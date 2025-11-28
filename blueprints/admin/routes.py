@@ -5,10 +5,10 @@ from flask import render_template, request, redirect, url_for, flash, jsonify, c
 from flask_login import login_required, current_user
 from functools import wraps
 from database import get_neo4j_db, safe_run, _node_to_dict
-from models import User, Business, Job, Service, Review, Notification
+from models import User, Business, Job, Review, Notification
 from decorators import role_required, json_response
 from tasks import send_email_task, create_notification_task
-from forms import BusinessForm, JobForm, ServiceForm
+from forms import BusinessForm, JobForm
 import bcrypt
 from . import admin_bp
 
@@ -70,10 +70,10 @@ def _paginate(session, query, count_query, params, per_page=20):
 from flask_login import login_required, current_user
 from functools import wraps
 from database import get_neo4j_db, safe_run, _node_to_dict
-from models import User, Business, Job, Service, Review, Notification
+from models import User, Business, Job, Review, Notification
 from decorators import role_required, json_response
 from tasks import send_email_task, create_notification_task
-from forms import BusinessForm, JobForm, ServiceForm
+from forms import BusinessForm, JobForm
 import bcrypt
 
 logger = logging.getLogger(__name__)

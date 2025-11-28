@@ -198,51 +198,51 @@ class Job:
             'applications_count': self.applications_count
         }
 
-class Service:
-    """Service listing model"""
+# class Service:
+#     """Service listing model"""
     
-    def __init__(self, **kwargs):
-        self.id = kwargs.get('id') or str(uuid.uuid4())
-        self.title = kwargs.get('title')
-        self.description = kwargs.get('description')
-        self.category = kwargs.get('category')
-        self.price = kwargs.get('price')
-        self.currency = kwargs.get('currency', 'PHP')
-        self.price_type = kwargs.get('price_type', 'fixed')  # fixed, hourly, daily
-        self.location = kwargs.get('location')
-        self.latitude = kwargs.get('latitude')
-        self.longitude = kwargs.get('longitude')
-        self.provider_id = kwargs.get('provider_id')
-        self.provider_name = kwargs.get('provider_name')
-        self.duration = kwargs.get('duration')
-        self.requirements = kwargs.get('requirements', [])
-        self.is_active = kwargs.get('is_active', True)
-        self.created_at = kwargs.get('created_at', datetime.utcnow().isoformat())
-        self.rating = kwargs.get('rating', 0.0)
-        self.review_count = kwargs.get('review_count', 0)
+#     def __init__(self, **kwargs):
+#         self.id = kwargs.get('id') or str(uuid.uuid4())
+#         self.title = kwargs.get('title')
+#         self.description = kwargs.get('description')
+#         self.category = kwargs.get('category')
+#         self.price = kwargs.get('price')
+#         self.currency = kwargs.get('currency', 'PHP')
+#         self.price_type = kwargs.get('price_type', 'fixed')  # fixed, hourly, daily
+#         self.location = kwargs.get('location')
+#         self.latitude = kwargs.get('latitude')
+#         self.longitude = kwargs.get('longitude')
+#         self.provider_id = kwargs.get('provider_id')
+#         self.provider_name = kwargs.get('provider_name')
+#         self.duration = kwargs.get('duration')
+#         self.requirements = kwargs.get('requirements', [])
+#         self.is_active = kwargs.get('is_active', True)
+#         self.created_at = kwargs.get('created_at', datetime.utcnow().isoformat())
+#         self.rating = kwargs.get('rating', 0.0)
+#         self.review_count = kwargs.get('review_count', 0)
         
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert service to dictionary"""
-        return {
-            'id': self.id,
-            'title': self.title,
-            'description': self.description,
-            'category': self.category,
-            'price': self.price,
-            'currency': self.currency,
-            'price_type': self.price_type,
-            'location': self.location,
-            'latitude': self.latitude,
-            'longitude': self.longitude,
-            'provider_id': self.provider_id,
-            'provider_name': self.provider_name,
-            'duration': self.duration,
-            'requirements': self.requirements,
-            'is_active': self.is_active,
-            'created_at': self.created_at,
-            'rating': self.rating,
-            'review_count': self.review_count
-        }
+#     def to_dict(self) -> Dict[str, Any]:
+#         """Convert service to dictionary"""
+#         return {
+#             'id': self.id,
+#             'title': self.title,
+#             'description': self.description,
+#             'category': self.category,
+#             'price': self.price,
+#             'currency': self.currency,
+#             'price_type': self.price_type,
+#             'location': self.location,
+#             'latitude': self.latitude,
+#             'longitude': self.longitude,
+#             'provider_id': self.provider_id,
+#             'provider_name': self.provider_name,
+#             'duration': self.duration,
+#             'requirements': self.requirements,
+#             'is_active': self.is_active,
+#             'created_at': self.created_at,
+#             'rating': self.rating,
+#             'review_count': self.review_count
+#         }
 
 class Review:
     """Review model"""

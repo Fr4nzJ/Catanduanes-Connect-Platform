@@ -43,8 +43,8 @@ class RegistrationForm(FlaskForm):
     ])
     role = SelectField('Account Type', choices=[
         ('job_seeker', 'Job Seeker'),
-        ('business_owner', 'Business Owner'),
-        ('service_client', 'Service Client')
+        ('business_owner', 'Business Owner')
+        # ('service_client', 'Service Client')
     ], validators=[DataRequired()])
 
 class PasswordResetForm(FlaskForm):
@@ -111,29 +111,29 @@ class JobForm(FlaskForm):
     benefits = TextAreaField('Benefits', validators=[Optional(), Length(max=1000)])
     expires_at = StringField('Application Deadline', validators=[Optional()])
 
-class ServiceForm(FlaskForm):
-    """Service posting form"""
-    title = StringField('Service Title', validators=[DataRequired(), Length(min=3, max=100)])
-    description = TextAreaField('Service Description', validators=[DataRequired(), Length(min=20, max=1000)])
-    category = SelectField('Category', choices=[
-        ('home_services', 'Home Services'),
-        ('professional_services', 'Professional Services'),
-        ('personal_services', 'Personal Services'),
-        ('automotive', 'Automotive'),
-        ('health_wellness', 'Health & Wellness'),
-        ('education_training', 'Education & Training'),
-        ('creative_media', 'Creative & Media'),
-        ('other', 'Other')
-    ], validators=[DataRequired()])
-    price = DecimalField('Price', validators=[DataRequired(), NumberRange(min=0)])
-    price_type = SelectField('Price Type', choices=[
-        ('fixed', 'Fixed Price'),
-        ('hourly', 'Per Hour'),
-        ('daily', 'Per Day')
-    ], validators=[DataRequired()])
-    location = StringField('Service Location', validators=[DataRequired(), Length(min=3, max=100)])
-    duration = StringField('Estimated Duration', validators=[Optional(), Length(max=50)])
-    requirements = TextAreaField('Requirements', validators=[Optional(), Length(max=500)])
+# class ServiceForm(FlaskForm):
+#     """Service posting form"""
+#     title = StringField('Service Title', validators=[DataRequired(), Length(min=3, max=100)])
+#     description = TextAreaField('Service Description', validators=[DataRequired(), Length(min=20, max=1000)])
+#     category = SelectField('Category', choices=[
+#         ('home_services', 'Home Services'),
+#         ('professional_services', 'Professional Services'),
+#         ('personal_services', 'Personal Services'),
+#         ('automotive', 'Automotive'),
+#         ('health_wellness', 'Health & Wellness'),
+#         ('education_training', 'Education & Training'),
+#         ('creative_media', 'Creative & Media'),
+#         ('other', 'Other')
+#     ], validators=[DataRequired()])
+#     price = DecimalField('Price', validators=[DataRequired(), NumberRange(min=0)])
+#     price_type = SelectField('Price Type', choices=[
+#         ('fixed', 'Fixed Price'),
+#         ('hourly', 'Per Hour'),
+#         ('daily', 'Per Day')
+#     ], validators=[DataRequired()])
+#     location = StringField('Service Location', validators=[DataRequired(), Length(min=3, max=100)])
+#     duration = StringField('Estimated Duration', validators=[Optional(), Length(max=50)])
+#     requirements = TextAreaField('Requirements', validators=[Optional(), Length(max=500)])
 
 class ReviewForm(FlaskForm):
     """Review form"""
@@ -178,53 +178,53 @@ class ContactForm(FlaskForm):
 from wtforms import StringField, DecimalField, SelectField, TextAreaField, BooleanField
 from wtforms.validators import DataRequired, Optional, NumberRange
 
-class ServiceForm(FlaskForm):
-    """Form for creating / editing a service listing"""
+# class ServiceForm(FlaskForm):
+#     """Form for creating / editing a service listing"""
 
-    title = StringField('Service Title', validators=[DataRequired()])
-    description = TextAreaField('Description', validators=[DataRequired()])
+#     title = StringField('Service Title', validators=[DataRequired()])
+#     description = TextAreaField('Description', validators=[DataRequired()])
     
-    category = SelectField(
-        'Category',
-        choices=[
-            ('tech', 'Technology & IT'),
-            ('design', 'Design & Creative'),
-            ('writing', 'Writing & Translation'),
-            ('marketing', 'Marketing & Sales'),
-            ('business', 'Business & Consulting'),
-            ('legal', 'Legal'),
-            ('accounting', 'Accounting & Finance'),
-            ('engineering', 'Engineering & Architecture'),
-            ('education', 'Teaching & Education'),
-            ('health', 'Health & Wellness'),
-            ('events', 'Events & Entertainment'),
-            ('other', 'Other')
-        ],
-        validators=[DataRequired()]
-    )
+#     category = SelectField(
+#         'Category',
+#         choices=[
+#             ('tech', 'Technology & IT'),
+#             ('design', 'Design & Creative'),
+#             ('writing', 'Writing & Translation'),
+#             ('marketing', 'Marketing & Sales'),
+#             ('business', 'Business & Consulting'),
+#             ('legal', 'Legal'),
+#             ('accounting', 'Accounting & Finance'),
+#             ('engineering', 'Engineering & Architecture'),
+#             ('education', 'Teaching & Education'),
+#             ('health', 'Health & Wellness'),
+#             ('events', 'Events & Entertainment'),
+#             ('other', 'Other')
+#         ],
+#         validators=[DataRequired()]
+#     )
 
-    price = DecimalField('Price (numbers only)', validators=[NumberRange(min=0)])
+#     price = DecimalField('Price (numbers only)', validators=[NumberRange(min=0)])
     
-    currency = SelectField(
-        'Currency',
-        choices=[('PHP', '₱ PHP'), ('USD', '$ USD')],
-        default='PHP'
-    )
+#     currency = SelectField(
+#         'Currency',
+#         choices=[('PHP', '₱ PHP'), ('USD', '$ USD')],
+#         default='PHP'
+#     )
 
-    price_type = SelectField(
-        'Pricing model',
-        choices=[
-            ('fixed', 'Fixed price'),
-            ('hourly', 'Per hour'),
-            ('daily', 'Per day'),
-            ('project', 'Per project')
-        ],
-        default='fixed'
-    )
+#     price_type = SelectField(
+#         'Pricing model',
+#         choices=[
+#             ('fixed', 'Fixed price'),
+#             ('hourly', 'Per hour'),
+#             ('daily', 'Per day'),
+#             ('project', 'Per project')
+#         ],
+#         default='fixed'
+#     )
 
-    location = StringField('Location / City', validators=[DataRequired()])
-    duration = StringField('Estimated duration (optional)', validators=[Optional()])
-    requirements = TextAreaField('Client requirements (optional)', validators=[Optional()])
-    is_active = BooleanField('List as active', default=True)
+#     location = StringField('Location / City', validators=[DataRequired()])
+#     duration = StringField('Estimated duration (optional)', validators=[Optional()])
+#     requirements = TextAreaField('Client requirements (optional)', validators=[Optional()])
+#     is_active = BooleanField('List as active', default=True)
     
-    submit = SubmitField('Save Service')
+#     submit = SubmitField('Save Service')

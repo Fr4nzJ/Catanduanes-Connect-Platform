@@ -64,9 +64,9 @@
                         <a href="{{ url_for('businesses.list_businesses') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Businesses
                         </a>
-                        <a href="{{ url_for('services.list_services') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        {% comment %} <a href="{{ url_for('services.list_services') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Services
-                        </a>
+                        </a> {% endcomment %}
                         <a href="{{ url_for('chat.user_chat_view') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Chat
                         </a>
@@ -121,11 +121,11 @@
                                         <a href="{{ url_for('businesses.dashboard') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                                         </a>
-                                    {% elif current_user.role == 'service_client' %}
+                                    {% comment %} {% elif current_user.role == 'service_client' %}
                                         <a href="{{ url_for('services.service_provider_dashboard') }}"
                                         class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-concierge-bell mr-2"></i>Provider Dashboard
-                                        </a>
+                                        </a> {% endcomment %}
                                     {% else %}
                                         <a href="{{ url_for('jobs.my_applications') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-briefcase mr-2"></i>My Applications
@@ -178,9 +178,9 @@
                 <a href="{{ url_for('businesses.list_businesses') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Businesses
                 </a>
-                <a href="{{ url_for('services.list_services') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
+                {% comment %} <a href="{{ url_for('services.list_services') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Services
-                </a>
+                </a> {% endcomment %}
                 <a href="{{ url_for('chat.chatbot_view') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Chat
                 </a>

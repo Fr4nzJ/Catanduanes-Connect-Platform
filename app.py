@@ -148,7 +148,7 @@ def create_app(config_name='default'):
     from blueprints.auth import auth_bp
     from blueprints.businesses.routes import businesses_bp
     from blueprints.jobs.routes import jobs_bp
-    from blueprints.services.routes import services_bp
+    # from blueprints.services.routes import services_bp
     from blueprints.dashboard.routes import dashboard_bp
     from blueprints.verification.routes import verification_bp
     from blueprints.chat.routes import chat_bp
@@ -160,7 +160,7 @@ def create_app(config_name='default'):
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(businesses_bp, url_prefix="/businesses")
     app.register_blueprint(jobs_bp, url_prefix="/jobs")
-    app.register_blueprint(services_bp, url_prefix="/services")
+    # app.register_blueprint(services_bp, url_prefix="/services")
     app.register_blueprint(dashboard_bp, url_prefix="/dashboard")
     app.register_blueprint(verification_bp, url_prefix="/verify")
     app.register_blueprint(chat_bp, url_prefix="/chat")
