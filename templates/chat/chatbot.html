@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Chat{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-4">Virtual Assistant</h1>
+        
+        <!-- Chat messages container -->
+        <div id="chat-messages" class="h-96 overflow-y-auto mb-4 p-4 border rounded">
+            <div class="mb-4">
+                <div class="bg-blue-100 p-3 rounded-lg inline-block">
+                    <p>Hello! How can I help you today?</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat input form -->
+        <form id="chat-form" class="flex gap-2">
+            <input type="text" 
+                   id="user-input" 
+                   class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" 
+                   placeholder="Type your message here..."
+                   required>
+            <button type="submit" 
+                    class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                Send
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Add chat-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

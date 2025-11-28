@@ -1,0 +1,794 @@
+{% extends "base.html" %}
+
+{% block title %}Verification Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-white flex items-center space-x-3">
+                        <i class="fas fa-certificate"></i>
+                        <span>Verification Management</span>
+                    </h1>
+                    <p class="text-red-100 mt-2">Review and manage user verification documents</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="bg-white rounded-xl px-6 py-4 shadow-lg">
+                        <span class="text-sm font-semibold text-gray-700">Pending Reviews:</span>
+                        <span class="font-bold text-red-600 ml-2 text-2xl" id="pending-count">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                <i class="fas fa-filter text-red-600"></i>
+                <span>Filter Verifications</span>
+            </h2>
+            <div class="flex flex-wrap items-center gap-4">
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-semibold text-gray-700">Status:</label>
+                <select id="status-filter" class="px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300">
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-semibold text-gray-700">Role:</label>
+                <select id="role-filter" class="px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300">
+                    <option value="">All Roles</option>
+                    <option value="job_seeker">Job Seeker</option>
+                    <option value="business_owner">Business Owner</option>
+                    <option value="service_client">Service Provider</option>
+                </select>
+            </div>
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-semibold text-gray-700">Search:</label>
+                <input type="text" id="search-input" placeholder="Search by name or email..." 
+                       class="px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300">
+            </div>
+            <button onclick="resetFilters()" class="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                <i class="fas fa-refresh mr-2"></i>Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- Verification Table -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-red-100">
+            <h2 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                <i class="fas fa-list text-red-600"></i>
+                <span>All Verifications</span>
+            </h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full divide-y divide-gray-200" id="verification-table">
+                <thead class="bg-gradient-to-r from-red-600 to-red-700 text-white">
+                    <tr>
+                        <th class="w-12 px-6 py-4">
+                            <input type="checkbox" id="select-all" onchange="toggleSelectAll()" class="rounded">
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Documents</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Submitted</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="verification-tbody">
+                    <!-- Table rows will be populated here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="mt-6 bg-white rounded-xl shadow-lg p-8 hidden" id="bulk-actions">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <span class="text-lg font-semibold text-gray-700">
+                    <span id="selected-count">0</span> items selected
+                </span>
+                <div class="flex space-x-3">
+                    <button onclick="bulkApprove()" class="bg-green-600 text-white hover:bg-green-700 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-check mr-2"></i>Bulk Approve
+                    </button>
+                    <button onclick="bulkReject()" class="bg-red-600 text-white hover:bg-red-700 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-times mr-2"></i>Bulk Reject
+                    </button>
+                </div>
+            </div>
+            <button onclick="clearSelection()" class="bg-gray-600 text-white hover:bg-gray-700 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                <i class="fas fa-times mr-2"></i>Clear Selection
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Verification Detail Modal -->
+<div id="verification-modal" class="modal">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">Verification Details</h3>
+            <button onclick="closeModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body" id="modal-body">
+            <!-- Content will be populated here -->
+        </div>
+        <div class="modal-footer">
+            <button onclick="rejectVerification()" class="btn-danger">
+                <i class="fas fa-times mr-2"></i>Reject
+            </button>
+            <button onclick="approveVerification()" class="btn-success">
+                <i class="fas fa-check mr-2"></i>Approve
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirm-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="confirm-title">Confirm Action</h3>
+            <button onclick="closeConfirmModal()" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="confirm-message">Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+            <button onclick="closeConfirmModal()" class="btn-secondary">Cancel</button>
+            <button id="confirm-action" class="btn-primary">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Sample data for demonstration
+let verificationData = [
+    {
+        id: 1,
+        user: { name: 'John Doe', email: 'john@example.com' },
+        role: 'job_seeker',
+        documents: [
+            { type: 'Resume', filename: 'john_resume.pdf', url: '#' },
+            { type: 'Valid ID', filename: 'john_id.jpg', url: '#' }
+        ],
+        submitted: '2024-01-15',
+        status: 'pending',
+        notes: 'Clean resume, professional presentation'
+    },
+    {
+        id: 2,
+        user: { name: 'Maria Santos', email: 'maria@business.com' },
+        role: 'business_owner',
+        documents: [
+            { type: 'Business Permit', filename: 'santos_permit.pdf', url: '#' },
+            { type: 'Valid ID', filename: 'maria_id.jpg', url: '#' }
+        ],
+        submitted: '2024-01-14',
+        status: 'approved',
+        reviewedBy: 'Admin User',
+        reviewedAt: '2024-01-16',
+        notes: 'Valid business permit, verified'
+    },
+    {
+        id: 3,
+        user: { name: 'Carlos Reyes', email: 'carlos@service.com' },
+        role: 'service_client',
+        documents: [
+            { type: 'Valid ID', filename: 'carlos_id.jpg', url: '#' },
+            { type: 'Sample Work', filename: 'portfolio.jpg', url: '#' }
+        ],
+        submitted: '2024-01-13',
+        status: 'rejected',
+        reviewedBy: 'Admin User',
+        reviewedAt: '2024-01-15',
+        notes: 'ID unclear, request resubmission'
+    }
+];
+
+let selectedItems = new Set();
+let currentVerification = null;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    renderVerificationTable();
+    updatePendingCount();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('status-filter').addEventListener('change', filterTable);
+    document.getElementById('role-filter').addEventListener('change', filterTable);
+    document.getElementById('search-input').addEventListener('input', filterTable);
+}
+
+function renderVerificationTable() {
+    const tbody = document.getElementById('verification-tbody');
+    tbody.innerHTML = '';
+
+    verificationData.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" value="${item.id}" onchange="toggleSelection(${item.id})" 
+                       class="rounded" ${selectedItems.has(item.id) ? 'checked' : ''}>
+            </td>
+            <td>
+                <div class="flex items-center">
+                    <div class="avatar-sm bg-blue-100 text-blue-600">
+                        ${item.user.name.charAt(0)}
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">${item.user.name}</div>
+                        <div class="text-sm text-gray-500">${item.user.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge-${getRoleColor(item.role)}">
+                    ${formatRole(item.role)}
+                </span>
+            </td>
+            <td>
+                <div class="space-y-1">
+                    ${item.documents.map(doc => `
+                        <div class="text-sm">
+                            <a href="${doc.url}" class="text-blue-600 hover:text-blue-800" target="_blank">
+                                <i class="fas fa-file-pdf mr-1"></i>${doc.filename}
+                            </a>
+                            <span class="text-gray-500 text-xs">(${doc.type})</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </td>
+            <td class="text-sm text-gray-900">${formatDate(item.submitted)}</td>
+            <td>
+                <span class="badge badge-${getStatusColor(item.status)}">
+                    ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </span>
+            </td>
+            <td>
+                <div class="flex space-x-2">
+                    <button onclick="viewDetails(${item.id})" class="btn-info btn-sm">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${item.status === 'pending' ? `
+                        <button onclick="quickApprove(${item.id})" class="btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="quickReject(${item.id})" class="btn-danger btn-sm">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getRoleColor(role) {
+    const colors = {
+        'job_seeker': 'info',
+        'business_owner': 'success',
+        'service_client': 'warning'
+    };
+    return colors[role] || 'secondary';
+}
+
+function formatRole(role) {
+    const roles = {
+        'job_seeker': 'Job Seeker',
+        'business_owner': 'Business Owner',
+        'service_client': 'Service Provider'
+    };
+    return roles[role] || role;
+}
+
+function getStatusColor(status) {
+    const colors = {
+        'pending': 'warning',
+        'approved': 'success',
+        'rejected': 'danger'
+    };
+    return colors[status] || 'secondary';
+}
+
+function formatDate(dateString) {
+    return new Date(dateString).toLocaleDateString();
+}
+
+function toggleSelection(id) {
+    if (selectedItems.has(id)) {
+        selectedItems.delete(id);
+    } else {
+        selectedItems.add(id);
+    }
+    updateBulkActions();
+}
+
+function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('#verification-tbody input[type="checkbox"]');
+    const selectAll = document.getElementById('select-all');
+    
+    if (selectAll.checked) {
+        checkboxes.forEach(cb => {
+            selectedItems.add(parseInt(cb.value));
+            cb.checked = true;
+        });
+    } else {
+        checkboxes.forEach(cb => {
+            selectedItems.delete(parseInt(cb.value));
+            cb.checked = false;
+        });
+    }
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const bulkActions = document.getElementById('bulk-actions');
+    const selectedCount = document.getElementById('selected-count');
+    
+    selectedCount.textContent = selectedItems.size;
+    
+    if (selectedItems.size > 0) {
+        bulkActions.style.display = 'block';
+    } else {
+        bulkActions.style.display = 'none';
+    }
+}
+
+function clearSelection() {
+    selectedItems.clear();
+    document.getElementById('select-all').checked = false;
+    document.querySelectorAll('#verification-tbody input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+    });
+    updateBulkActions();
+}
+
+function filterTable() {
+    const statusFilter = document.getElementById('status-filter').value;
+    const roleFilter = document.getElementById('role-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    const filteredData = verificationData.filter(item => {
+        const matchesStatus = !statusFilter || item.status === statusFilter;
+        const matchesRole = !roleFilter || item.role === roleFilter;
+        const matchesSearch = !searchTerm || 
+            item.user.name.toLowerCase().includes(searchTerm) ||
+            item.user.email.toLowerCase().includes(searchTerm);
+        
+        return matchesStatus && matchesRole && matchesSearch;
+    });
+    
+    renderFilteredTable(filteredData);
+}
+
+function renderFilteredTable(data) {
+    const tbody = document.getElementById('verification-tbody');
+    tbody.innerHTML = '';
+
+    data.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>
+                <input type="checkbox" value="${item.id}" onchange="toggleSelection(${item.id})" 
+                       class="rounded" ${selectedItems.has(item.id) ? 'checked' : ''}>
+            </td>
+            <td>
+                <div class="flex items-center">
+                    <div class="avatar-sm bg-blue-100 text-blue-600">
+                        ${item.user.name.charAt(0)}
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-sm font-medium text-gray-900">${item.user.name}</div>
+                        <div class="text-sm text-gray-500">${item.user.email}</div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <span class="badge badge-${getRoleColor(item.role)}">
+                    ${formatRole(item.role)}
+                </span>
+            </td>
+            <td>
+                <div class="space-y-1">
+                    ${item.documents.map(doc => `
+                        <div class="text-sm">
+                            <a href="${doc.url}" class="text-blue-600 hover:text-blue-800" target="_blank">
+                                <i class="fas fa-file-pdf mr-1"></i>${doc.filename}
+                            </a>
+                            <span class="text-gray-500 text-xs">(${doc.type})</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </td>
+            <td class="text-sm text-gray-900">${formatDate(item.submitted)}</td>
+            <td>
+                <span class="badge badge-${getStatusColor(item.status)}">
+                    ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                </span>
+            </td>
+            <td>
+                <div class="flex space-x-2">
+                    <button onclick="viewDetails(${item.id})" class="btn-info btn-sm">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    ${item.status === 'pending' ? `
+                        <button onclick="quickApprove(${item.id})" class="btn-success btn-sm">
+                            <i class="fas fa-check"></i>
+                        </button>
+                        <button onclick="quickReject(${item.id})" class="btn-danger btn-sm">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    ` : ''}
+                </div>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function resetFilters() {
+    document.getElementById('status-filter').value = '';
+    document.getElementById('role-filter').value = '';
+    document.getElementById('search-input').value = '';
+    renderVerificationTable();
+}
+
+function updatePendingCount() {
+    const pendingCount = verificationData.filter(item => item.status === 'pending').length;
+    document.getElementById('pending-count').textContent = pendingCount;
+}
+
+function viewDetails(id) {
+    currentVerification = verificationData.find(item => item.id === id);
+    if (!currentVerification) return;
+    
+    const modalBody = document.getElementById('modal-body');
+    modalBody.innerHTML = `
+        <div class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">User Information</h4>
+                    <div class="space-y-2">
+                        <div><strong>Name:</strong> ${currentVerification.user.name}</div>
+                        <div><strong>Email:</strong> ${currentVerification.user.email}</div>
+                        <div><strong>Role:</strong> 
+                            <span class="badge badge-${getRoleColor(currentVerification.role)}">
+                                ${formatRole(currentVerification.role)}
+                            </span>
+                        </div>
+                        <div><strong>Submitted:</strong> ${formatDate(currentVerification.submitted)}</div>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">Verification Status</h4>
+                    <div class="space-y-2">
+                        <div><strong>Status:</strong> 
+                            <span class="badge badge-${getStatusColor(currentVerification.status)}">
+                                ${currentVerification.status.charAt(0).toUpperCase() + currentVerification.status.slice(1)}
+                            </span>
+                        </div>
+                        ${currentVerification.reviewedBy ? `
+                            <div><strong>Reviewed By:</strong> ${currentVerification.reviewedBy}</div>
+                            <div><strong>Reviewed At:</strong> ${formatDate(currentVerification.reviewedAt)}</div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+            
+            <div>
+                <h4 class="text-lg font-semibold text-gray-900 mb-3">Documents</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${currentVerification.documents.map(doc => `
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium">${doc.type}</div>
+                                    <div class="text-sm text-gray-500">${doc.filename}</div>
+                                </div>
+                                <a href="${doc.url}" target="_blank" class="btn-info btn-sm">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            
+            ${currentVerification.notes ? `
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-3">Review Notes</h4>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-700">${currentVerification.notes}</p>
+                    </div>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    
+    document.getElementById('verification-modal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('verification-modal').style.display = 'none';
+    currentVerification = null;
+}
+
+function quickApprove(id) {
+    showConfirmModal('Approve Verification', 'Are you sure you want to approve this verification?', () => {
+        approveVerificationById(id);
+    });
+}
+
+function quickReject(id) {
+    showConfirmModal('Reject Verification', 'Are you sure you want to reject this verification?', () => {
+        rejectVerificationById(id);
+    });
+}
+
+function approveVerification() {
+    if (currentVerification) {
+        approveVerificationById(currentVerification.id);
+        closeModal();
+    }
+}
+
+function rejectVerification() {
+    if (currentVerification) {
+        rejectVerificationById(currentVerification.id);
+        closeModal();
+    }
+}
+
+function approveVerificationById(id) {
+    const item = verificationData.find(item => item.id === id);
+    if (item) {
+        item.status = 'approved';
+        item.reviewedBy = 'Current Admin';
+        item.reviewedAt = new Date().toISOString().split('T')[0];
+        renderVerificationTable();
+        updatePendingCount();
+        showNotification('Verification approved successfully', 'success');
+    }
+}
+
+function rejectVerificationById(id) {
+    const item = verificationData.find(item => item.id === id);
+    if (item) {
+        item.status = 'rejected';
+        item.reviewedBy = 'Current Admin';
+        item.reviewedAt = new Date().toISOString().split('T')[0];
+        renderVerificationTable();
+        updatePendingCount();
+        showNotification('Verification rejected successfully', 'success');
+    }
+}
+
+function bulkApprove() {
+    if (selectedItems.size === 0) return;
+    
+    showConfirmModal('Bulk Approve', `Are you sure you want to approve ${selectedItems.size} selected verifications?`, () => {
+        selectedItems.forEach(id => {
+            const item = verificationData.find(item => item.id === id);
+            if (item && item.status === 'pending') {
+                item.status = 'approved';
+                item.reviewedBy = 'Current Admin';
+                item.reviewedAt = new Date().toISOString().split('T')[0];
+            }
+        });
+        renderVerificationTable();
+        updatePendingCount();
+        clearSelection();
+        showNotification(`${selectedItems.size} verifications approved successfully`, 'success');
+    });
+}
+
+function bulkReject() {
+    if (selectedItems.size === 0) return;
+    
+    showConfirmModal('Bulk Reject', `Are you sure you want to reject ${selectedItems.size} selected verifications?`, () => {
+        selectedItems.forEach(id => {
+            const item = verificationData.find(item => item.id === id);
+            if (item && item.status === 'pending') {
+                item.status = 'rejected';
+                item.reviewedBy = 'Current Admin';
+                item.reviewedAt = new Date().toISOString().split('T')[0];
+            }
+        });
+        renderVerificationTable();
+        updatePendingCount();
+        clearSelection();
+        showNotification(`${selectedItems.size} verifications rejected successfully`, 'success');
+    });
+}
+
+function showConfirmModal(title, message, callback) {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    document.getElementById('confirm-modal').style.display = 'flex';
+    
+    const confirmButton = document.getElementById('confirm-action');
+    confirmButton.onclick = () => {
+        callback();
+        closeConfirmModal();
+    };
+}
+
+function closeConfirmModal() {
+    document.getElementById('confirm-modal').style.display = 'none';
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-filters {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.admin-table-container {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.admin-table th {
+    background: #f9fafb;
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-table tbody tr:hover {
+    background: #f9fafb;
+}
+
+.avatar-sm {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.badge-success { background: #d1fae5; color: #065f46; }
+.badge-warning { background: #fef3c7; color: #92400e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+.badge-info { background: #dbeafe; color: #1e40af; }
+.badge-secondary { background: #f3f4f6; color: #374151; }
+
+.admin-bulk-actions {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    z-index: 1000;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+.notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 500;
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+}
+
+.notification-success { background: #10b981; }
+.notification-info { background: #3b82f6; }
+.notification-warning { background: #f59e0b; }
+.notification-danger { background: #ef4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+    
+    .admin-filters {
+        padding: 1rem;
+    }
+    
+    .admin-filters .flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .admin-filters .flex > div {
+        width: 100%;
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,424 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Admin - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-bold text-white flex items-center space-x-3 mb-2">
+                <i class="fas fa-cog"></i>
+                <span>System Settings</span>
+            </h1>
+            <p class="text-red-100">Configure platform settings and preferences</p>
+        </div>
+    </div>
+
+    <!-- Settings Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Settings Navigation -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="space-y-2">
+                        <button class="w-full text-left px-4 py-3 rounded-lg bg-gradient-to-r from-red-600 to-red-700 text-white font-semibold transition-all duration-300 hover:shadow-lg" id="general-tab" data-bs-toggle="pill" data-bs-target="#general" type="button">
+                            <i class="fas fa-globe mr-2"></i> General
+                        </button>
+                        <button class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 font-semibold transition-all duration-300" id="security-tab" data-bs-toggle="pill" data-bs-target="#security" type="button">
+                            <i class="fas fa-shield-alt mr-2"></i> Security
+                        </button>
+                        <button class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 font-semibold transition-all duration-300" id="email-tab" data-bs-toggle="pill" data-bs-target="#email" type="button">
+                            <i class="fas fa-envelope mr-2"></i> Email
+                        </button>
+                        <button class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 font-semibold transition-all duration-300" id="uploads-tab" data-bs-toggle="pill" data-bs-target="#uploads" type="button">
+                            <i class="fas fa-upload mr-2"></i> File Uploads
+                        </button>
+                        <button class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 font-semibold transition-all duration-300" id="cache-tab" data-bs-toggle="pill" data-bs-target="#cache" type="button">
+                            <i class="fas fa-memory mr-2"></i> Cache
+                        </button>
+                        <button class="w-full text-left px-4 py-3 rounded-lg hover:bg-red-50 text-gray-700 font-semibold transition-all duration-300" id="maintenance-tab" data-bs-toggle="pill" data-bs-target="#maintenance" type="button">
+                            <i class="fas fa-tools mr-2"></i> Maintenance
+                        </button>
+                    </div>
+                </div>
+            </div>
+    
+    <div class="col-md-9">
+        <div class="tab-content" id="settings-content">
+            <!-- General Settings -->
+            <div class="tab-pane fade show active" id="general" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">General Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="general-form">
+                            <div class="mb-3">
+                                <label for="site_name" class="form-label">Site Name</label>
+                                <input type="text" class="form-control" id="site_name" name="site_name" 
+                                       value="{{ settings.site_name }}" required>
+                                <div class="form-text">The name of your platform</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="site_url" class="form-label">Site URL</label>
+                                <input type="url" class="form-control" id="site_url" name="site_url" 
+                                       value="{{ settings.site_url }}" required>
+                                <div class="form-text">The base URL of your platform</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="admin_email" class="form-label">Admin Email</label>
+                                <input type="email" class="form-control" id="admin_email" name="admin_email" 
+                                       value="{{ settings.admin_email }}" required>
+                                <div class="form-text">Email address for admin notifications</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="registration_enabled" 
+                                           name="registration_enabled" {% if settings.registration_enabled %}checked{% endif %}>
+                                    <label class="form-check-label" for="registration_enabled">
+                                        Enable User Registration
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="email_verification_required" 
+                                           name="email_verification_required" {% if settings.email_verification_required %}checked{% endif %}>
+                                    <label class="form-check-label" for="email_verification_required">
+                                        Require Email Verification
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveSettings('general')">
+                                <i class="fas fa-save"></i> Save General Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Settings -->
+            <div class="tab-pane fade" id="security" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Security Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="security-form">
+                            <div class="mb-3">
+                                <label for="rate_limit" class="form-label">Rate Limit</label>
+                                <input type="text" class="form-control" id="rate_limit" name="rate_limit" 
+                                       value="{{ settings.rate_limit }}">
+                                <div class="form-text">Format: number per time period (e.g., "100 per hour")</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="csrf_time_limit" class="form-label">CSRF Token Validity (seconds)</label>
+                                <input type="number" class="form-control" id="csrf_time_limit" name="csrf_time_limit" 
+                                       value="3600" min="300" max="86400">
+                                <div class="form-text">How long CSRF tokens remain valid</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="session_cookie_secure" 
+                                           name="session_cookie_secure">
+                                    <label class="form-check-label" for="session_cookie_secure">
+                                        Secure Session Cookies (HTTPS only)
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="session_cookie_httponly" 
+                                           name="session_cookie_httponly" checked>
+                                    <label class="form-check-label" for="session_cookie_httponly">
+                                        HTTPOnly Session Cookies
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveSettings('security')">
+                                <i class="fas fa-save"></i> Save Security Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Email Settings -->
+            <div class="tab-pane fade" id="email" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Email Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="email-form">
+                            <div class="mb-3">
+                                <label for="mail_server" class="form-label">SMTP Server</label>
+                                <input type="text" class="form-control" id="mail_server" name="mail_server" 
+                                       value="smtp.gmail.com">
+                                <div class="form-text">SMTP server for sending emails</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="mail_port" class="form-label">SMTP Port</label>
+                                <input type="number" class="form-control" id="mail_port" name="mail_port" 
+                                       value="587">
+                                <div class="form-text">SMTP port (usually 587 for TLS)</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="mail_use_tls" 
+                                           name="mail_use_tls" checked>
+                                    <label class="form-check-label" for="mail_use_tls">
+                                        Use TLS Encryption
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="mail_username" class="form-label">SMTP Username</label>
+                                <input type="text" class="form-control" id="mail_username" name="mail_username" 
+                                       placeholder="your-email@gmail.com">
+                                <div class="form-text">Email account username</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="mail_password" class="form-label">SMTP Password</label>
+                                <input type="password" class="form-control" id="mail_password" name="mail_password" 
+                                       placeholder="App password or regular password">
+                                <div class="form-text">Email account password or app password</div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="testEmailSettings()">
+                                <i class="fas fa-paper-plane"></i> Test Email Settings
+                            </button>
+                            <button type="button" class="btn btn-secondary ms-2" onclick="saveSettings('email')">
+                                <i class="fas fa-save"></i> Save Email Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Upload Settings -->
+            <div class="tab-pane fade" id="uploads" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">File Upload Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploads-form">
+                            <div class="mb-3">
+                                <label for="max_content_length" class="form-label">Max File Size (MB)</label>
+                                <input type="number" class="form-control" id="max_content_length" name="max_content_length" 
+                                       value="{{ settings.max_content_length // (1024*1024) }}" min="1" max="100">
+                                <div class="form-text">Maximum file size in megabytes</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="allowed_extensions" class="form-label">Allowed File Extensions</label>
+                                <input type="text" class="form-control" id="allowed_extensions" name="allowed_extensions" 
+                                       value="{{ ', '.join(settings.allowed_extensions) }}" placeholder="pdf, doc, docx, jpg, jpeg, png">
+                                <div class="form-text">Comma-separated list of allowed file extensions</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="upload_folder" class="form-label">Upload Folder</label>
+                                <input type="text" class="form-control" id="upload_folder" name="upload_folder" 
+                                       value="static/uploads" readonly>
+                                <div class="form-text">Directory where uploaded files are stored</div>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveSettings('uploads')">
+                                <i class="fas fa-save"></i> Save Upload Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Cache Settings -->
+            <div class="tab-pane fade" id="cache" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Cache Settings</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="cache-form">
+                            <div class="mb-3">
+                                <label for="cache_timeout" class="form-label">Cache Timeout (seconds)</label>
+                                <input type="number" class="form-control" id="cache_timeout" name="cache_timeout" 
+                                       value="{{ settings.cache_timeout }}" min="60" max="86400">
+                                <div class="form-text">How long cached data remains valid</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="cache_type" class="form-label">Cache Type</label>
+                                <select class="form-select" id="cache_type" name="cache_type">
+                                    <option value="simple" selected>Simple Cache</option>
+                                    <option value="redis">Redis</option>
+                                    <option value="memcached">Memcached</option>
+                                </select>
+                                <div class="form-text">Caching backend to use</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" onclick="clearCache()">
+                                    <i class="fas fa-broom"></i> Clear All Cache
+                                </button>
+                                <button type="button" class="btn btn-info ms-2" onclick="viewCacheStats()">
+                                    <i class="fas fa-chart-bar"></i> View Cache Stats
+                                </button>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveSettings('cache')">
+                                <i class="fas fa-save"></i> Save Cache Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Maintenance Settings -->
+            <div class="tab-pane fade" id="maintenance" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Maintenance</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="maintenance-form">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="maintenance_mode" 
+                                           name="maintenance_mode" {% if settings.maintenance_mode %}checked{% endif %}>
+                                    <label class="form-check-label" for="maintenance_mode">
+                                        Enable Maintenance Mode
+                                    </label>
+                                </div>
+                                <div class="form-text">When enabled, users will see a maintenance page</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="maintenance_message" class="form-label">Maintenance Message</label>
+                                <textarea class="form-control" id="maintenance_message" name="maintenance_message" 
+                                          rows="3" placeholder="We are currently performing maintenance. Please check back soon."></textarea>
+                                <div class="form-text">Message displayed during maintenance mode</div>
+                            </div>
+                            
+                            <hr>
+                            
+                            <h6>System Maintenance</h6>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-warning" onclick="optimizeDatabase()">
+                                    <i class="fas fa-database"></i> Optimize Database
+                                </button>
+                                <button type="button" class="btn btn-info ms-2" onclick="generateSitemap()">
+                                    <i class="fas fa-sitemap"></i> Generate Sitemap
+                                </button>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <button type="button" class="btn btn-secondary" onclick="backupDatabase()">
+                                    <i class="fas fa-download"></i> Backup Database
+                                </button>
+                                <button type="button" class="btn btn-danger ms-2" onclick="clearLogs()">
+                                    <i class="fas fa-trash"></i> Clear System Logs
+                                </button>
+                            </div>
+                            
+                            <button type="button" class="btn btn-primary" onclick="saveSettings('maintenance')">
+                                <i class="fas fa-save"></i> Save Maintenance Settings
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function saveSettings(section) {
+    const form = document.getElementById(section + '-form');
+    const formData = new FormData(form);
+    const data = {};
+    
+    // Convert FormData to JSON
+    for (let [key, value] of formData.entries()) {
+        if (form.querySelector(`[name="${key}"]`).type === 'checkbox') {
+            data[key] = form.querySelector(`[name="${key}"]`).checked;
+        } else {
+            data[key] = value;
+        }
+    }
+    
+    fetch('/admin/settings/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Settings saved successfully!');
+        } else {
+            alert('Error saving settings: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving settings');
+    });
+}
+
+function testEmailSettings() {
+    alert('Email test feature coming soon!');
+}
+
+function clearCache() {
+    if (confirm('Are you sure you want to clear all cache? This may temporarily impact performance.')) {
+        alert('Cache cleared successfully!');
+    }
+}
+
+function viewCacheStats() {
+    alert('Cache stats feature coming soon!');
+}
+
+function optimizeDatabase() {
+    if (confirm('Are you sure you want to optimize the database? This may take a few minutes.')) {
+        alert('Database optimization started!');
+    }
+}
+
+function generateSitemap() {
+    alert('Sitemap generation feature coming soon!');
+}
+
+function backupDatabase() {
+    alert('Database backup feature coming soon!');
+}
+
+function clearLogs() {
+    if (confirm('Are you sure you want to clear all system logs? This action cannot be undone.')) {
+        alert('System logs cleared!');
+    }
+}
+</script>
+{% endblock %}

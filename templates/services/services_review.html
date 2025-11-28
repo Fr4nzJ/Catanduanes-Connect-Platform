@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+
+{% block title %}Write a Service Review - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('services.service_detail', service_id=service.id) }}" 
+                   class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Write a Service Review</h1>
+                    <p class="text-gray-600">Share your experience with {{ service.title }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <!-- Service Info Card -->
+            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-concierge-bell text-purple-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ service.title }}</h3>
+                        <p class="text-gray-600">{{ service.category.replace('_', ' ').title() }}</p>
+                        <p class="text-sm text-gray-500">{{ service.location }}</p>
+                        <p class="text-sm font-semibold text-green-600">
+                            ₱{{ "{:,.2f}".format(service.price) }} {{ service.price_type.replace('_', ' ').title() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                {{ form.hidden_tag() }}
+                
+                <!-- Rating Section -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Rate Your Experience</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="text-center">
+                            <p class="text-gray-700 mb-4">How would you rate your experience with {{ service.title }}?</p>
+                            
+                            <!-- Star Rating -->
+                            <div class="flex justify-center space-x-2 mb-4" id="star-rating">
+                                <button type="button" class="star text-4xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="1">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button type="button" class="star text-4xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="2">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button type="button" class="star text-4xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="3">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button type="button" class="star text-4xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="4">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                                <button type="button" class="star text-4xl text-gray-300 hover:text-yellow-400 transition-colors" data-rating="5">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            </div>
+                            
+                            <p id="rating-text" class="text-sm text-gray-600">Click to rate</p>
+                            
+                            <!-- Hidden rating input -->
+                            {{ form.rating(class="hidden", id="rating-input") }}
+                            {% if form.rating.errors %}
+                                <p class="mt-2 text-sm text-red-600">{{ form.rating.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Additional Rating Categories -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Rate Specific Aspects</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Quality of Service</span>
+                                <div class="flex space-x-1" id="quality-rating">
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="1">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="2">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="3">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="4">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="5">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Timeliness</span>
+                                <div class="flex space-x-1" id="timeliness-rating">
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="1">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="2">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="3">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="4">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="5">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-700">Value for Money</span>
+                                <div class="flex space-x-1" id="value-rating">
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="1">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="2">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="3">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="4">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                    <button type="button" class="aspect-star text-gray-300 hover:text-yellow-400" data-rating="5">
+                                        <i class="fas fa-star text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Review Text -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Share Your Experience</h2>
+                    
+                    <div>
+                        <label for="comment" class="block text-sm font-medium text-gray-700 mb-2">
+                            Your Review (Optional)
+                        </label>
+                        {{ form.comment(class="form-textarea h-32", 
+                               placeholder="Tell others about your experience with this service. What did you like? What could be improved? Would you recommend it?") }}
+                        {% if form.comment.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.comment.errors[0] }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Maximum 500 characters</p>
+                    </div>
+                </div>
+                
+                <!-- Service Details -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900">Service Details</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-gray-600">Service Date:</span>
+                                <input type="date" id="service-date" class="form-input ml-2" name="service_date">
+                            </div>
+                            <div>
+                                <span class="text-gray-600">Would you hire again?</span>
+                                <select id="hire-again" class="form-select ml-2" name="hire_again">
+                                    <option value="">Select</option>
+                                    <option value="yes">Yes</option>
+                                    <option value="no">No</option>
+                                    <option value="maybe">Maybe</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Review Guidelines -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-blue-600 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-blue-800">Review Guidelines</h3>
+                            <ul class="text-sm text-blue-700 mt-1 space-y-1">
+                                <li>• Be honest and specific about your experience</li>
+                                <li>• Focus on the quality of service provided</li>
+                                <li>• Mention timeliness, professionalism, and value</li>
+                                <li>• Avoid personal attacks or inappropriate language</li>
+                                <li>• Don't include personal contact information</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="flex justify-end space-x-4 pt-6 border-t">
+                    <a href="{{ url_for('services.service_detail', service_id=service.id) }}" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn-primary" id="submit-review" disabled>
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    let selectedRating = 0;
+    let qualityRating = 0;
+    let timelinessRating = 0;
+    let valueRating = 0;
+    
+    const stars = document.querySelectorAll('.star');
+    const aspectStars = document.querySelectorAll('.aspect-star');
+    const ratingInput = document.getElementById('rating-input');
+    const ratingText = document.getElementById('rating-text');
+    const submitButton = document.getElementById('submit-review');
+    
+    const ratingTexts = {
+        1: 'Poor',
+        2: 'Fair',
+        3: 'Good',
+        4: 'Very Good',
+        5: 'Excellent'
+    };
+    
+    // Main rating functionality
+    stars.forEach(star => {
+        star.addEventListener('click', (e) => {
+            e.preventDefault();
+            const rating = parseInt(star.dataset.rating);
+            selectedRating = rating;
+            updateStarDisplay();
+            updateSubmitButton();
+        });
+        
+        star.addEventListener('mouseenter', () => {
+            const rating = parseInt(star.dataset.rating);
+            highlightStars(rating);
+            ratingText.textContent = ratingTexts[rating];
+        });
+    });
+    
+    document.getElementById('star-rating').addEventListener('mouseleave', () => {
+        updateStarDisplay();
+        if (selectedRating > 0) {
+            ratingText.textContent = ratingTexts[selectedRating];
+        } else {
+            ratingText.textContent = 'Click to rate';
+        }
+    });
+    
+    // Aspect rating functionality
+    aspectStars.forEach(star => {
+        star.addEventListener('click', (e) => {
+            e.preventDefault();
+            const rating = parseInt(star.dataset.rating);
+            const container = star.closest('[id$="-rating"]');
+            const aspectId = container.id;
+            
+            if (aspectId === 'quality-rating') {
+                qualityRating = rating;
+                highlightAspectStars(container, qualityRating);
+            } else if (aspectId === 'timeliness-rating') {
+                timelinessRating = rating;
+                highlightAspectStars(container, timelinessRating);
+            } else if (aspectId === 'value-rating') {
+                valueRating = rating;
+                highlightAspectStars(container, valueRating);
+            }
+            
+            updateSubmitButton();
+        });
+    });
+    
+    function highlightStars(rating) {
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.remove('text-gray-300');
+                star.classList.add('text-yellow-400');
+            } else {
+                star.classList.remove('text-yellow-400');
+                star.classList.add('text-gray-300');
+            }
+        });
+    }
+    
+    function highlightAspectStars(container, rating) {
+        const stars = container.querySelectorAll('.aspect-star');
+        stars.forEach((star, index) => {
+            if (index < rating) {
+                star.classList.remove('text-gray-300');
+                star.classList.add('text-yellow-400');
+            } else {
+                star.classList.remove('text-yellow-400');
+                star.classList.add('text-gray-300');
+            }
+        });
+    }
+    
+    function updateStarDisplay() {
+        highlightStars(selectedRating);
+        ratingInput.value = selectedRating;
+    }
+    
+    function updateSubmitButton() {
+        if (selectedRating > 0) {
+            submitButton.disabled = false;
+            submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitButton.disabled = true;
+            submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+</script>
+{% endblock %}

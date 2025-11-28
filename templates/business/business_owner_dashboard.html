@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block title %}Business Owner Dashboard - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+                    <p class="mt-2 text-gray-600">Manage your businesses, jobs, and services</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('businesses.create_business') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>New Business
+                    </a>
+                    <a href="{{ url_for('jobs.create_job') }}" class="btn-secondary">
+                        <i class="fas fa-briefcase mr-2"></i>Post Job
+                    </a>
+                    <a href="{{ url_for('services.create_service') }}" class="btn-secondary">
+                        <i class="fas fa-concierge-bell mr-2"></i>Add Service
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Businesses -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-building text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Businesses</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_businesses }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Jobs -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-briefcase text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Jobs</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.active_jobs }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Applications -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-file-alt text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Applications</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_applications }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Services -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-concierge-bell text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Services</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.active_services }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - My Businesses -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">My Businesses</h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        {% if businesses %}
+                            <div class="space-y-4">
+                                {% for business in businesses %}
+                                    <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                                        <div class="flex items-start justify-between">
+                                            <div class="flex-1">
+                                                <div class="flex items-center space-x-3 mb-2">
+                                                    <h3 class="text-lg font-semibold text-gray-900">{{ business.name }}</h3>
+                                                    <span class="badge badge-{{ 'success' if business.is_verified else 'warning' }}">
+                                                        {{ 'Verified' if business.is_verified else 'Pending' }}
+                                                    </span>
+                                                </div>
+                                                <p class="text-gray-600 text-sm mb-2">{{ business.category.title() }}</p>
+                                                <p class="text-gray-700 text-sm">{{ business.description[:100] }}...</p>
+                                                <div class="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                                                    <span><i class="fas fa-map-marker-alt mr-1"></i>{{ business.address }}</span>
+                                                    <span><i class="fas fa-phone mr-1"></i>{{ business.phone }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex space-x-2 ml-4">
+                                                <a href="{{ url_for('businesses.edit_business', business_id=business.id) }}" 
+                                                   class="text-blue-600 hover:text-blue-800">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('businesses.business_detail', business_id=business.id) }}" 
+                                                   class="text-gray-600 hover:text-gray-800">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Business Stats -->
+                                        <div class="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-gray-100">
+                                            <div class="text-center">
+                                                <p class="text-lg font-semibold text-gray-900">{{ business.jobs_count or 0 }}</p>
+                                                <p class="text-xs text-gray-500">Jobs</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-lg font-semibold text-gray-900">{{ business.services_count or 0 }}</p>
+                                                <p class="text-xs text-gray-500">Services</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-lg font-semibold text-gray-900">{{ business.reviews_count or 0 }}</p>
+                                                <p class="text-xs text-gray-500">Reviews</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-building text-4xl text-gray-300 mb-4"></i>
+                                <p class="text-gray-600 mb-4">You haven't registered any businesses yet.</p>
+                                <a href="{{ url_for('businesses.create_business') }}" class="btn-primary">
+                                    <i class="fas fa-plus mr-2"></i>Register Your First Business
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Recent Activity & Quick Actions -->
+            <div class="space-y-6">
+                <!-- Recent Job Applications -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Recent Applications</h2>
+                    </div>
+                    <div class="p-6">
+                        {% if recent_applications %}
+                            <div class="space-y-3">
+                                {% for application in recent_applications %}
+                                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-blue-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-900">{{ application.applicant_name }}</p>
+                                            <p class="text-xs text-gray-500">Applied for {{ application.job_title }}</p>
+                                            <p class="text-xs text-gray-400">{{ application.created_at }}</p>
+                                        </div>
+                                        <span class="badge badge-{{ 'warning' if application.status == 'pending' else 'success' }}">
+                                            {{ application.status.title() }}
+                                        </span>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            <div class="mt-4 text-center">
+                                <a href="{{ url_for('jobs.my_applications') }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                                    View All Applications
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="text-gray-500 text-center py-4">No recent applications</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Quick Actions</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <a href="{{ url_for('verification.upload_verification') }}" 
+                               class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <i class="fas fa-upload text-blue-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Upload Documents</span>
+                            </a>
+                            <a href="{{ url_for('auth.change_password') }}" 
+                               class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-key text-gray-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Change Password</span>
+                            </a>
+                            <a href="{{ url_for('auth.profile') }}" 
+                               class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <i class="fas fa-user text-gray-600"></i>
+                                <span class="text-sm font-medium text-gray-900">Edit Profile</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verification Status -->
+                <div class="bg-white rounded-lg shadow-sm">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h2 class="text-lg font-semibold text-gray-900">Account Status</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Email Verified</span>
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Profile Complete</span>
+                                <i class="fas fa-check-circle text-green-500"></i>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">Identity Verified</span>
+                                {% if current_user.is_verified %}
+                                    <i class="fas fa-check-circle text-green-500"></i>
+                                {% else %}
+                                    <a href="{{ url_for('verification.upload_verification') }}" class="text-blue-600 hover:text-blue-800 text-sm">
+                                        Verify Now
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

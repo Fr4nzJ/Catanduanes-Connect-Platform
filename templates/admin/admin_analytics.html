@@ -1,0 +1,820 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics Dashboard - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-white flex items-center space-x-3">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Analytics Dashboard</span>
+                    </h1>
+                    <p class="text-red-100 mt-2">Platform performance and user insights</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-2 bg-white rounded-lg px-4 py-2 shadow-lg">
+                        <label class="text-sm font-semibold text-gray-700">Period:</label>
+                        <select id="period-filter" class="px-2 py-1 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300">
+                            <option value="7">Last 7 days</option>
+                            <option value="30" selected>Last 30 days</option>
+                            <option value="90">Last 90 days</option>
+                            <option value="365">Last year</option>
+                        </select>
+                    </div>
+                    <button onclick="refreshData()" class="bg-white text-red-600 hover:bg-red-50 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-refresh mr-2"></i>Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Total Users</h3>
+                        <p class="text-4xl font-bold text-gray-900" id="total-users">1,247</p>
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-arrow-up"></i> +12% from last month
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fas fa-users text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Active Jobs</h3>
+                        <p class="text-4xl font-bold text-gray-900" id="active-jobs">89</p>
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-arrow-up"></i> +5% from last month
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fas fa-briefcase text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Active Businesses</h3>
+                        <p class="text-4xl font-bold text-gray-900" id="active-businesses">156</p>
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-arrow-up"></i> +8% from last month
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fas fa-building text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700 mb-2">Service Providers</h3>
+                        <p class="text-4xl font-bold text-gray-900" id="service-providers">203</p>
+                        <p class="text-sm text-green-600 mt-2">
+                            <i class="fas fa-arrow-up"></i> +15% from last month
+                        </p>
+                    </div>
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center shadow-lg">
+                        <i class="fas fa-tools text-2xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            <!-- User Growth Chart -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                    <i class="fas fa-chart-line text-red-600"></i>
+                    <span>User Growth</span>
+                </h3>
+                <div class="flex space-x-4 mb-6">
+                    <span class="flex items-center space-x-2">
+                        <span class="w-4 h-4 bg-blue-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-gray-700">New Users</span>
+                    </span>
+                    <span class="flex items-center space-x-2">
+                        <span class="w-4 h-4 bg-green-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-gray-700">Active Users</span>
+                    </span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="userGrowthChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Content Activity Chart -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                    <i class="fas fa-tasks text-red-600"></i>
+                    <span>Content Activity</span>
+                </h3>
+                <div class="flex space-x-4 mb-6">
+                    <span class="flex items-center space-x-2">
+                        <span class="w-4 h-4 bg-yellow-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-gray-700">Job Postings</span>
+                    </span>
+                    <span class="flex items-center space-x-2">
+                        <span class="w-4 h-4 bg-purple-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-gray-700">Business Listings</span>
+                    </span>
+                    <span class="flex items-center space-x-2">
+                        <span class="w-4 h-4 bg-orange-500 rounded-full"></span>
+                        <span class="text-sm font-medium text-gray-700">Service Listings</span>
+                    </span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="contentActivityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- User Roles Distribution -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                    <i class="fas fa-pie-chart text-red-600"></i>
+                    <span>User Roles Distribution</span>
+                </h3>
+                <div class="chart-container">
+                    <canvas id="userRolesChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Verification Status -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                    <i class="fas fa-certificate text-red-600"></i>
+                    <span>Verification Status</span>
+                </h3>
+                <div class="chart-container">
+                    <canvas id="verificationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+                <h3 class="stats-title">Top Performing Businesses</h3>
+                <div class="stats-list">
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Santos Electronics</span>
+                            <span class="stats-item-value">4.8 ⭐ • 245 views</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 92%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Tech Solutions Inc.</span>
+                            <span class="stats-item-value">4.6 ⭐ • 189 views</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Quality Auto Repair</span>
+                            <span class="stats-item-value">4.5 ⭐ • 156 views</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 78%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Job Applications -->
+            <div class="stats-card">
+                <h3 class="stats-title">Recent Job Applications</h3>
+                <div class="stats-list">
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Frontend Developer</span>
+                            <span class="stats-item-value">12 applications</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Digital Marketing</span>
+                            <span class="stats-item-value">8 applications</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 65%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Customer Service</span>
+                            <span class="stats-item-value">15 applications</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Services -->
+            <div class="stats-card">
+                <h3 class="stats-title">Popular Services</h3>
+                <div class="stats-list">
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Plumbing Services</span>
+                            <span class="stats-item-value">4.9 ⭐ • 23 bookings</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 88%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Home Cleaning</span>
+                            <span class="stats-item-value">4.7 ⭐ • 18 bookings</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="stats-item">
+                        <div class="stats-item-info">
+                            <span class="stats-item-name">Electrical Repair</span>
+                            <span class="stats-item-value">4.6 ⭐ • 12 bookings</span>
+                        </div>
+                        <div class="stats-item-bar">
+                            <div class="stats-item-progress" style="width: 70%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="stats-card">
+                <h3 class="stats-title">System Health</h3>
+                <div class="health-metrics">
+                    <div class="health-item">
+                        <div class="health-label">Server Uptime</div>
+                        <div class="health-value">
+                            <span class="health-percentage">99.9%</span>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 99.9%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-label">Database Performance</div>
+                        <div class="health-value">
+                            <span class="health-percentage">98.5%</span>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 98.5%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-label">API Response Time</div>
+                        <div class="health-value">
+                            <span class="health-percentage">95.2%</span>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 95.2%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="health-item">
+                        <div class="health-label">Security Score</div>
+                        <div class="health-value">
+                            <span class="health-percentage">100%</span>
+                            <div class="health-bar">
+                                <div class="health-fill" style="width: 100%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Sample data for charts
+const analyticsData = {
+    userGrowth: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        newUsers: [45, 52, 61, 58, 67, 73, 89, 94, 87, 92, 98, 105],
+        activeUsers: [234, 267, 289, 312, 345, 378, 412, 445, 478, 512, 545, 578]
+    },
+    contentActivity: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+        jobs: [12, 15, 18, 22, 25, 28, 32, 35, 38, 42, 45, 48],
+        businesses: [8, 10, 12, 15, 18, 22, 25, 28, 32, 35, 38, 42],
+        services: [15, 18, 22, 25, 28, 32, 35, 38, 42, 45, 48, 52]
+    },
+    userRoles: {
+        labels: ['Job Seekers', 'Business Owners', 'Service Providers'],
+        data: [567, 234, 446],
+        colors: ['#3b82f6', '#10b981', '#f59e0b']
+    },
+    verificationStatus: {
+        labels: ['Verified', 'Pending', 'Rejected'],
+        data: [892, 245, 110],
+        colors: ['#10b981', '#f59e0b', '#ef4444']
+    }
+};
+
+// Initialize charts
+document.addEventListener('DOMContentLoaded', function() {
+    initializeCharts();
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    document.getElementById('period-filter').addEventListener('change', updatePeriod);
+}
+
+function initializeCharts() {
+    // User Growth Chart
+    const userGrowthCtx = document.getElementById('userGrowthChart').getContext('2d');
+    new Chart(userGrowthCtx, {
+        type: 'line',
+        data: {
+            labels: analyticsData.userGrowth.labels,
+            datasets: [{
+                label: 'New Users',
+                data: analyticsData.userGrowth.newUsers,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Active Users',
+                data: analyticsData.userGrowth.activeUsers,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+
+    // Content Activity Chart
+    const contentActivityCtx = document.getElementById('contentActivityChart').getContext('2d');
+    new Chart(contentActivityCtx, {
+        type: 'bar',
+        data: {
+            labels: analyticsData.contentActivity.labels,
+            datasets: [{
+                label: 'Job Postings',
+                data: analyticsData.contentActivity.jobs,
+                backgroundColor: '#f59e0b',
+                borderColor: '#d97706',
+                borderWidth: 1
+            }, {
+                label: 'Business Listings',
+                data: analyticsData.contentActivity.businesses,
+                backgroundColor: '#8b5cf6',
+                borderColor: '#7c3aed',
+                borderWidth: 1
+            }, {
+                label: 'Service Listings',
+                data: analyticsData.contentActivity.services,
+                backgroundColor: '#f97316',
+                borderColor: '#ea580c',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+
+    // User Roles Chart
+    const userRolesCtx = document.getElementById('userRolesChart').getContext('2d');
+    new Chart(userRolesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: analyticsData.userRoles.labels,
+            datasets: [{
+                data: analyticsData.userRoles.data,
+                backgroundColor: analyticsData.userRoles.colors,
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+
+    // Verification Status Chart
+    const verificationCtx = document.getElementById('verificationChart').getContext('2d');
+    new Chart(verificationCtx, {
+        type: 'pie',
+        data: {
+            labels: analyticsData.verificationStatus.labels,
+            datasets: [{
+                data: analyticsData.verificationStatus.data,
+                backgroundColor: analyticsData.verificationStatus.colors,
+                borderColor: '#ffffff',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        usePointStyle: true
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updatePeriod() {
+    const period = document.getElementById('period-filter').value;
+    // In a real application, this would fetch new data based on the selected period
+    console.log(`Updating data for period: ${period} days`);
+    showNotification(`Analytics updated for ${period} day period`, 'info');
+}
+
+function refreshData() {
+    // Simulate data refresh
+    showNotification('Analytics data refreshed successfully', 'success');
+    
+    // Update metrics with random variations
+    const metrics = {
+        'total-users': 1247 + Math.floor(Math.random() * 20),
+        'active-jobs': 89 + Math.floor(Math.random() * 10),
+        'active-businesses': 156 + Math.floor(Math.random() * 15),
+        'service-providers': 203 + Math.floor(Math.random() * 25)
+    };
+    
+    Object.entries(metrics).forEach(([id, value]) => {
+        document.getElementById(id).textContent = value.toLocaleString();
+    });
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'} mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
+</script>
+
+<style>
+.admin-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.admin-header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+}
+
+.metric-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.metric-title {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.metric-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.metric-change {
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+}
+
+.metric-change.positive {
+    color: #10b981;
+}
+
+.metric-change.negative {
+    color: #ef4444;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.chart-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.875rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.legend-color {
+    width: 0.75rem;
+    height: 0.75rem;
+    border-radius: 50%;
+}
+
+.chart-container {
+    height: 300px;
+    position: relative;
+}
+
+.stats-section {
+    margin-top: 2rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stats-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 1rem;
+}
+
+.stats-list {
+    space-y: 1rem;
+}
+
+.stats-item {
+    margin-bottom: 1rem;
+}
+
+.stats-item-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.stats-item-name {
+    font-weight: 500;
+    color: #374151;
+}
+
+.stats-item-value {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.stats-item-bar {
+    width: 100%;
+    height: 0.5rem;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.stats-item-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.health-metrics {
+    space-y: 1rem;
+}
+
+.health-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.health-label {
+    font-weight: 500;
+    color: #374151;
+}
+
+.health-value {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.health-percentage {
+    font-weight: 600;
+    color: #10b981;
+}
+
+.health-bar {
+    width: 6rem;
+    height: 0.5rem;
+    background: #e5e7eb;
+    border-radius: 9999px;
+    overflow: hidden;
+}
+
+.health-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    border-radius: 9999px;
+    transition: width 0.3s ease;
+}
+
+.notification {
+    position: fixed;
+    top: 2rem;
+    right: 2rem;
+    padding: 1rem 1.5rem;
+    border-radius: 0.5rem;
+    color: white;
+    font-weight: 500;
+    z-index: 2000;
+    animation: slideIn 0.3s ease;
+}
+
+.notification-success { background: #10b981; }
+.notification-info { background: #3b82f6; }
+.notification-warning { background: #f59e0b; }
+.notification-danger { background: #ef4444; }
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@media (max-width: 768px) {
+    .admin-container {
+        padding: 1rem;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}

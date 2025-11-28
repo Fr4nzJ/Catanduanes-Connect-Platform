@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-md mx-auto mt-12">
+  <h2 class="text-2xl font-bold mb-4">Enter verification code</h2>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div class="mb-4 text-sm text-{{ 'red' if category=='error' else 'green' }}-600">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <form method="POST">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <input type="text" name="otp" maxlength="6" pattern="\d{6}" required
+           class="border rounded px-3 py-2 w-full mb-4" placeholder="000000">
+    <button class="bg-blue-600 text-white px-4 py-2 rounded w-full">Verify</button>
+  </form>
+
+  <form method="POST" action="{{ url_for('auth.resend_otp') }}" class="mt-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+    <button type="submit" class="text-sm text-blue-600">Resend code</button>
+  </form>
+</div>
+{% endblock %}

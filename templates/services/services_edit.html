@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Service - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('services.service_detail', service_id=service.id) }}" 
+                   class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Edit Service</h1>
+                    <p class="mt-2 text-gray-600">Update your service offering</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <form method="POST" class="space-y-6">
+                {{ form.hidden_tag() }}
+                
+                <!-- Service Information -->
+                <div class="space-y-6">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Service Information</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
+                                Service Title *
+                            </label>
+                            {{ form.title(class="form-input", value=service.title) }}
+                            {% if form.title.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.title.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
+                                Service Category *
+                            </label>
+                            {{ form.category(class="form-select") }}
+                            {% if form.category.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.category.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                            Service Description *
+                        </label>
+                        {{ form.description(class="form-textarea h-32", value=service.description) }}
+                        {% if form.description.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.description.errors[0] }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Minimum 20 characters, maximum 1000 characters</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="price" class="block text-sm font-medium text-gray-700 mb-2">
+                                Price *
+                            </label>
+                            {{ form.price(class="form-input", value=service.price) }}
+                            {% if form.price.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.price.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="price_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                Price Type *
+                            </label>
+                            {{ form.price_type(class="form-select") }}
+                            {% if form.price_type.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.price_type.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
+                                Service Location *
+                            </label>
+                            {{ form.location(class="form-input", value=service.location) }}
+                            {% if form.location.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.location.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-gray-700 mb-2">
+                                Estimated Duration (Optional)
+                            </label>
+                            {{ form.duration(class="form-input", value=service.duration or '') }}
+                            {% if form.duration.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.duration.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="requirements" class="block text-sm font-medium text-gray-700 mb-2">
+                            Requirements or Prerequisites (Optional)
+                        </label>
+                        {{ form.requirements(class="form-textarea h-24", value=service.requirements or '') }}
+                        {% if form.requirements.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.requirements.errors[0] }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Maximum 500 characters</p>
+                    </div>
+                </div>
+                
+                <!-- Current Service Status -->
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Service Status</h2>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                            <div class="text-center">
+                                <p class="text-gray-600 mb-1">Status</p>
+                                <span class="badge badge-{{ 'success' if service.is_active else 'warning' }}">
+                                    {{ 'Active' if service.is_active else 'Inactive' }}
+                                </span>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-gray-600 mb-1">Reviews</p>
+                                <p class="font-semibold">{{ service.reviews_count or 0 }}</p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-gray-600 mb-1">Bookings</p>
+                                <p class="font-semibold">{{ service.bookings_count or 0 }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Service Guidelines -->
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex items-start">
+                        <i class="fas fa-lightbulb text-blue-600 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-sm font-medium text-blue-800">Service Guidelines</h3>
+                            <ul class="text-sm text-blue-700 mt-1 space-y-1">
+                                <li>• Be specific about what your service includes</li>
+                                <li>• Include your experience and qualifications</li>
+                                <li>• Mention any materials or tools you provide</li>
+                                <li>• Specify your availability and response time</li>
+                                <li>• Be honest about your pricing and any additional fees</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="flex justify-end space-x-4 pt-6 border-t">
+                    <a href="{{ url_for('services.service_detail', service_id=service.id) }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Set form values based on current service data
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        const priceTypeSelect = document.getElementById('price_type');
+        
+        categorySelect.value = '{{ service.category }}';
+        priceTypeSelect.value = '{{ service.price_type }}';
+    });
+</script>
+{% endblock %}

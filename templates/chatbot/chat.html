@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}AI Assistant - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">AI Assistant</h5>
+            </div>
+            <div class="card-body">
+                <div id="chat-messages" class="mb-3" style="height: 400px; overflow-y: auto; border: 1px solid #ddd; padding: 10px;">
+                    <div class="text-center text-muted">
+                        <p>Welcome! I'm here to help you find jobs, businesses, and services in Catanduanes.</p>
+                        <p>Ask me anything like:</p>
+                        <ul class="list-unstyled">
+                            <li>"Find IT jobs in Virac"</li>
+                            <li>"Show me restaurants"</li>
+                            <li>"What services are available?"</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="message-input" class="form-control" placeholder="Type your message here..." maxlength="500">
+                    <button class="btn btn-primary" type="button" id="send-button">Send</button>
+                </div>
+                
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-secondary" id="clear-history">Clear History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const clearButton = document.getElementById('clear-history');
+    
+    let isLoading = false;
+    
+    function addMessage(message, isUser = false) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `mb-2 ${isUser ? 'text-end' : 'text-start'}`;
+        
+        const messageClass = isUser ? 'alert alert-primary' : 'alert alert-light';
+        messageDiv.innerHTML = `<div class="${messageClass} d-inline-block max-width-75">${message}</div>`;
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    
+    function showLoading() {
+        isLoading = true;
+        sendButton.disabled = true;
+        sendButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Thinking...';
+    }
+    
+    function hideLoading() {
+        isLoading = false;
+        sendButton.disabled = false;
+        sendButton.innerHTML = 'Send';
+    }
+    
+    async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message || isLoading) return;
+        
+        addMessage(message, true);
+        messageInput.value = '';
+        showLoading();
+        
+        try {
+            const response = await fetch('{{ url_for("chatbot.chat_api") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            });
+            
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                addMessage(data.message);
+            } else {
+                addMessage('Sorry, I encountered an error. Please try again.', false);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            addMessage('Sorry, I encountered an error. Please try again.', false);
+        } finally {
+            hideLoading();
+        }
+    }
+    
+    async function clearHistory() {
+        try {
+            const response = await fetch('{{ url_for("chatbot.clear_chat_history") }}', {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                chatMessages.innerHTML = '<div class="text-center text-muted"><p>Chat history cleared. How can I help you?</p></div>';
+            }
+        } catch (error) {
+            console.error('Error clearing history:', error);
+        }
+    }
+    
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    clearButton.addEventListener('click', clearHistory);
+    
+    // Load chat history on page load
+    fetch('{{ url_for("chatbot.get_chat_history") }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.history.length > 0) {
+                chatMessages.innerHTML = '';
+                data.history.forEach(msg => {
+                    addMessage(msg.content, msg.role === 'user');
+                });
+            }
+        })
+        .catch(error => console.error('Error loading history:', error));
+});
+</script>
+
+<style>
+.max-width-75 {
+    max-width: 75%;
+    word-wrap: break-word;
+}
+</style>
+{% endblock %}

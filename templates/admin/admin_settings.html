@@ -1,0 +1,654 @@
+{% extends "base.html" %}
+
+{% block title %}System Settings - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-white flex items-center space-x-3">
+                        <i class="fas fa-cog"></i>
+                        <span>System Settings</span>
+                    </h1>
+                    <p class="text-red-100 mt-2">Configure platform settings and preferences</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="saveSettings()" class="bg-white text-red-600 hover:bg-red-50 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                    <button onclick="resetSettings()" class="bg-red-500 text-white hover:bg-red-600 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-refresh mr-2"></i>Reset to Defaults
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Navigation -->
+    <div class="bg-effects">
+        <div class="gradient-bg"></div>
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="admin-nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-cog"></i>
+                <span>Admin Console</span>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-icon" id="searchToggle">
+                    <i class="fas fa-search"></i>
+                </button>
+                <button class="btn-icon" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                <div class="user-menu">
+                    <div class="avatar">A</div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <div class="search-container">
+            <input type="text" placeholder="Search settings..." id="searchInput" autocomplete="off"/>
+            <button class="search-close" id="searchClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="admin-container">
+        <!-- Header Section -->
+        <header class="admin-header">
+            <div class="header-content">
+                <div class="header-info">
+                    <h1 class="header-title">
+                        <span class="title-text">System Settings</span>
+                        <span class="title-decoration"></span>
+                    </h1>
+                    <p class="header-subtitle">Configure platform settings and preferences for optimal performance</p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" onclick="resetSettings()">
+                        <i class="fas fa-refresh"></i>
+                        Reset to Defaults
+                    </button>
+                    <button class="btn btn-primary" onclick="saveSettings()">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Settings Overview Dashboard -->
+        <section class="settings-overview">
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <div class="card-icon success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>12 Settings Configured</h3>
+                        <p>All systems operational</p>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>3 Pending Changes</h3>
+                        <p>Requires attention</p>
+                    </div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon info">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Last Updated</h3>
+                        <p>2 hours ago</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Navigation -->
+        <nav class="settings-nav">
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="general">
+                    <i class="fas fa-cog"></i>
+                    <span>General</span>
+                </button>
+                <button class="nav-tab" data-tab="email">
+                    <i class="fas fa-envelope"></i>
+                    <span>Email</span>
+                </button>
+                <button class="nav-tab" data-tab="security">
+                    <i class="fas fa-shield-alt"></i>
+                    <span>Security</span>
+                </button>
+                <button class="nav-tab" data-tab="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </button>
+                <button class="nav-tab" data-tab="integrations">
+                    <i class="fas fa-plug"></i>
+                    <span>Integrations</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Settings Content -->
+        <main class="settings-content">
+            <!-- General Settings -->
+            <section class="settings-section active" id="settings-general">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-info-circle"></i>
+                                Platform Information
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Platform Name</label>
+                                <input type="text" id="platform-name" value="Catanduanes Connect" class="form-input"/>
+                                <p class="form-help">The name of your platform as it appears to users.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Platform Description</label>
+                                <textarea id="platform-description" rows="3" class="form-input">Connecting job seekers, businesses, and service providers in Catanduanes.</textarea>
+                                <p class="form-help">Brief description of your platform&#39;s purpose.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Platform URL</label>
+                                <input type="url" id="platform-url" value="https://catanduanesconnect.com" class="form-input"/>
+                                <p class="form-help">The main URL where your platform is accessible.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-user-plus"></i>
+                                User Registration
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="registration-enabled" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable User Registration</span>
+                                </label>
+                                <p class="form-help">Allow new users to register on the platform.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="email-verification" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Require Email Verification</span>
+                                </label>
+                                <p class="form-help">Users must verify their email address before accessing the platform.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="manual-approval"/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Require Manual Approval</span>
+                                </label>
+                                <p class="form-help">New user registrations require admin approval before activation.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-filter"></i>
+                                Content Moderation
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Default Content Status</label>
+                                <select id="default-content-status" class="form-input">
+                                    <option value="active">Active (Auto-approve)</option>
+                                    <option value="pending">Pending Review</option>
+                                    <option value="draft">Draft</option>
+                                </select>
+                                <p class="form-help">Default status for new content submissions.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="auto-flag-enabled" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable Auto-Flagging</span>
+                                </label>
+                                <p class="form-help">Automatically flag potentially inappropriate content for review.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Flag Threshold</label>
+                                <input type="range" id="flag-threshold" min="1" max="10" value="3" class="form-range"/>
+                                <div class="range-labels">
+                                    <span>Low</span>
+                                    <span>Medium</span>
+                                    <span>High</span>
+                                </div>
+                                <p class="form-help">Sensitivity level for automatic content flagging.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Email Settings -->
+            <section class="settings-section" id="settings-email">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-server"></i>
+                                Email Configuration
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">SMTP Host</label>
+                                <input type="text" id="smtp-host" value="smtp.gmail.com" class="form-input"/>
+                                <p class="form-help">Your SMTP server hostname.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">SMTP Port</label>
+                                <input type="number" id="smtp-port" value="587" class="form-input"/>
+                                <p class="form-help">SMTP server port (usually 587 for TLS, 465 for SSL).</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">SMTP Username</label>
+                                <input type="text" id="smtp-username" value="noreply@catanduanesconnect.com" class="form-input"/>
+                                <p class="form-help">Username for SMTP authentication.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">SMTP Password</label>
+                                <input type="password" id="smtp-password" value="••••••••••••" class="form-input"/>
+                                <p class="form-help">Password for SMTP authentication.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="smtp-tls" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable TLS Encryption</span>
+                                </label>
+                                <p class="form-help">Use TLS encryption for email sending.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-envelope-open"></i>
+                                Email Templates
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">From Name</label>
+                                <input type="text" id="email-from-name" value="Catanduanes Connect" class="form-input"/>
+                                <p class="form-help">Name that appears in the &#34;From&#34; field of emails.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">From Email</label>
+                                <input type="email" id="email-from-email" value="noreply@catanduanesconnect.com" class="form-input"/>
+                                <p class="form-help">Email address that appears in the &#34;From&#34; field.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Email Footer</label>
+                                <textarea id="email-footer" rows="3" class="form-input">© 2024 Catanduanes Connect. All rights reserved. This email was sent to you because you have an account on our platform.</textarea>
+                                <p class="form-help">Footer text that appears at the bottom of all emails.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Security Settings -->
+            <section class="settings-section" id="settings-security">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-key"></i>
+                                Authentication
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="two-factor-auth" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable Two-Factor Authentication</span>
+                                </label>
+                                <p class="form-help">Require users to use 2FA for additional security.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Session Timeout (minutes)</label>
+                                <input type="number" id="session-timeout" value="30" min="5" max="1440" class="form-input"/>
+                                <p class="form-help">How long before user sessions expire due to inactivity.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Maximum Login Attempts</label>
+                                <input type="number" id="max-login-attempts" value="5" min="1" max="20" class="form-input"/>
+                                <p class="form-help">Number of failed login attempts before temporary lockout.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Lockout Duration (minutes)</label>
+                                <input type="number" id="lockout-duration" value="15" min="1" max="1440" class="form-input"/>
+                                <p class="form-help">How long users are locked out after exceeding login attempts.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-lock"></i>
+                                Password Requirements
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Minimum Password Length</label>
+                                <input type="number" id="min-password-length" value="8" min="6" max="128" class="form-input"/>
+                                <p class="form-help">Minimum number of characters required for passwords.</p>
+                            </div>
+                            <div class="password-requirements">
+                                <div class="requirement-item">
+                                    <label class="form-checkbox">
+                                        <input type="checkbox" id="require-uppercase" checked=""/>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-label">Require Uppercase Letters</span>
+                                    </label>
+                                </div>
+                                <div class="requirement-item">
+                                    <label class="form-checkbox">
+                                        <input type="checkbox" id="require-lowercase" checked=""/>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-label">Require Lowercase Letters</span>
+                                    </label>
+                                </div>
+                                <div class="requirement-item">
+                                    <label class="form-checkbox">
+                                        <input type="checkbox" id="require-numbers" checked=""/>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-label">Require Numbers</span>
+                                    </label>
+                                </div>
+                                <div class="requirement-item">
+                                    <label class="form-checkbox">
+                                        <input type="checkbox" id="require-symbols"/>
+                                        <span class="checkmark"></span>
+                                        <span class="checkbox-label">Require Special Characters</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-shield-alt"></i>
+                                API Security
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="api-rate-limiting" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable API Rate Limiting</span>
+                                </label>
+                                <p class="form-help">Limit the number of API requests per user to prevent abuse.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">API Rate Limit (requests/minute)</label>
+                                <input type="number" id="api-rate-limit" value="60" min="10" max="1000" class="form-input"/>
+                                <p class="form-help">Maximum number of API requests allowed per minute per user.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="cors-protection" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable CORS Protection</span>
+                                </label>
+                                <p class="form-help">Restrict API access to authorized domains only.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Notification Settings -->
+            <section class="settings-section" id="settings-notifications">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-envelope"></i>
+                                Email Notifications
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="notification-grid">
+                                <div class="notification-item">
+                                    <label class="form-toggle">
+                                        <input type="checkbox" id="email-new-user" checked=""/>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">New User Registration</span>
+                                    </label>
+                                    <p class="form-help">Send email when a new user registers.</p>
+                                </div>
+                                <div class="notification-item">
+                                    <label class="form-toggle">
+                                        <input type="checkbox" id="email-new-job" checked=""/>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">New Job Posting</span>
+                                    </label>
+                                    <p class="form-help">Send email when a new job is posted.</p>
+                                </div>
+                                <div class="notification-item">
+                                    <label class="form-toggle">
+                                        <input type="checkbox" id="email-new-business" checked=""/>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">New Business Listing</span>
+                                    </label>
+                                    <p class="form-help">Send email when a new business is listed.</p>
+                                </div>
+                                <div class="notification-item">
+                                    <label class="form-toggle">
+                                        <input type="checkbox" id="email-verification-request" checked=""/>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Verification Request</span>
+                                    </label>
+                                    <p class="form-help">Send email when users submit verification documents.</p>
+                                </div>
+                                <div class="notification-item">
+                                    <label class="form-toggle">
+                                        <input type="checkbox" id="email-report-flagged" checked=""/>
+                                        <span class="toggle-slider"></span>
+                                        <span class="toggle-label">Content Flagged</span>
+                                    </label>
+                                    <p class="form-help">Send email when content is flagged for review.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-user-shield"></i>
+                                Admin Notifications
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-label">Admin Email Address</label>
+                                <input type="email" id="admin-email" value="admin@catanduanesconnect.com" class="form-input"/>
+                                <p class="form-help">Email address where admin notifications should be sent.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="daily-summary" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Daily Summary Report</span>
+                                </label>
+                                <p class="form-help">Receive daily summary of platform activity.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="security-alerts" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Security Alerts</span>
+                                </label>
+                                <p class="form-help">Receive alerts for security-related events.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Integration Settings -->
+            <section class="settings-section" id="settings-integrations">
+                <div class="settings-grid">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-credit-card"></i>
+                                Payment Integration
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="payments-enabled"/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable Payment Processing</span>
+                                </label>
+                                <p class="form-help">Allow users to make payments through the platform.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Payment Gateway</label>
+                                <select id="payment-gateway" class="form-input">
+                                    <option value="">Select Payment Gateway</option>
+                                    <option value="stripe">Stripe</option>
+                                    <option value="paypal">PayPal</option>
+                                    <option value="square">Square</option>
+                                </select>
+                                <p class="form-help">Choose your preferred payment gateway provider.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">API Key</label>
+                                <input type="password" id="payment-api-key" placeholder="Enter your payment gateway API key" class="form-input"/>
+                                <p class="form-help">API key for your payment gateway integration.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                Analytics Integration
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="analytics-enabled" checked=""/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable Analytics</span>
+                                </label>
+                                <p class="form-help">Track user behavior and platform performance.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Analytics Provider</label>
+                                <select id="analytics-provider" class="form-input">
+                                    <option value="google">Google Analytics</option>
+                                    <option value="mixpanel">Mixpanel</option>
+                                    <option value="custom">Custom Analytics</option>
+                                </select>
+                                <p class="form-help">Choose your analytics tracking provider.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tracking ID</label>
+                                <input type="text" id="analytics-tracking-id" placeholder="UA-XXXXXXXXX-X" class="form-input"/>
+                                <p class="form-help">Your analytics tracking ID or measurement ID.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h3 class="card-title">
+                                <i class="fas fa-share-alt"></i>
+                                Social Media Integration
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label class="form-toggle">
+                                    <input type="checkbox" id="social-login-enabled"/>
+                                    <span class="toggle-slider"></span>
+                                    <span class="toggle-label">Enable Social Login</span>
+                                </label>
+                                <p class="form-help">Allow users to login using social media accounts.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Facebook App ID</label>
+                                <input type="text" id="facebook-app-id" placeholder="Enter Facebook App ID" class="form-input"/>
+                                <p class="form-help">Facebook application ID for social login integration.</p>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Google Client ID</label>
+                                <input type="text" id="google-client-id" placeholder="Enter Google Client ID" class="form-input"/>
+                                <p class="form-help">Google client ID for social login integration.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Saving settings...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+{% endblock %}

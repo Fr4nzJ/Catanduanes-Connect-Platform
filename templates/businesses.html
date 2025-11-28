@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Businesses - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-12">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-store text-blue-600 mr-3"></i>Local Businesses
+                    </h1>
+                    <p class="text-xl text-gray-600">
+                        Discover and support exceptional businesses in Catanduanes
+                    </p>
+                </div>
+                <div class="mt-6 md:mt-0 flex gap-3 flex-wrap">
+                    <a href="{{ url_for('businesses.featured_businesses') }}" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-star mr-2"></i>Featured
+                    </a>
+                    <a href="{{ url_for('businesses.categories_overview') }}" class="bg-indigo-500 hover:bg-indigo-600 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-tags mr-2"></i>Categories
+                    </a>
+                    {% if current_user.is_authenticated and current_user.role == 'business_owner' %}
+                    <a href="{{ url_for('businesses.create_business') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Register Business
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8 backdrop-blur-sm">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-filter text-blue-600 mr-2"></i>Filter & Search
+            </h2>
+            <form method="GET" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="query" class="block text-sm font-bold text-gray-700 mb-2">Search</label>
+                        <input type="text" name="query" id="query" value="{{ request.args.get('query', '') }}"
+                               placeholder="Business name or description"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                    
+                    <div>
+                        <label for="category" class="block text-sm font-bold text-gray-700 mb-2">Category</label>
+                        <select name="category" id="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="">All Categories</option>
+                            <option value="restaurant" {% if request.args.get('category') == 'restaurant' %}selected{% endif %}>Restaurant</option>
+                            <option value="retail" {% if request.args.get('category') == 'retail' %}selected{% endif %}>Retail</option>
+                            <option value="services" {% if request.args.get('category') == 'services' %}selected{% endif %}>Services</option>
+                            <option value="manufacturing" {% if request.args.get('category') == 'manufacturing' %}selected{% endif %}>Manufacturing</option>
+                            <option value="healthcare" {% if request.args.get('category') == 'healthcare' %}selected{% endif %}>Healthcare</option>
+                            <option value="education" {% if request.args.get('category') == 'education' %}selected{% endif %}>Education</option>
+                            <option value="technology" {% if request.args.get('category') == 'technology' %}selected{% endif %}>Technology</option>
+                            <option value="other" {% if request.args.get('category') == 'other' %}selected{% endif %}>Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="location" class="block text-sm font-bold text-gray-700 mb-2">Location</label>
+                        <input type="text" name="location" id="location" value="{{ request.args.get('location', '') }}"
+                               placeholder="City or area"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="min_rating" class="block text-sm font-bold text-gray-700 mb-2">Min. Rating</label>
+                        <select name="min_rating" id="min_rating" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="0" {% if request.args.get('min_rating', '0') == '0' %}selected{% endif %}>Any Rating</option>
+                            <option value="3" {% if request.args.get('min_rating') == '3' %}selected{% endif %}>3.0+ Stars</option>
+                            <option value="3.5" {% if request.args.get('min_rating') == '3.5' %}selected{% endif %}>3.5+ Stars</option>
+                            <option value="4" {% if request.args.get('min_rating') == '4' %}selected{% endif %}>4.0+ Stars</option>
+                            <option value="4.5" {% if request.args.get('min_rating') == '4.5' %}selected{% endif %}>4.5+ Stars</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="sort_by" class="block text-sm font-bold text-gray-700 mb-2">Sort by</label>
+                        <select name="sort_by" id="sort_by" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="created_at" {% if request.args.get('sort_by') == 'created_at' %}selected{% endif %}>Newest</option>
+                            <option value="rating" {% if request.args.get('sort_by') == 'rating' %}selected{% endif %}>Highest Rated</option>
+                            <option value="reviews" {% if request.args.get('sort_by') == 'reviews' %}selected{% endif %}>Most Reviewed</option>
+                            <option value="name" {% if request.args.get('sort_by') == 'name' %}selected{% endif %}>Name A-Z</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end">
+                        <label class="flex items-center cursor-pointer bg-gradient-to-r from-green-50 to-emerald-50 px-4 py-3 rounded-lg border border-green-200 hover:border-green-400 transition-all duration-300 flex-1">
+                            <input type="checkbox" name="verified_only" value="true" 
+                                   {% if request.args.get('verified_only') == 'true' %}checked{% endif %}
+                                   class="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-2 focus:ring-green-500 cursor-pointer">
+                            <span class="ml-3 text-sm font-bold text-gray-700 flex items-center">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>Verified Only
+                            </span>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-end space-x-2">
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                        <a href="{{ url_for('businesses.list_businesses') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md">
+                            <i class="fas fa-redo mr-2"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Results Count -->
+        <div class="mb-6 flex items-center justify-between">
+            <p class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-store text-blue-600 mr-2"></i>Found <span class="text-blue-600">{{ pagination.total }}</span> businesses
+            </p>
+        </div>
+        
+        <!-- Businesses Grid -->
+        {% if businesses %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for business in businesses %}
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                        <!-- Business Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 relative">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-white truncate">{{ business.name }}</h3>
+                                    <a href="{{ url_for('businesses.category_detail', category=business.category) }}" class="text-blue-100 hover:text-white text-sm mt-2 inline-flex items-center transition-colors">
+                                        <i class="fas fa-tag mr-2"></i>{{ business.category | title }}
+                                    </a>
+                                </div>
+                                {% if business.is_featured %}
+                                <div class="bg-yellow-400 rounded-full p-3 shadow-lg animate-pulse">
+                                    <i class="fas fa-star text-yellow-600"></i>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Business Body -->
+                        <div class="p-6">
+                            <!-- Rating Section -->
+                            <div class="mb-5 pb-4 border-b border-gray-200">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="flex text-yellow-400">
+                                            {% for i in range(5) %}
+                                                {% if i < business.rating | int %}
+                                                    <i class="fas fa-star"></i>
+                                                {% elif i < business.rating %}
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <span class="text-sm font-bold text-gray-800">{{ "%.1f"|format(business.rating) }}</span>
+                                    </div>
+                                    {% if business.is_verified %}
+                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold flex items-center shadow-sm">
+                                            <i class="fas fa-check-circle mr-1"></i>Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold flex items-center shadow-sm">
+                                            <i class="fas fa-clock mr-1"></i>Pending
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if business.review_count %}
+                                    <p class="text-xs text-gray-500 mt-2">{{ business.review_count }} {{ 'review' if business.review_count == 1 else 'reviews' }}</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {{ business.description or 'No description provided' }}
+                            </p>
+
+                            <!-- Business Info -->
+                            <div class="space-y-2 mb-5 text-sm">
+                                {% if business.address %}
+                                    <div class="flex items-start text-gray-600 hover:text-blue-600 transition-colors">
+                                        <i class="fas fa-map-marker-alt mr-3 mt-0.5 text-blue-500 flex-shrink-0"></i>
+                                        <span class="line-clamp-2 text-xs">{{ business.address }}</span>
+                                    </div>
+                                {% endif %}
+                                {% if business.phone %}
+                                    <div class="flex items-center text-gray-600 hover:text-blue-600 transition-colors">
+                                        <i class="fas fa-phone mr-3 text-blue-500 flex-shrink-0"></i>
+                                        <a href="tel:{{ business.phone }}" class="text-xs hover:text-blue-600 transition-colors">{{ business.phone }}</a>
+                                    </div>
+                                {% endif %}
+                                {% if business.email %}
+                                    <div class="flex items-center text-gray-600 hover:text-blue-600 transition-colors">
+                                        <i class="fas fa-envelope mr-3 text-blue-500 flex-shrink-0"></i>
+                                        <a href="mailto:{{ business.email }}" class="text-xs hover:text-blue-600 transition-colors truncate">{{ business.email }}</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-3 pt-4 border-t border-gray-200">
+                                <a href="{{ url_for('businesses.business_detail', business_id=business.id) }}" 
+                                   class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 text-center shadow-md">
+                                    <i class="fas fa-eye mr-2"></i>View Details
+                                </a>
+                                {% if business.website %}
+                                    <a href="{{ business.website }}" target="_blank" rel="noopener noreferrer"
+                                       class="flex-1 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 text-center shadow-md">
+                                        <i class="fas fa-globe mr-2"></i>Website
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-xl shadow-lg p-16 text-center">
+                <i class="fas fa-inbox text-blue-300 text-7xl mb-6 inline-block"></i>
+                <h3 class="text-3xl font-bold text-gray-900 mb-3">No Businesses Found</h3>
+                <p class="text-gray-600 text-lg mb-8">
+                    Try adjusting your search criteria or check back later for more businesses.
+                </p>
+                <a href="{{ url_for('businesses.list_businesses') }}" class="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-redo mr-2"></i>Clear Filters
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+            {% set args = request.args.copy() %}
+            {% set _ = args.pop('page', none) %}
+            <div class="flex items-center justify-center space-x-2 mt-12">
+                {% if pagination.has_prev %}
+                    <a href="{{ url_for('businesses.list_businesses', page=pagination.prev_num, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </a>
+                {% endif %}
+
+                <div class="flex items-center space-x-2">
+                    {% for p in range(1, total_pages + 1) %}
+                        {% if p == current_page %}
+                            <span class="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-bold shadow-lg">
+                                {{ p }}
+                            </span>
+                        {% elif p <= current_page + 2 and p >= current_page - 2 %}
+                            <a href="{{ url_for('businesses.list_businesses', page=p, **args) }}" 
+                               class="px-4 py-3 bg-white text-gray-700 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-400 shadow-md">
+                                {{ p }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if pagination.has_next %}
+                    <a href="{{ url_for('businesses.list_businesses', page=pagination.next_num, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

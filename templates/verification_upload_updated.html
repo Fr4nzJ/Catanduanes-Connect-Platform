@@ -1,0 +1,576 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Verification Documents - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('dashboard.index') }}" 
+                   class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Verify Your Account</h1>
+                    <p class="mt-2 text-gray-600">Upload required documents based on your account type</p>
+                    <span class="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                        {{ current_user.role.replace('_', ' ').title() }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role-Specific Instructions -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            {% if current_user.role == 'job_seeker' %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-briefcase text-blue-600 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-800">Job Seeker Verification</h3>
+                            <p class="text-blue-700 mt-2">As a job seeker, please upload your resume and valid ID for employment verification.</p>
+                            <ul class="text-sm text-blue-600 mt-2 space-y-1">
+                                <li>• Resume must be in PDF, DOC, or DOCX format</li>
+                                <li>• Valid ID must be government-issued and clearly visible</li>
+                                <li>• All documents will be securely stored and only used for verification</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% elif current_user.role == 'business_owner' %}
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-building text-green-600 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-green-800">Business Owner Verification</h3>
+                            <p class="text-green-700 mt-2">As a business owner, please upload your business permit/license and valid ID.</p>
+                            <ul class="text-sm text-green-600 mt-2 space-y-1">
+                                <li>• Business permit/license must be current and valid</li>
+                                <li>• Valid ID must be government-issued</li>
+                                <li>• DTI registration is optional but recommended</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% elif current_user.role == 'service_client' %}
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4 mb-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-user-tie text-purple-600 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-purple-800">Service Provider Verification</h3>
+                            <p class="text-purple-700 mt-2">As a service provider, please upload your valid ID and optionally provide sample work photos.</p>
+                            <ul class="text-sm text-purple-600 mt-2 space-y-1">
+                                <li>• Valid government-issued ID is required</li>
+                                <li>• Sample work photos are optional but help build trust</li>
+                                <li>• Photos should showcase your skills and work quality</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Verification Form -->
+        <div class="bg-white rounded-lg shadow-sm p-8">
+            <form method="POST" enctype="multipart/form-data" id="verification-form">
+                {{ form.hidden_tag() }}
+                
+                <!-- Common ID Document (Required for all roles) -->
+                <div class="space-y-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Personal Identification</h2>
+                    
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-circle text-red-600 mt-1 mr-3"></i>
+                            <div>
+                                <h3 class="text-sm font-medium text-red-800">Required Document</h3>
+                                <p class="text-sm text-red-700 mt-1">
+                                    All users must provide a valid government-issued ID (Driver's License, Passport, or National ID).
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="id_document" class="block text-sm font-medium text-gray-700 mb-2">
+                            Valid ID Document *
+                        </label>
+                        <div class="file-upload-area" id="id-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-id-card text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload your valid government-issued ID</p>
+                                <p class="text-sm text-gray-500">JPG, JPEG, PNG, or PDF files</p>
+                                <p class="text-xs text-gray-400 mt-2">Make sure all text is clearly visible</p>
+                            </div>
+                            {{ form.id_document(class="hidden", id="id-document-input") }}
+                        </div>
+                        <div id="id-preview" class="mt-4 hidden">
+                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-image text-blue-500 mr-3"></i>
+                                    <span id="id-file-name" class="text-sm text-gray-700"></span>
+                                </div>
+                                <button type="button" onclick="removeFile('id')" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% if form.id_document.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.id_document.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="id_number" class="block text-sm font-medium text-gray-700 mb-2">
+                                ID Number *
+                            </label>
+                            {{ form.id_number(class="form-input", placeholder="Your ID number") }}
+                            {% if form.id_number.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.id_number.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="id_expiry" class="block text-sm font-medium text-gray-700 mb-2">
+                                ID Expiry Date *
+                            </label>
+                            {{ form.id_expiry(class="form-input", type="date") }}
+                            {% if form.id_expiry.errors %}
+                                <p class="mt-1 text-sm text-red-600">{{ form.id_expiry.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Role-Specific Documents -->
+                {% if current_user.role == 'job_seeker' %}
+                <!-- Job Seeker Documents -->
+                <div class="space-y-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Employment Documents</h2>
+                    
+                    <div>
+                        <label for="resume" class="block text-sm font-medium text-gray-700 mb-2">
+                            Resume/CV *
+                        </label>
+                        <div class="file-upload-area" id="resume-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload your updated resume</p>
+                                <p class="text-sm text-gray-500">PDF, DOC, or DOCX files only</p>
+                            </div>
+                            {{ form.resume(class="hidden", id="resume-document-input") }}
+                        </div>
+                        <div id="resume-preview" class="mt-4 hidden">
+                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                    <span id="resume-file-name" class="text-sm text-gray-700"></span>
+                                </div>
+                                <button type="button" onclick="removeFile('resume')" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% if form.resume.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.resume.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="certifications" class="block text-sm font-medium text-gray-700 mb-2">
+                            Certifications (Optional)
+                        </label>
+                        <div class="file-upload-area" id="cert-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-certificate text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload relevant certifications</p>
+                                <p class="text-sm text-gray-500">PDF, JPG, JPEG, or PNG files</p>
+                                <p class="text-xs text-gray-400 mt-2">You can upload multiple files</p>
+                            </div>
+                            {{ form.certifications(class="hidden", id="certifications-input", multiple="") }}
+                        </div>
+                        <div id="certifications-preview" class="mt-4 hidden">
+                            <div class="space-y-2" id="cert-files-list"></div>
+                        </div>
+                        {% if form.certifications.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.certifications.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% elif current_user.role == 'business_owner' %}
+                <!-- Business Owner Documents -->
+                <div class="space-y-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Business Documents</h2>
+                    
+                    <div>
+                        <label for="business_permit" class="block text-sm font-medium text-gray-700 mb-2">
+                            Business Permit/License *
+                        </label>
+                        <div class="file-upload-area" id="permit-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-file-certificate text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload your business permit or license</p>
+                                <p class="text-sm text-gray-500">PDF, JPG, JPEG, or PNG files</p>
+                            </div>
+                            {{ form.business_permit(class="hidden", id="permit-document-input") }}
+                        </div>
+                        <div id="permit-preview" class="mt-4 hidden">
+                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                    <span id="permit-file-name" class="text-sm text-gray-700"></span>
+                                </div>
+                                <button type="button" onclick="removeFile('permit')" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% if form.business_permit.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.business_permit.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="dti_registration" class="block text-sm font-medium text-gray-700 mb-2">
+                            DTI Registration (Optional)
+                        </label>
+                        <div class="file-upload-area" id="dti-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload DTI registration</p>
+                                <p class="text-sm text-gray-500">PDF, JPG, JPEG, or PNG files</p>
+                            </div>
+                            {{ form.dti_registration(class="hidden", id="dti-document-input") }}
+                        </div>
+                        <div id="dti-preview" class="mt-4 hidden">
+                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                    <span id="dti-file-name" class="text-sm text-gray-700"></span>
+                                </div>
+                                <button type="button" onclick="removeFile('dti')" class="text-red-500 hover:text-red-700">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% if form.dti_registration.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.dti_registration.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div>
+                        <label for="business_address" class="block text-sm font-medium text-gray-700 mb-2">
+                            Business Address *
+                        </label>
+                        {{ form.business_address(class="form-textarea h-20", placeholder="Complete business address as registered") }}
+                        {% if form.business_address.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.business_address.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                {% elif current_user.role == 'service_client' %}
+                <!-- Service Provider Documents -->
+                <div class="space-y-6 mb-8">
+                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Service Provider Documents</h2>
+                    
+                    <div>
+                        <label for="sample_work" class="block text-sm font-medium text-gray-700 mb-2">
+                            Sample Work Photos (Optional)
+                        </label>
+                        <div class="file-upload-area" id="sample-work-upload-area">
+                            <div class="text-center">
+                                <i class="fas fa-camera text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-gray-600 mb-2">Upload photos of your work</p>
+                                <p class="text-sm text-gray-500">JPG, JPEG, or PNG files</p>
+                                <p class="text-xs text-gray-400 mt-2">Before/after photos, completed projects, etc.</p>
+                            </div>
+                            {{ form.sample_work(class="hidden", id="sample-work-input", multiple="") }}
+                        </div>
+                        <div id="sample-work-preview" class="mt-4 hidden">
+                            <div class="space-y-2" id="sample-work-files-list"></div>
+                        </div>
+                        {% if form.sample_work.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.sample_work.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <i class="fas fa-lightbulb text-blue-600 mt-1 mr-3"></i>
+                            <div>
+                                <h3 class="text-sm font-medium text-blue-800">Sample Work Tips</h3>
+                                <ul class="text-sm text-blue-700 mt-1 space-y-1">
+                                    <li>• Before and after photos of your work</li>
+                                    <li>• Completed projects showcasing your skills</li>
+                                    <li>• High-quality images that clearly show your work</li>
+                                    <li>• Multiple examples of different types of work</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Terms and Submission -->
+                <div class="space-y-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex items-start">
+                            <input type="checkbox" id="terms" name="terms" class="mt-1 mr-3" required>
+                            <label for="terms" class="text-sm text-gray-700">
+                                I confirm that all uploaded documents are genuine and belong to me. I understand that providing false information may result in account suspension. I agree to the platform's terms of service and privacy policy.
+                            </label>
+                        </div>
+                        {% if form.terms.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.terms.errors[0] }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="flex justify-end space-x-4 pt-6 border-t">
+                        <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+                            <i class="fas fa-arrow-left mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn-primary" id="submit-verification">
+                            <i class="fas fa-paper-plane mr-2"></i>Submit for Verification
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // File upload handling functions
+    function setupFileUpload(inputId, previewId, fileNameId, uploadAreaId) {
+        const input = document.getElementById(inputId);
+        const preview = document.getElementById(previewId);
+        const fileName = document.getElementById(fileNameId);
+        const uploadArea = document.getElementById(uploadAreaId);
+        
+        uploadArea.addEventListener('click', () => input.click());
+        
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                fileName.textContent = file.name;
+                preview.classList.remove('hidden');
+                uploadArea.style.display = 'none';
+            }
+        });
+    }
+    
+    function removeFile(type) {
+        let inputId, previewId, uploadAreaId;
+        
+        switch(type) {
+            case 'id':
+                inputId = 'id-document-input';
+                previewId = 'id-preview';
+                uploadAreaId = 'id-upload-area';
+                break;
+            case 'resume':
+                inputId = 'resume-document-input';
+                previewId = 'resume-preview';
+                uploadAreaId = 'resume-upload-area';
+                break;
+            case 'permit':
+                inputId = 'permit-document-input';
+                previewId = 'permit-preview';
+                uploadAreaId = 'permit-upload-area';
+                break;
+            case 'dti':
+                inputId = 'dti-document-input';
+                previewId = 'dti-preview';
+                uploadAreaId = 'dti-upload-area';
+                break;
+            case 'sample_work':
+                inputId = 'sample-work-input';
+                previewId = 'sample-work-preview';
+                uploadAreaId = 'sample-work-upload-area';
+                break;
+        }
+        
+        document.getElementById(inputId).value = '';
+        document.getElementById(previewId).classList.add('hidden');
+        document.getElementById(uploadAreaId).style.display = 'block';
+    }
+    
+    // Setup file uploads for all document types
+    setupFileUpload('id-document-input', 'id-preview', 'id-file-name', 'id-upload-area');
+    
+    {% if current_user.role == 'job_seeker' %}
+    setupFileUpload('resume-document-input', 'resume-preview', 'resume-file-name', 'resume-upload-area');
+    {% elif current_user.role == 'business_owner' %}
+    setupFileUpload('permit-document-input', 'permit-preview', 'permit-file-name', 'permit-upload-area');
+    setupFileUpload('dti-document-input', 'dti-preview', 'dti-file-name', 'dti-upload-area');
+    {% elif current_user.role == 'service_client' %}
+    // Handle multiple sample work photos
+    const sampleWorkInput = document.getElementById('sample-work-input');
+    const sampleWorkPreview = document.getElementById('sample-work-preview');
+    const sampleWorkFilesList = document.getElementById('sample-work-files-list');
+    
+    document.getElementById('sample-work-upload-area').addEventListener('click', () => {
+        sampleWorkInput.click();
+    });
+    
+    sampleWorkInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            sampleWorkFilesList.innerHTML = '';
+            files.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
+                fileDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-file-image text-blue-500 mr-2"></i>
+                        <span class="text-sm text-gray-700">${file.name}</span>
+                    </div>
+                    <button type="button" onclick="removeSampleWorkFile(${index})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                sampleWorkFilesList.appendChild(fileDiv);
+            });
+            sampleWorkPreview.classList.remove('hidden');
+            document.getElementById('sample-work-upload-area').style.display = 'none';
+        }
+    });
+    
+    window.removeSampleWorkFile = function(index) {
+        const dt = new DataTransfer();
+        const files = Array.from(sampleWorkInput.files);
+        files.forEach((file, i) => {
+            if (i !== index) {
+                dt.items.add(file);
+            }
+        });
+        sampleWorkInput.files = dt.files;
+        
+        if (sampleWorkInput.files.length === 0) {
+            sampleWorkPreview.classList.add('hidden');
+            document.getElementById('sample-work-upload-area').style.display = 'block';
+        } else {
+            // Refresh the list
+            const event = new Event('change');
+            sampleWorkInput.dispatchEvent(event);
+        }
+    };
+    {% endif %}
+    
+    // Handle multiple certifications (for job seekers)
+    {% if current_user.role == 'job_seeker' %}
+    const certificationsInput = document.getElementById('certifications-input');
+    const certificationsPreview = document.getElementById('certifications-preview');
+    const certFilesList = document.getElementById('cert-files-list');
+    
+    document.getElementById('cert-upload-area').addEventListener('click', () => {
+        certificationsInput.click();
+    });
+    
+    certificationsInput.addEventListener('change', (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            certFilesList.innerHTML = '';
+            files.forEach((file, index) => {
+                const fileDiv = document.createElement('div');
+                fileDiv.className = 'flex items-center justify-between bg-gray-50 p-2 rounded';
+                fileDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-file-pdf text-red-500 mr-2"></i>
+                        <span class="text-sm text-gray-700">${file.name}</span>
+                    </div>
+                    <button type="button" onclick="removeCertFile(${index})" class="text-red-500 hover:text-red-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                certFilesList.appendChild(fileDiv);
+            });
+            certificationsPreview.classList.remove('hidden');
+            document.getElementById('cert-upload-area').style.display = 'none';
+        }
+    });
+    
+    window.removeCertFile = function(index) {
+        const dt = new DataTransfer();
+        const files = Array.from(certificationsInput.files);
+        files.forEach((file, i) => {
+            if (i !== index) {
+                dt.items.add(file);
+            }
+        });
+        certificationsInput.files = dt.files;
+        
+        if (certificationsInput.files.length === 0) {
+            certificationsPreview.classList.add('hidden');
+            document.getElementById('cert-upload-area').style.display = 'block';
+        } else {
+            // Refresh the list
+            const event = new Event('change');
+            certificationsInput.dispatchEvent(event);
+        }
+    };
+    {% endif %}
+    
+    // Form submission
+    document.getElementById('verification-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitButton = document.getElementById('submit-verification');
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Submitting...';
+        submitButton.disabled = true;
+        
+        try {
+            const formData = new FormData(e.target);
+            const response = await fetch('/verification/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                showAlert('success', result.message);
+                setTimeout(() => {
+                    window.location.href = result.redirect_url || '/';
+                }, 2000);
+            } else {
+                showAlert('error', result.error || 'An error occurred');
+                submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit for Verification';
+                submitButton.disabled = false;
+            }
+        } catch (error) {
+            showAlert('error', 'Network error. Please try again.');
+            submitButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Submit for Verification';
+            submitButton.disabled = false;
+        }
+    });
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
+            type === 'error' ? 'bg-red-100 border border-red-200 text-red-800' :
+            'bg-blue-100 border border-blue-200 text-blue-800'
+        }`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

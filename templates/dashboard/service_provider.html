@@ -1,0 +1,144 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Service Provider Dashboard{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{{ url_for('services.create_service') }}" class="btn-primary">
+    <i class="fas fa-plus mr-2"></i>Post New Service
+</a>
+{% endblock %}
+
+{% block stats_cards %}
+<!-- Total Services -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+            <i class="fas fa-concierge-bell text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Services</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Active Services -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-green-100 text-green-600">
+            <i class="fas fa-check-circle text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Active Services</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.active_services }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Total Bookings -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+            <i class="fas fa-calendar-check text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Bookings</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.total_bookings }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Average Rating -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+            <i class="fas fa-star text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Average Rating</p>
+            <p class="text-2xl font-bold text-gray-900">{{ "%.1f"|format(stats.avg_rating|default(0)) }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block main_content %}
+<!-- Services List -->
+<div class="lg:col-span-2">
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">My Services</h2>
+        </div>
+        <div class="p-6">
+            {% if services %}
+                <div class="space-y-4">
+                    {% for service in services %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                        <a href="{{ url_for('services.service_detail', service_id=service.id) }}" 
+                                           class="text-purple-600 hover:text-purple-800">{{ service.title }}</a>
+                                    </h3>
+                                    <p class="text-sm text-gray-700 mb-3">{{ service.description[:150] }}...</p>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                        <span><i class="fas fa-tag mr-1"></i>{{ service.category }}</span>
+                                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ service.location }}</span>
+                                        <span class="badge badge-{{ 'success' if service.status == 'active' else 'danger' }}">
+                                            {{ service.status.title() }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col space-y-2 ml-4">
+                                    <a href="{{ url_for('services.edit_service', service_id=service.id) }}" 
+                                       class="btn-secondary text-xs text-center">
+                                        <i class="fas fa-edit mr-1"></i>Edit
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-600">No services posted yet.</p>
+                    <a href="{{ url_for('services.create_service') }}" class="btn-primary mt-4">Post Your First Service</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Bookings -->
+<div class="lg:col-span-1">
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recent Bookings</h2>
+        </div>
+        <div class="p-6">
+            {% if recent_bookings %}
+                <div class="space-y-4">
+                    {% for booking in recent_bookings %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">{{ booking.service.title }}</h3>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-user mr-1"></i>{{ booking.client_name }}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                <i class="fas fa-calendar mr-1"></i>{{ booking.booking_date }}
+                            </p>
+                            <span class="badge badge-{{ 'warning' if booking.status == 'pending' else 'success' if booking.status == 'confirmed' else 'danger' }} mt-2">
+                                {{ booking.status.title() }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-600">No bookings yet.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile – Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-10">
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-white rounded-lg shadow p-6">
+      <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">My Profile</h1>
+        <a href="{{ url_for('auth.change_password') }}"
+           class="btn-secondary">Change Password</a>
+      </div>
+
+      <!-- Avatar -->
+      <div class="flex items-center space-x-4 mb-6">
+        <img class="h-20 w-20 rounded-full object-cover"
+             src="{{ current_user.profile_picture or url_for('static', filename='images/default-avatar.png') }}"
+             alt="Avatar">
+        <div>
+          <p class="text-lg font-medium text-gray-900">{{ current_user.username }}</p>
+          <p class="text-sm text-gray-500">{{ current_user.email }}</p>
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                       {{ 'bg-green-100 text-green-800' if current_user.is_verified else 'bg-yellow-100 text-yellow-800' }}">
+            {{ 'Verified' if current_user.is_verified else 'Un-verified' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Read-only core fields -->
+      <dl class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <dt class="font-medium text-gray-500">Role</dt>
+          <dd class="mt-1 text-gray-900 capitalize">{{ current_user.role.replace('_', ' ') }}</dd>
+        </div>
+        <div>
+          <dt class="font-medium text-gray-500">Member since</dt>
+          <dd class="mt-1 text-gray-900">{{ current_user.created_at[:10] }}</dd>
+        </div>
+      </dl>
+
+      <!-- Quick actions -->
+      <div class="mt-8 flex space-x-3">
+        <a href="{{ url_for('dashboard.index') }}" class="btn-primary">Dashboard</a>
+        <a href="{{ url_for('auth.logout') }}" class="btn-danger">Logout</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

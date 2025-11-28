@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <main>
+        <div class="py-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center gap-3 mb-8">
+                    <i class="fas fa-chart-line text-4xl text-blue-600"></i>
+                    <div>
+                        <h1 class="text-4xl font-bold text-gray-900">Dashboard</h1>
+                        <p class="text-gray-600">Welcome back! Here's your overview</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                <div class="bg-white shadow-lg rounded-xl overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-10">
+                        <h3 class="text-3xl font-bold text-white">
+                            👋 Welcome back to Catanduanes Connect!
+                        </h3>
+                        <p class="text-blue-100 mt-2">We're glad to see you. Here's what's happening on your account.</p>
+                    </div>
+                    
+                    <div class="p-8">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <!-- Quick Stats Card 1 -->
+                            <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-6 border-l-4 border-blue-600">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-600 text-sm font-semibold">Your Applications</p>
+                                        <p class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                                    </div>
+                                    <i class="fas fa-file-upload text-4xl text-blue-200"></i>
+                                </div>
+                            </div>
+
+                            <!-- Quick Stats Card 2 -->
+                            <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border-l-4 border-green-600">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-600 text-sm font-semibold">Saved Items</p>
+                                        <p class="text-3xl font-bold text-green-600 mt-2">0</p>
+                                    </div>
+                                    <i class="fas fa-bookmark text-4xl text-green-200"></i>
+                                </div>
+                            </div>
+
+                            <!-- Quick Stats Card 3 -->
+                            <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border-l-4 border-purple-600">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-gray-600 text-sm font-semibold">Profile Views</p>
+                                        <p class="text-3xl font-bold text-purple-600 mt-2">0</p>
+                                    </div>
+                                    <i class="fas fa-eye text-4xl text-purple-200"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <a href="{{ url_for('jobs.list_jobs') }}" class="group bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center">
+                                <i class="fas fa-briefcase"></i>Browse Jobs
+                            </a>
+                            <a href="{{ url_for('businesses.list_businesses') }}" class="group bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center">
+                                <i class="fas fa-building"></i>Explore Businesses
+                            </a>
+                            <a href="{{ url_for('services.list_services') }}" class="group bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2 justify-center">
+                                <i class="fas fa-cogs"></i>Find Services
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,501 @@
+/* Additional styles for Catanduanes Connect */
+
+/* Star Rating Styles */
+.star-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.star-rating .star {
+    color: #d1d5db;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.star-rating .star.filled {
+    color: #fbbf24;
+}
+
+.star-rating .star:hover {
+    color: #f59e0b;
+}
+
+/* Aspect Rating Styles */
+.aspect-rating {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.aspect-rating .aspect-star {
+    color: #d1d5db;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+.aspect-rating .aspect-star.filled {
+    color: #fbbf24;
+}
+
+/* File Upload Styles */
+.file-upload-area {
+    border: 2px dashed #cbd5e1;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    background-color: #f8fafc;
+}
+
+.file-upload-area:hover {
+    border-color: #3b82f6;
+    background-color: #f1f5f9;
+}
+
+.file-upload-area.dragover {
+    border-color: #1d4ed8;
+    background-color: #eff6ff;
+    transform: scale(1.02);
+}
+
+/* Verification Progress Styles */
+.verification-step {
+    transition: all 0.3s ease;
+}
+
+.verification-step.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.verification-step.completed {
+    background-color: #10b981;
+    color: white;
+}
+
+/* Dashboard Stats Cards */
+.stats-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Service Card Styles */
+.service-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.service-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border-color: #3b82f6;
+}
+
+.service-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Application Card Styles */
+.application-card {
+    transition: all 0.2s ease;
+}
+
+.application-card:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+/* Status Badge Styles */
+.badge-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-reviewed {
+    background-color: #dbeafe;
+    color: #1e40af;
+}
+
+.badge-accepted {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-rejected {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Form Step Styles */
+.form-step {
+    display: none;
+}
+
+.form-step.active {
+    display: block;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Progress Bar Animation */
+.progress-bar {
+    transition: width 0.3s ease;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Alert Styles */
+.alert {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 1000;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive Table Styles */
+.responsive-table {
+    overflow-x: auto;
+}
+
+.responsive-table table {
+    min-width: 600px;
+}
+
+/* Filter Panel Styles */
+.filter-panel {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    border: 1px solid #e2e8f0;
+}
+
+/* Review Card Styles */
+.review-card {
+    border-left: 4px solid #3b82f6;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.review-card.own-review {
+    border-left-color: #10b981;
+    background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+}
+
+/* Business Card Styles */
+.business-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.business-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.business-card:hover::before {
+    left: 100%;
+}
+
+.business-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Job Card Styles */
+.job-card {
+    border-left: 4px solid #f59e0b;
+    transition: all 0.3s ease;
+}
+
+.job-card:hover {
+    border-left-color: #d97706;
+    transform: translateX(4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Chat Styles */
+.chat-container {
+    max-height: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.chat-message {
+    margin-bottom: 1rem;
+    animation: slideUp 0.3s ease-out;
+}
+
+.chat-message.user {
+    text-align: right;
+}
+
+.chat-message.bot {
+    text-align: left;
+}
+
+.chat-bubble {
+    display: inline-block;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    max-width: 70%;
+    word-wrap: break-word;
+}
+
+.chat-bubble.user {
+    background-color: #3b82f6;
+    color: white;
+    border-bottom-right-radius: 0.25rem;
+}
+
+.chat-bubble.bot {
+    background-color: #f3f4f6;
+    color: #374151;
+    border-bottom-left-radius: 0.25rem;
+}
+
+/* Utility Classes */
+.line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* Gradient Backgrounds */
+.gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.gradient-success {
+    background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+}
+
+.gradient-warning {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+}
+
+.gradient-danger {
+    background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+/* Hover Effects */
+.hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Focus States */
+.focus-ring:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    --tw-ring-offset-width: 2px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-color: #3b82f6;
+    --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+    --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+    box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+/* Print Styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .print-only {
+        display: block !important;
+    }
+    
+    body {
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+    
+    .container {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .dark\:bg-gray-800 {
+        background-color: #1f2937;
+    }
+    
+    .dark\:text-white {
+        color: #ffffff;
+    }
+    
+    .dark\:border-gray-600 {
+        border-color: #4b5563;
+    }
+}
+
+/* Accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .border-gray-300 {
+        border-color: #000000;
+    }
+    
+    .text-gray-600 {
+        color: #000000;
+    }
+    
+    .bg-gray-50 {
+        background-color: #ffffff;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Custom Scrollbar for Webkit */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Firefox Scrollbar */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+}

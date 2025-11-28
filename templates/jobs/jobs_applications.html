@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block title %}Job Applications - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Job Applications</h1>
+                    <p class="mt-2 text-gray-600">Review applications for your job postings</p>
+                </div>
+                {% if current_user.has_role('business_owner') %}
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('jobs.create_job') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Post New Job
+                    </a>
+                    <a href="{{ url_for('businesses.dashboard') }}" class="btn-secondary">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Filter Applications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="job-filter" class="block text-sm font-medium text-gray-700 mb-2">Job Position</label>
+                    <select id="job-filter" class="form-select">
+                        <option value="">All Positions</option>
+                        {% for job in jobs %}
+                            <option value="{{ job.id }}">{{ job.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="status-filter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="reviewed">Reviewed</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="date-filter" class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                    <select id="date-filter" class="form-select">
+                        <option value="">All Time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <button onclick="clearFilters()" class="btn-secondary w-full">
+                        <i class="fas fa-eraser mr-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Applications List -->
+        <div class="bg-white rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Applications</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Sort by:</span>
+                        <select id="sort-applications" class="form-select text-sm">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="job">Job Position</option>
+                            <option value="name">Applicant Name</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="divide-y divide-gray-200" id="applications-list">
+                {% if applications %}
+                    {% for application in applications %}
+                        <div class="p-6 hover:bg-gray-50 transition-colors application-item" 
+                             data-job-id="{{ application.job_id }}" 
+                             data-status="{{ application.status }}"
+                             data-date="{{ application.created_at }}">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-blue-600"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-lg font-semibold text-gray-900">{{ application.applicant_name }}</h3>
+                                            <p class="text-sm text-gray-600">
+                                                Applied for <a href="{{ url_for('jobs.job_detail', job_id=application.job_id) }}" 
+                                                               class="text-blue-600 hover:text-blue-800 font-medium">{{ application.job_title }}</a>
+                                            </p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ml-15 space-y-2">
+                                        <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span><i class="fas fa-envelope mr-1"></i>{{ application.applicant_email or 'Email not provided' }}</span>
+                                            <span><i class="fas fa-phone mr-1"></i>{{ application.applicant_phone or 'Phone not provided' }}</span>
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                            <span><i class="fas fa-clock mr-1"></i>{{ application.created_at }}</span>
+                                            <span class="badge badge-{{ 'warning' if application.status == 'pending' else 'info' if application.status == 'reviewed' else 'success' if application.status == 'accepted' else 'danger' }}">
+                                                {{ application.status.title() }}
+                                            </span>
+                                        </div>
+                                        
+                                        {% if application.cover_letter %}
+                                        <div class="mt-3">
+                                            <p class="text-sm text-gray-700 line-clamp-3">
+                                                <strong>Cover Letter:</strong> {{ application.cover_letter }}
+                                            </p>
+                                            <button type="button" onclick="toggleCoverLetter(this)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                Read more
+                                            </button>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <div class="flex flex-col space-y-2 ml-4">
+                                    {% if application.resume_file %}
+                                    <a href="{{ url_for('static', filename='uploads/' + application.resume_file) }}" 
+                                       target="_blank" class="btn-secondary text-sm">
+                                        <i class="fas fa-file-pdf mr-1"></i>View Resume
+                                    </a>
+                                    {% endif %}
+                                    
+                                    <div class="flex space-x-2">
+                                        <button onclick="updateStatus('{{ application.id }}', 'reviewed')" 
+                                                class="btn-info text-sm {{ 'opacity-50 cursor-not-allowed' if application.status != 'pending' }}"
+                                                {{ 'disabled' if application.status != 'pending' }}>
+                                            <i class="fas fa-eye mr-1"></i>Mark Reviewed
+                                        </button>
+                                        <button onclick="updateStatus('{{ application.id }}', 'accepted')" 
+                                                class="btn-success text-sm {{ 'opacity-50 cursor-not-allowed' if application.status in ['accepted', 'rejected'] }}"
+                                                {{ 'disabled' if application.status in ['accepted', 'rejected'] }}>
+                                            <i class="fas fa-check mr-1"></i>Accept
+                                        </button>
+                                        <button onclick="updateStatus('{{ application.id }}', 'rejected')" 
+                                                class="btn-danger text-sm {{ 'opacity-50 cursor-not-allowed' if application.status in ['accepted', 'rejected'] }}"
+                                                {{ 'disabled' if application.status in ['accepted', 'rejected'] }}>
+                                            <i class="fas fa-times mr-1"></i>Reject
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="p-12 text-center">
+                        <i class="fas fa-file-alt text-4xl text-gray-300 mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">No Applications Yet</h3>
+                        <p class="text-gray-600 mb-4">You haven't received any applications for your job postings.</p>
+                        <a href="{{ url_for('jobs.create_job') }}" class="btn-primary">
+                            <i class="fas fa-plus mr-2"></i>Post a New Job
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter functionality
+    document.getElementById('job-filter').addEventListener('change', filterApplications);
+    document.getElementById('status-filter').addEventListener('change', filterApplications);
+    document.getElementById('date-filter').addEventListener('change', filterApplications);
+    document.getElementById('sort-applications').addEventListener('change', sortApplications);
+
+    function filterApplications() {
+        const jobFilter = document.getElementById('job-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        const dateFilter = document.getElementById('date-filter').value;
+        
+        const applications = document.querySelectorAll('.application-item');
+        
+        applications.forEach(application => {
+            let show = true;
+            
+            // Job filter
+            if (jobFilter && application.dataset.jobId !== jobFilter) {
+                show = false;
+            }
+            
+            // Status filter
+            if (statusFilter && application.dataset.status !== statusFilter) {
+                show = false;
+            }
+            
+            // Date filter
+            if (dateFilter) {
+                const applicationDate = new Date(application.dataset.date);
+                const now = new Date();
+                const daysDiff = Math.floor((now - applicationDate) / (1000 * 60 * 60 * 24));
+                
+                if (dateFilter === 'today' && daysDiff > 0) {
+                    show = false;
+                } else if (dateFilter === 'week' && daysDiff > 7) {
+                    show = false;
+                } else if (dateFilter === 'month' && daysDiff > 30) {
+                    show = false;
+                }
+            }
+            
+            application.style.display = show ? 'block' : 'none';
+        });
+    }
+
+    function sortApplications() {
+        const sortBy = document.getElementById('sort-applications').value;
+        const container = document.getElementById('applications-list');
+        const applications = Array.from(container.querySelectorAll('.application-item'));
+        
+        applications.sort((a, b) => {
+            switch(sortBy) {
+                case 'newest':
+                    return new Date(b.dataset.date) - new Date(a.dataset.date);
+                case 'oldest':
+                    return new Date(a.dataset.date) - new Date(b.dataset.date);
+                case 'job':
+                    return a.dataset.jobId.localeCompare(b.dataset.jobId);
+                case 'name':
+                    return a.querySelector('h3').textContent.localeCompare(b.querySelector('h3').textContent);
+                default:
+                    return 0;
+            }
+        });
+        
+        applications.forEach(app => container.appendChild(app));
+    }
+
+    function clearFilters() {
+        document.getElementById('job-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        document.getElementById('date-filter').value = '';
+        filterApplications();
+    }
+
+    function toggleCoverLetter(button) {
+        const textElement = button.previousElementSibling;
+        if (textElement.classList.contains('line-clamp-3')) {
+            textElement.classList.remove('line-clamp-3');
+            button.textContent = 'Read less';
+        } else {
+            textElement.classList.add('line-clamp-3');
+            button.textContent = 'Read more';
+        }
+    }
+
+    async function updateStatus(applicationId, status) {
+        if (!confirm(`Are you sure you want to ${status} this application?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/jobs/applications/${applicationId}/status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ status: status })
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert('success', result.message);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showAlert('error', result.error || 'An error occurred');
+            }
+        } catch (error) {
+            showAlert('error', 'Network error. Please try again.');
+        }
+    }
+
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
+            type === 'error' ? 'bg-red-100 border border-red-200 text-red-800' :
+            'bg-blue-100 border border-blue-200 text-blue-800'
+        }`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

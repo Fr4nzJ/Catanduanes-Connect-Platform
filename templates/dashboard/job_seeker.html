@@ -1,0 +1,158 @@
+{% extends "dashboard/base_dashboard.html" %}
+
+{% block title %}Job Seeker Dashboard{% endblock %}
+
+{% block dashboard_actions %}
+<a href="{{ url_for('jobs.list_jobs') }}" class="btn-primary">
+    <i class="fas fa-search mr-2"></i>Browse Jobs
+</a>
+{% endblock %}
+
+{% block stats_cards %}
+<!-- Total Applications -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+            <i class="fas fa-file-alt text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Total Applications</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.total_applications }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Applications -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+            <i class="fas fa-clock text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Pending</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.pending_applications }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Reviewed Applications -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+            <i class="fas fa-eye text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Reviewed</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.reviewed_applications }}</p>
+        </div>
+    </div>
+</div>
+
+<!-- Accepted Applications -->
+<div class="bg-white rounded-lg shadow-sm p-6">
+    <div class="flex items-center">
+        <div class="p-3 rounded-full bg-green-100 text-green-600">
+            <i class="fas fa-check-circle text-xl"></i>
+        </div>
+        <div class="ml-4">
+            <p class="text-sm font-medium text-gray-600">Accepted</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.accepted_applications }}</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block main_content %}
+<!-- Left Column - My Applications -->
+<div class="lg:col-span-2">
+    <div class="bg-white rounded-lg shadow-sm mb-8">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">My Applications</h2>
+        </div>
+        
+        <div class="p-6">
+            {% if applications %}
+                <div class="space-y-4">
+                    {% for application in applications %}
+                        <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">
+                                        <a href="{{ url_for('jobs.job_detail', job_id=application.job.id) }}" 
+                                           class="text-blue-600 hover:text-blue-800">{{ application.job.title }}</a>
+                                    </h3>
+                                    <p class="text-sm text-gray-600 mb-2">
+                                        <i class="fas fa-building mr-1"></i>{{ application.business_name }}
+                                    </p>
+                                    <p class="text-sm text-gray-700 mb-3">{{ application.job.description[:150] }}...</p>
+                                    
+                                    <div class="flex items-center space-x-4 text-sm text-gray-500">
+                                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ application.job.location }}</span>
+                                        <span><i class="fas fa-clock mr-1"></i>{{ application.created_at }}</span>
+                                        <span class="badge badge-{{ 'warning' if application.status == 'pending' else 'info' if application.status == 'reviewed' else 'success' if application.status == 'accepted' else 'danger' }}">
+                                            {{ application.status.title() }}
+                                        </span>
+                                    </div>
+                                    
+                                    {% if application.cover_letter %}
+                                    <div class="mt-3">
+                                        <p class="text-sm text-gray-600">
+                                            <strong>Cover Letter:</strong> {{ application.cover_letter[:100] }}...
+                                        </p>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="flex flex-col space-y-2 ml-4">
+                                    <a href="{{ url_for('jobs.job_detail', job_id=application.job.id) }}" 
+                                       class="btn-secondary text-xs text-center">
+                                        <i class="fas fa-eye mr-1"></i>View
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-600">No applications submitted yet.</p>
+                    <a href="{{ url_for('jobs.list_jobs') }}" class="btn-primary mt-4">Browse Available Jobs</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Right Column - Job Recommendations -->
+<div class="lg:col-span-1">
+    <div class="bg-white rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Recommended Jobs</h2>
+        </div>
+        <div class="p-6">
+            {% if recommended_jobs %}
+                <div class="space-y-4">
+                    {% for job in recommended_jobs %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">
+                                <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" 
+                                   class="text-blue-600 hover:text-blue-800">{{ job.title }}</a>
+                            </h3>
+                            <p class="text-sm text-gray-600 mb-2">
+                                <i class="fas fa-building mr-1"></i>{{ job.business_name }}
+                            </p>
+                            <p class="text-sm text-gray-500">
+                                <i class="fas fa-map-marker-alt mr-1"></i>{{ job.location }}
+                            </p>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-600">No recommendations available.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

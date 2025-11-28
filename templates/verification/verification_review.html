@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Verification Review - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Verification Review</h1>
+                    <p class="mt-1 text-sm text-gray-500">Review and manage user verifications</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-lg shadow-sm mb-6">
+            <nav class="flex">
+                <a href="?status=pending" 
+                   class="px-6 py-4 text-sm font-medium {{ 'text-blue-600 border-b-2 border-blue-600' if status == 'pending' else 'text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Pending
+                    {% if pending_count %}
+                    <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                        {{ pending_count }}
+                    </span>
+                    {% endif %}
+                </a>
+                <a href="?status=verified" 
+                   class="px-6 py-4 text-sm font-medium {{ 'text-blue-600 border-b-2 border-blue-600' if status == 'verified' else 'text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Verified
+                </a>
+                <a href="?status=rejected" 
+                   class="px-6 py-4 text-sm font-medium {{ 'text-blue-600 border-b-2 border-blue-600' if status == 'rejected' else 'text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                    Rejected
+                </a>
+            </nav>
+        </div>
+
+        <!-- Verification List -->
+        {% if verifications %}
+            <div class="space-y-6">
+                {% for verification in verifications %}
+                    <div class="bg-white rounded-lg shadow-sm">
+                        <div class="p-6">
+                            <div class="flex items-center justify-between">
+                                <!-- User Info -->
+                                <div class="flex items-center space-x-4">
+                                    <div class="flex-shrink-0">
+                                        {% if verification.u.avatar_url %}
+                                            <img class="h-12 w-12 rounded-full" src="{{ verification.u.avatar_url }}" alt="">
+                                        {% else %}
+                                            <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                                <i class="fas fa-user text-gray-400"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-medium text-gray-900">
+                                            {{ verification.u.first_name }} {{ verification.u.last_name }}
+                                        </h3>
+                                        <p class="text-sm text-gray-500">
+                                            {{ verification.user_type|title }} Account
+                                            <span class="mx-2">&middot;</span>
+                                            Submitted {{ verification.v.created_at|datetime }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Status Badge -->
+                                <div>
+                                    {% if verification.v.status == 'pending' %}
+                                        <span class="px-3 py-1 text-sm font-medium rounded-full bg-yellow-100 text-yellow-800">
+                                            Pending Review
+                                        </span>
+                                    {% elif verification.v.status == 'verified' %}
+                                        <span class="px-3 py-1 text-sm font-medium rounded-full bg-green-100 text-green-800">
+                                            Verified
+                                        </span>
+                                    {% else %}
+                                        <span class="px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800">
+                                            Rejected
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Submitted Documents -->
+                            <div class="mt-6">
+                                <h4 class="text-sm font-medium text-gray-900">Submitted Documents</h4>
+                                <div class="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    {% for doc in verification.documents %}
+                                        <div class="relative group bg-white rounded-lg border border-gray-200 p-4 hover:shadow-sm transition-shadow">
+                                            <div class="flex items-center space-x-4">
+                                                {% if doc.filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')) %}
+                                                    <i class="fas fa-image text-gray-400 text-2xl"></i>
+                                                {% else %}
+                                                    <i class="fas fa-file-pdf text-gray-400 text-2xl"></i>
+                                                {% endif %}
+                                                <div class="min-w-0 flex-1">
+                                                    <p class="text-sm font-medium text-gray-900">
+                                                        {{ doc.document_type|replace('_', ' ')|title }}
+                                                    </p>
+                                                    <p class="text-sm text-gray-500">
+                                                        Uploaded {{ doc.uploaded_at|datetime }}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <a href="{{ url_for('verification.view_document', doc_id=doc.id) }}" 
+                                                       target="_blank"
+                                                       class="text-blue-600 hover:text-blue-800">
+                                                        <i class="fas fa-external-link-alt"></i>
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            {% if verification.v.status == 'pending' %}
+                                <!-- Review Actions -->
+                                <div class="mt-6 border-t border-gray-200 pt-6">
+                                    <form action="{{ url_for('verification.review_verification', verification_id=verification.v.id) }}" method="POST">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <div class="flex items-start space-x-4">
+                                            <div class="min-w-0 flex-1">
+                                                <label for="reviewer_notes_{{ verification.v.id }}" class="sr-only">
+                                                    Add notes
+                                                </label>
+                                                <textarea id="reviewer_notes_{{ verification.v.id }}" 
+                                                          name="reviewer_notes" 
+                                                          rows="3"
+                                                          class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                                                          placeholder="Add review notes (required for rejection)"></textarea>
+                                            </div>
+                                            <div class="flex flex-shrink-0">
+                                                <button type="submit" 
+                                                        name="action" 
+                                                        value="approve"
+                                                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                                    Approve
+                                                </button>
+                                                <button type="submit"
+                                                        name="action"
+                                                        value="reject"
+                                                        class="ml-3 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                                    Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            {% elif verification.v.reviewer_notes %}
+                                <!-- Reviewer Notes -->
+                                <div class="mt-6 border-t border-gray-200 pt-6">
+                                    <h4 class="text-sm font-medium text-gray-900">Review Notes</h4>
+                                    <div class="mt-2 text-sm text-gray-500">
+                                        {{ verification.v.reviewer_notes }}
+                                    </div>
+                                    <div class="mt-2 text-xs text-gray-400">
+                                        Reviewed by {{ verification.v.reviewed_by }} on {{ verification.v.reviewed_at|datetime }}
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if pagination.pages > 1 %}
+                <div class="mt-6">
+                    <nav class="flex items-center justify-between" aria-label="Pagination">
+                        <div class="hidden sm:block">
+                            <p class="text-sm text-gray-700">
+                                Showing <span class="font-medium">{{ pagination.start }}</span> to 
+                                <span class="font-medium">{{ pagination.end }}</span> of 
+                                <span class="font-medium">{{ pagination.total }}</span> results
+                            </p>
+                        </div>
+                        <div class="flex justify-end flex-1">
+                            <div class="flex space-x-3">
+                                {% if pagination.has_prev %}
+                                    <a href="?page={{ pagination.prev_num }}&status={{ status }}" 
+                                       class="btn-secondary">Previous</a>
+                                {% endif %}
+                                {% if pagination.has_next %}
+                                    <a href="?page={{ pagination.next_num }}&status={{ status }}" 
+                                       class="btn-secondary">Next</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+                <i class="fas fa-inbox text-gray-400 text-5xl mb-4"></i>
+                <h3 class="text-lg font-medium text-gray-900">No verifications to review</h3>
+                <p class="mt-1 text-gray-500">
+                    {% if status == 'pending' %}
+                        There are no pending verification requests at the moment.
+                    {% elif status == 'verified' %}
+                        No verifications have been approved yet.
+                    {% else %}
+                        No verifications have been rejected yet.
+                    {% endif %}
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Add confirmation for reject action
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const action = e.submitter.value;
+        const notes = this.querySelector('textarea[name="reviewer_notes"]').value.trim();
+        
+        if (action === 'reject' && !notes) {
+            e.preventDefault();
+            alert('Please provide rejection notes.');
+            return;
+        }
+        
+        if (action === 'reject') {
+            if (!confirm('Are you sure you want to reject this verification?')) {
+                e.preventDefault();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

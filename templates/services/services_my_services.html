@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}My Services - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">My Services</h1>
+                    <p class="mt-2 text-gray-600">Manage your service offerings</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('services.create_service') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Add New Service
+                    </a>
+                    <a href="{{ url_for('businesses.dashboard') }}" class="btn-secondary">
+                        <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <!-- Total Services -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-concierge-bell text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Services</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_services }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Active Services -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <i class="fas fa-check-circle text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Active Services</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.active_services }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Reviews -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <i class="fas fa-star text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Reviews</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_reviews }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Average Rating -->
+            <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100 text-blue-600">
+                        <i class="fas fa-chart-line text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Avg Rating</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ "{:.1f}".format(stats.average_rating or 0) }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4 md:mb-0">Filter Services</h2>
+                <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-4">
+                    <select id="category-filter" class="form-select">
+                        <option value="">All Categories</option>
+                        <option value="home_services">Home Services</option>
+                        <option value="professional_services">Professional Services</option>
+                        <option value="personal_services">Personal Services</option>
+                        <option value="automotive">Automotive</option>
+                        <option value="health_wellness">Health & Wellness</option>
+                        <option value="education_training">Education & Training</option>
+                        <option value="creative_media">Creative & Media</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <select id="status-filter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="pending">Pending Review</option>
+                    </select>
+                    <button onclick="clearFilters()" class="btn-secondary">
+                        <i class="fas fa-eraser mr-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Services Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="services-grid">
+            {% if services %}
+                {% for service in services %}
+                    <div class="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow service-item"
+                         data-category="{{ service.category }}" 
+                         data-status="{{ 'active' if service.is_active else 'inactive' if not service.is_verified else 'pending' }}">
+                        
+                        <!-- Service Header -->
+                        <div class="bg-gradient-to-r from-purple-500 to-purple-600 p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-concierge-bell text-white text-lg"></i>
+                                    <h3 class="text-white font-semibold text-lg">{{ service.title }}</h3>
+                                </div>
+                                <div class="flex space-x-1">
+                                    <span class="badge badge-{{ 'success' if service.is_active else 'warning' if not service.is_verified else 'info' }}">
+                                        {{ 'Active' if service.is_active else 'Inactive' if not service.is_verified else 'Pending' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Service Content -->
+                        <div class="p-6">
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">{{ service.category.replace('_', ' ').title() }}</span>
+                                    <span class="text-lg font-bold text-green-600">
+                                        ₱{{ "{:,.2f}".format(service.price) }}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-gray-700 text-sm line-clamp-3">
+                                    {{ service.description }}
+                                </p>
+                                
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <span><i class="fas fa-map-marker-alt mr-1"></i>{{ service.location }}</span>
+                                    <span>{{ service.price_type.replace('_', ' ').title() }}</span>
+                                </div>
+                                
+                                {% if service.duration %}
+                                <div class="text-sm text-gray-600">
+                                    <i class="fas fa-clock mr-1"></i>{{ service.duration }}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Service Stats -->
+                                <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-gray-100">
+                                    <div class="text-center">
+                                        <p class="text-lg font-semibold text-gray-900">{{ service.reviews_count or 0 }}</p>
+                                        <p class="text-xs text-gray-500">Reviews</p>
+                                        <div class="flex justify-center text-yellow-400 text-xs mt-1">
+                                            {% for i in range(5) %}
+                                                <i class="fas fa-star {{ 'text-yellow-400' if i < service.average_rating else 'text-gray-300' }}"></i>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-lg font-semibold text-gray-900">{{ service.bookings_count or 0 }}</p>
+                                        <p class="text-xs text-gray-500">Bookings</p>
+                                        <div class="text-xs text-gray-400 mt-1">
+                                            {% if service.last_booking %}
+                                                Last: {{ service.last_booking }}
+                                            {% else %}
+                                                No bookings yet
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="flex space-x-2 mt-4 pt-4 border-t border-gray-100">
+                                <a href="{{ url_for('services.edit_service', service_id=service.id) }}" 
+                                   class="flex-1 btn-secondary text-center text-sm">
+                                    <i class="fas fa-edit mr-1"></i>Edit
+                                </a>
+                                <a href="{{ url_for('services.service_detail', service_id=service.id) }}" 
+                                   class="flex-1 btn-primary text-center text-sm">
+                                    <i class="fas fa-eye mr-1"></i>View
+                                </a>
+                                <button onclick="toggleServiceStatus('{{ service.id }}', {{ service.is_active }})" 
+                                        class="flex-1 btn-{{ 'danger' if service.is_active else 'success' }} text-center text-sm">
+                                    <i class="fas fa-{{ 'pause' if service.is_active else 'play' }} mr-1"></i>
+                                    {{ 'Pause' if service.is_active else 'Activate' }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-span-full p-12 text-center">
+                    <i class="fas fa-concierge-bell text-4xl text-gray-300 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Services Yet</h3>
+                    <p class="text-gray-600 mb-4">You haven't created any service offerings yet.</p>
+                    <a href="{{ url_for('services.create_service') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Add Your First Service
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter functionality
+    document.getElementById('category-filter').addEventListener('change', filterServices);
+    document.getElementById('status-filter').addEventListener('change', filterServices);
+
+    function filterServices() {
+        const categoryFilter = document.getElementById('category-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        
+        const services = document.querySelectorAll('.service-item');
+        
+        services.forEach(service => {
+            let show = true;
+            
+            // Category filter
+            if (categoryFilter && service.dataset.category !== categoryFilter) {
+                show = false;
+            }
+            
+            // Status filter
+            if (statusFilter && service.dataset.status !== statusFilter) {
+                show = false;
+            }
+            
+            service.style.display = show ? 'block' : 'none';
+        });
+    }
+
+    function clearFilters() {
+        document.getElementById('category-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        filterServices();
+    }
+
+    async function toggleServiceStatus(serviceId, isActive) {
+        const action = isActive ? 'pause' : 'activate';
+        if (!confirm(`Are you sure you want to ${action} this service?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/services/${serviceId}/toggle-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                showAlert('success', result.message);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showAlert('error', result.error || 'An error occurred');
+            }
+        } catch (error) {
+            showAlert('error', 'Network error. Please try again.');
+        }
+    }
+
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
+            type === 'error' ? 'bg-red-100 border border-red-200 text-red-800' :
+            'bg-blue-100 border border-blue-200 text-blue-800'
+        }`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

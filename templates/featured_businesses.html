@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Featured Businesses - Catanduanes Connect Platform{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-4">
+                <h1 class="text-4xl font-bold text-gray-900">
+                    <i class="fas fa-star text-yellow-400 mr-3"></i>Featured Businesses
+                </h1>
+                <span class="bg-yellow-100 text-yellow-800 px-4 py-2 rounded-full text-sm font-semibold">
+                    {{ total_featured }} Featured
+                </span>
+            </div>
+            <p class="text-xl text-gray-600">
+                Discover our hand-picked featured businesses offering exceptional products and services in Catanduanes
+            </p>
+        </div>
+
+        <!-- Featured Businesses Grid -->
+        {% if businesses %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for business in businesses %}
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                        <!-- Business Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-4 relative">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-white truncate">{{ business.name }}</h3>
+                                    <p class="text-blue-100 text-sm mt-1">
+                                        <i class="fas fa-folder-open mr-2"></i>{{ business.category | title }}
+                                    </p>
+                                </div>
+                                <div class="bg-yellow-400 rounded-full p-2 shadow-lg">
+                                    <i class="fas fa-star text-yellow-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Business Body -->
+                        <div class="p-6">
+                            <!-- Rating Section -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="flex text-yellow-400">
+                                            {% for i in range(5) %}
+                                                {% if i < business.rating | int %}
+                                                    <i class="fas fa-star"></i>
+                                                {% elif i < business.rating %}
+                                                    <i class="fas fa-star-half-alt"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <span class="text-sm font-semibold text-gray-700">{{ "%.1f"|format(business.rating) }}</span>
+                                    </div>
+                                    {% if business.is_verified %}
+                                        <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold flex items-center">
+                                            <i class="fas fa-check-circle mr-1"></i>Verified
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                {% if business.review_count %}
+                                    <p class="text-sm text-gray-500 mt-2">{{ business.review_count }} reviews</p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Description -->
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {{ business.description or 'No description provided' }}
+                            </p>
+
+                            <!-- Business Info -->
+                            <div class="space-y-2 mb-4 text-sm">
+                                {% if business.address %}
+                                    <div class="flex items-start text-gray-600">
+                                        <i class="fas fa-map-marker-alt mr-3 mt-0.5 text-blue-500 flex-shrink-0"></i>
+                                        <span class="line-clamp-2">{{ business.address }}</span>
+                                    </div>
+                                {% endif %}
+                                {% if business.phone %}
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-phone mr-3 text-blue-500 flex-shrink-0"></i>
+                                        <a href="tel:{{ business.phone }}" class="hover:text-blue-500 transition-colors">{{ business.phone }}</a>
+                                    </div>
+                                {% endif %}
+                                {% if business.email %}
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-envelope mr-3 text-blue-500 flex-shrink-0"></i>
+                                        <a href="mailto:{{ business.email }}" class="hover:text-blue-500 transition-colors truncate">{{ business.email }}</a>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2 pt-4 border-t border-gray-200">
+                                <a href="{{ url_for('businesses.business_detail', business_id=business.id) }}" 
+                                   class="flex-1 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors text-center font-semibold">
+                                    <i class="fas fa-eye mr-2"></i>View Details
+                                </a>
+                                {% if business.website %}
+                                    <a href="{{ business.website }}" target="_blank" rel="noopener noreferrer"
+                                       class="flex-1 bg-indigo-500 text-white px-4 py-2 rounded-md hover:bg-indigo-600 transition-colors text-center font-semibold">
+                                        <i class="fas fa-globe mr-2"></i>Website
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow-lg p-12 text-center">
+                <i class="fas fa-star text-yellow-300 text-6xl mb-4 inline-block"></i>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No Featured Businesses Yet</h3>
+                <p class="text-gray-600 mb-6">
+                    Featured businesses are coming soon. Check back later for exclusive business highlights!
+                </p>
+                <a href="{{ url_for('businesses.list_businesses') }}" class="inline-block bg-blue-500 text-white px-6 py-3 rounded-md hover:bg-blue-600 transition-colors font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i>Browse All Businesses
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Back to All Businesses -->
+        <div class="mt-12 text-center">
+            <a href="{{ url_for('businesses.list_businesses') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Back to All Businesses
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}User Chat{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
+        <h1 class="text-2xl font-bold mb-4">User Chat</h1>
+        <p class="mb-4 text-gray-600">Message business owners or service clients directly.</p>
+        <div id="user-chat-messages" class="h-96 overflow-y-auto mb-4 p-4 border rounded bg-gray-50"></div>
+        <form id="user-chat-form" class="flex gap-2">
+            <input type="text" id="user-chat-input" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Type your message..." required>
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Send</button>
+        </form>
+    </div>
+</div>
+<script>
+document.getElementById('user-chat-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const input = document.getElementById('user-chat-input');
+    const message = input.value.trim();
+    if (!message) return;
+    addUserChatMessage(message, 'user');
+    input.value = '';
+    // TODO: Send message to backend for user-to-user chat
+});
+function addUserChatMessage(text, sender) {
+    const chatMessages = document.getElementById('user-chat-messages');
+    const bubble = document.createElement('div');
+    bubble.className = 'mb-4 flex ' + (sender === 'user' ? 'justify-end' : 'justify-start');
+    bubble.innerHTML = `<div class="${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'} p-3 rounded-lg inline-block">${text}</div>`;
+    chatMessages.appendChild(bubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+</script>
+{% endblock %}

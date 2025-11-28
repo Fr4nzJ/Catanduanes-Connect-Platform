@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('admin.dashboard') }}" class="text-white hover:text-red-100 transition-colors duration-300">
+                        <i class="fas fa-arrow-left text-xl"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-4xl font-bold text-white flex items-center space-x-3">
+                            <i class="fas fa-users-cog"></i>
+                            <span>User Management</span>
+                        </h1>
+                        <p class="mt-2 text-red-100">Manage all platform users and their accounts</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="exportUsers()" class="bg-white text-red-600 hover:bg-red-50 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-download mr-2"></i>Export Users
+                    </button>
+                    <button onclick="showBulkActions()" class="bg-red-500 text-white hover:bg-red-600 px-6 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                        <i class="fas fa-tasks mr-2"></i>Bulk Actions
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 mb-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-6 flex items-center space-x-2">
+                <i class="fas fa-filter text-red-600"></i>
+                <span>Filter Users</span>
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="role-filter" class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                    <select id="role-filter" class="form-select">
+                        <option value="">All Roles</option>
+                        <option value="job_seeker">Job Seekers</option>
+                        <option value="business_owner">Business Owners</option>
+                        <option value="service_client">Service Providers</option>
+                        <option value="admin">Administrators</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="status-filter" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select id="status-filter" class="form-select">
+                        <option value="">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                        <option value="pending">Pending</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="verification-filter" class="block text-sm font-medium text-gray-700 mb-2">Verification</label>
+                    <select id="verification-filter" class="form-select">
+                        <option value="">All</option>
+                        <option value="verified">Verified</option>
+                        <option value="pending">Pending</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="not_submitted">Not Submitted</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <button onclick="clearFilters()" class="btn-secondary w-full">
+                        <i class="fas fa-eraser mr-2"></i>Clear
+                    </button>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <div class="flex items-center space-x-4">
+                    <div class="flex-1">
+                        <input type="text" id="search-input" placeholder="Search users by name, email, or phone..." 
+                               class="form-input" onkeyup="searchUsers()">
+                    </div>
+                    <button onclick="searchUsers()" class="btn-primary">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="px-8 py-6 border-b border-gray-200 bg-gradient-to-r from-red-50 to-red-100">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                        <i class="fas fa-table text-red-600"></i>
+                        <span>All Users</span>
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Sort by:</span>
+                        <select id="sort-users" class="form-select text-sm" onchange="sortUsers()">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="name">Name (A-Z)</option>
+                            <option value="role">Role</option>
+                            <option value="status">Status</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200" id="users-table">
+                    <thead class="bg-gradient-to-r from-red-600 to-red-700 text-white">
+                        <tr>
+                            <th class="px-6 py-3 text-left">
+                                <input type="checkbox" id="select-all" onchange="toggleSelectAll()" class="rounded">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">User</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Verification</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Joined</th>
+                            <th class="px-6 py-3 text-left text-xs font-bold uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200" id="users-tbody">
+                        {% if users %}
+                            {% for user in users %}
+                                <tr class="user-row hover:bg-red-50 transition-colors duration-300" data-role="{{ user.role }}" data-status="{{ user.status }}" data-verification="{{ user.verification_status or 'not_submitted' }}">
+                                    <td class="px-6 py-4">
+                                        <input type="checkbox" class="user-checkbox" value="{{ user.id }}" onchange="updateBulkActions()">
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mr-4 shadow-md">
+                                                <i class="fas fa-user text-white font-bold"></i>
+                                            </div>
+                                            <div>
+                                                <div class="text-sm font-medium text-gray-900">{{ user.username }}</div>
+                                                <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                                {% if user.phone %}
+                                                    <div class="text-xs text-gray-400">{{ user.phone }}</div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="badge badge-{{ 'info' if user.role == 'job_seeker' else 'success' if user.role == 'business_owner' else 'warning' if user.role == 'service_client' else 'danger' }}">
+                                            {{ user.role.replace('_', ' ').title() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span class="badge badge-{{ 'success' if user.status == 'active' else 'warning' if user.status == 'pending' else 'danger' if user.status == 'suspended' else 'secondary' }}">
+                                            {{ user.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        {% if user.verification_status %}
+                                            <span class="badge badge-{{ 'success' if user.verification_status == 'verified' else 'warning' if user.verification_status == 'pending' else 'danger' }}">
+                                                {{ user.verification_status.title() }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Not Submitted</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">{{ user.created_at }}</td>
+                                    <td class="px-6 py-4">
+                                        <div class="flex space-x-3">
+                                            <button onclick="viewUser('{{ user.id }}')" class="text-blue-600 hover:text-blue-800 hover:scale-125 transition-transform duration-300" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button onclick="editUser('{{ user.id }}')" class="text-green-600 hover:text-green-800 hover:scale-125 transition-transform duration-300" title="Edit User">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button onclick="toggleUserStatus('{{ user.id }}', '{{ user.status }}')" class="text-yellow-600 hover:text-yellow-800 hover:scale-125 transition-transform duration-300" title="Toggle Status">
+                                                <i class="fas fa-{{ 'pause' if user.status == 'active' else 'play' }}"></i>
+                                            </button>
+                                            <button onclick="deleteUser('{{ user.id }}')" class="text-red-600 hover:text-red-800 hover:scale-125 transition-transform duration-300" title="Delete User">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="px-6 py-12 text-center">
+                                    <i class="fas fa-users text-4xl text-gray-300 mb-4"></i>
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2">No Users Found</h3>
+                                    <p class="text-gray-600">No users match your current filters.</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if users and total_pages > 1 %}
+            <div class="px-8 py-6 border-t border-gray-200 bg-gradient-to-r from-red-50 to-red-100">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm font-semibold text-gray-700">
+                        Showing {{ (current_page - 1) * per_page + 1 }} to {{ min(current_page * per_page, total_users) }} of {{ total_users }} users
+                    </div>
+                    <div class="flex space-x-2">
+                        {% if current_page > 1 %}
+                            <button onclick="changePage({{ current_page - 1 }})" class="bg-white text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                                <i class="fas fa-chevron-left mr-1"></i>Previous
+                            </button>
+                        {% endif %}
+                        
+                        <span class="flex items-center space-x-1">
+                            {% for page in range(1, total_pages + 1) %}
+                                {% if page == current_page %}
+                                    <span class="px-3 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg text-sm font-bold shadow-lg">{{ page }}</span>
+                                {% elif page == 1 or page == total_pages or (page >= current_page - 2 and page <= current_page + 2) %}
+                                    <button onclick="changePage({{ page }})" class="px-3 py-2 text-gray-600 hover:text-red-600 hover:bg-red-100 rounded-lg text-sm font-medium transition-all duration-300">
+                                        {{ page }}
+                                    </button>
+                                {% elif page == current_page - 3 or page == current_page + 3 %}
+                                    <span class="px-3 py-2 text-gray-400 text-sm">...</span>
+                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        
+                        {% if current_page < total_pages %}
+                            <button onclick="changePage({{ current_page + 1 }})" class="bg-white text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg font-semibold transition-all duration-300 hover:shadow-lg">
+                                Next<i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div id="user-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900">User Details</h3>
+                    <button onclick="closeUserModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div id="user-modal-content">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div id="bulk-actions-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900">Bulk Actions</h3>
+                    <button onclick="closeBulkActionsModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-gray-600">Select an action to perform on <span id="selected-count">0</span> selected users:</p>
+                    
+                    <div class="space-y-2">
+                        <button onclick="bulkAction('activate')" class="w-full btn-success text-left">
+                            <i class="fas fa-play mr-2"></i>Activate Selected Users
+                        </button>
+                        <button onclick="bulkAction('deactivate')" class="w-full btn-warning text-left">
+                            <i class="fas fa-pause mr-2"></i>Deactivate Selected Users
+                        </button>
+                        <button onclick="bulkAction('suspend')" class="w-full btn-danger text-left">
+                            <i class="fas fa-ban mr-2"></i>Suspend Selected Users
+                        </button>
+                        <button onclick="bulkAction('delete')" class="w-full btn-danger text-left">
+                            <i class="fas fa-trash mr-2"></i>Delete Selected Users
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .user-row:hover {
+        background-color: #f9fafb;
+    }
+</style>
+
+<script>
+    let selectedUsers = [];
+    let currentFilters = {};
+    
+    // Filter functionality
+    function applyFilters() {
+        const roleFilter = document.getElementById('role-filter').value;
+        const statusFilter = document.getElementById('status-filter').value;
+        const verificationFilter = document.getElementById('verification-filter').value;
+        
+        currentFilters = {
+            role: roleFilter,
+            status: statusFilter,
+            verification: verificationFilter
+        };
+        
+        const userRows = document.querySelectorAll('.user-row');
+        
+        userRows.forEach(row => {
+            let show = true;
+            
+            // Role filter
+            if (roleFilter && row.dataset.role !== roleFilter) {
+                show = false;
+            }
+            
+            // Status filter
+            if (statusFilter && row.dataset.status !== statusFilter) {
+                show = false;
+            }
+            
+            // Verification filter
+            if (verificationFilter && row.dataset.verification !== verificationFilter) {
+                show = false;
+            }
+            
+            row.style.display = show ? 'table-row' : 'none';
+        });
+        
+        updateVisibleCount();
+    }
+    
+    function clearFilters() {
+        document.getElementById('role-filter').value = '';
+        document.getElementById('status-filter').value = '';
+        document.getElementById('verification-filter').value = '';
+        document.getElementById('search-input').value = '';
+        
+        currentFilters = {};
+        
+        const userRows = document.querySelectorAll('.user-row');
+        userRows.forEach(row => {
+            row.style.display = 'table-row';
+        });
+        
+        updateVisibleCount();
+    }
+    
+    function searchUsers() {
+        const searchTerm = document.getElementById('search-input').value.toLowerCase();
+        const userRows = document.querySelectorAll('.user-row');
+        
+        userRows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const matchesSearch = !searchTerm || text.includes(searchTerm);
+            
+            // Also check if it matches current filters
+            let matchesFilters = true;
+            if (currentFilters.role && row.dataset.role !== currentFilters.role) {
+                matchesFilters = false;
+            }
+            if (currentFilters.status && row.dataset.status !== currentFilters.status) {
+                matchesFilters = false;
+            }
+            if (currentFilters.verification && row.dataset.verification !== currentFilters.verification) {
+                matchesFilters = false;
+            }
+            
+            row.style.display = (matchesSearch && matchesFilters) ? 'table-row' : 'none';
+        });
+        
+        updateVisibleCount();
+    }
+    
+    function updateVisibleCount() {
+        const visibleRows = document.querySelectorAll('.user-row[style*="table-row"], .user-row:not([style*="none"])').length;
+        console.log(`Showing ${visibleRows} users`);
+    }
+    
+    // Selection functionality
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const userCheckboxes = document.querySelectorAll('.user-checkbox');
+        
+        userCheckboxes.forEach(checkbox => {
+            if (checkbox.closest('tr').style.display !== 'none') {
+                checkbox.checked = selectAllCheckbox.checked;
+            }
+        });
+        
+        updateSelectedUsers();
+    }
+    
+    function updateSelectedUsers() {
+        selectedUsers = [];
+        const checkedBoxes = document.querySelectorAll('.user-checkbox:checked');
+        
+        checkedBoxes.forEach(checkbox => {
+            selectedUsers.push(checkbox.value);
+        });
+        
+        updateBulkActions();
+    }
+    
+    function updateBulkActions() {
+        const selectedCount = selectedUsers.length;
+        document.getElementById('selected-count').textContent = selectedCount;
+        
+        // Show/hide bulk actions button based on selection
+        const bulkActionsBtn = document.querySelector('[onclick="showBulkActions()"]');
+        if (selectedCount > 0) {
+            bulkActionsBtn.style.display = 'inline-block';
+        } else {
+            bulkActionsBtn.style.display = 'none';
+        }
+    }
+    
+    // User actions
+    function viewUser(userId) {
+        // This would typically load user details via AJAX
+        document.getElementById('user-modal-content').innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-spinner fa-spin text-2xl text-blue-600"></i>
+                <p class="mt-2 text-gray-600">Loading user details...</p>
+            </div>
+        `;
+        
+        document.getElementById('user-modal').classList.remove('hidden');
+        
+        // Simulate loading user data
+        setTimeout(() => {
+            document.getElementById('user-modal-content').innerHTML = `
+                <div class="space-y-6">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-blue-600 text-2xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold text-gray-900">User ${userId}</h4>
+                            <p class="text-gray-600">user${userId}@example.com</p>
+                            <span class="badge badge-info">Job Seeker</span>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h5 class="font-semibold text-gray-900 mb-2">Account Information</h5>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Status:</span>
+                                    <span class="badge badge-success">Active</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Verification:</span>
+                                    <span class="badge badge-success">Verified</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Joined:</span>
+                                    <span>2024-01-15</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Last Login:</span>
+                                    <span>2024-01-20 10:30 AM</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h5 class="font-semibold text-gray-900 mb-2">Activity Summary</h5>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Applications:</span>
+                                    <span>5</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Reviews:</span>
+                                    <span>2</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">Profile Views:</span>
+                                    <span>15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                        <button onclick="closeUserModal()" class="btn-secondary">Close</button>
+                        <button onclick="editUser('${userId}')" class="btn-primary">Edit User</button>
+                    </div>
+                </div>
+            `;
+        }, 1000);
+    }
+    
+    function editUser(userId) {
+        alert('Edit user functionality would be implemented here');
+    }
+    
+    function toggleUserStatus(userId, currentStatus) {
+        const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+        if (confirm(`Are you sure you want to ${newStatus} this user?`)) {
+            // This would typically make an AJAX call
+            alert(`User ${userId} status changed to ${newStatus}`);
+        }
+    }
+    
+    function deleteUser(userId) {
+        if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+            // This would typically make an AJAX call
+            alert(`User ${userId} would be deleted`);
+        }
+    }
+    
+    // Modal functions
+    function closeUserModal() {
+        document.getElementById('user-modal').classList.add('hidden');
+    }
+    
+    function showBulkActions() {
+        if (selectedUsers.length === 0) {
+            alert('Please select at least one user');
+            return;
+        }
+        document.getElementById('bulk-actions-modal').classList.remove('hidden');
+    }
+    
+    function closeBulkActionsModal() {
+        document.getElementById('bulk-actions-modal').classList.add('hidden');
+    }
+    
+    function bulkAction(action) {
+        if (selectedUsers.length === 0) {
+            alert('No users selected');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to ${action} ${selectedUsers.length} selected users?`)) {
+            return;
+        }
+        
+        // This would typically make an AJAX call
+        alert(`Performing ${action} on ${selectedUsers.length} users`);
+        closeBulkActionsModal();
+    }
+    
+    function exportUsers() {
+        alert('Export users functionality would be implemented here');
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add event listeners for filters
+        document.getElementById('role-filter').addEventListener('change', applyFilters);
+        document.getElementById('status-filter').addEventListener('change', applyFilters);
+        document.getElementById('verification-filter').addEventListener('change', applyFilters);
+        
+        // Add event listeners for checkboxes
+        const userCheckboxes = document.querySelectorAll('.user-checkbox');
+        userCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedUsers);
+        });
+    });
+</script>
+{% endblock %}

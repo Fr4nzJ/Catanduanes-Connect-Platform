@@ -1,0 +1,409 @@
+{% extends "base.html" %}
+
+{% block title %}{{ job.title }} - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center space-x-4">
+                <a href="{{ url_for('jobs.list_jobs') }}" class="text-blue-600 hover:text-blue-800">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ job.title }}</h1>
+                    <p class="mt-1 text-gray-600">
+                        <a href="{{ url_for('businesses.business_detail', business_id=job.business_id) }}" 
+                           class="text-blue-600 hover:text-blue-800">{{ job.business_name }}</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Job Details -->
+            <div class="lg:col-span-2">
+                <!-- Job Info Card -->
+                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        <div class="text-center">
+                            <i class="fas fa-clock text-blue-600 text-xl mb-2"></i>
+                            <p class="text-sm text-gray-600">Type</p>
+                            <p class="font-semibold text-gray-900">{{ job.type.replace('_', ' ').title() }}</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-map-marker-alt text-blue-600 text-xl mb-2"></i>
+                            <p class="text-sm text-gray-600">Location</p>
+                            <p class="font-semibold text-gray-900">{{ job.location }}</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-calendar text-blue-600 text-xl mb-2"></i>
+                            <p class="text-sm text-gray-600">Posted</p>
+                            <p class="font-semibold text-gray-900">{{ job.created_at }}</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-users text-blue-600 text-xl mb-2"></i>
+                            <p class="text-sm text-gray-600">Applications</p>
+                            <p class="font-semibold text-gray-900">{{ job.applications_count or 0 }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Salary Info -->
+                    {% if job.salary_min or job.salary_max %}
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-money-bill-wave text-green-600"></i>
+                            <span class="font-semibold text-green-800">
+                                {% if job.salary_min and job.salary_max %}
+                                    ₱{{ "{:,.0f}".format(job.salary_min) }} - ₱{{ "{:,.0f}".format(job.salary_max) }} {{ job.currency }}
+                                {% elif job.salary_min %}
+                                    Starting from ₱{{ "{:,.0f}".format(job.salary_min) }} {{ job.currency }}
+                                {% elif job.salary_max %}
+                                    Up to ₱{{ "{:,.0f}".format(job.salary_max) }} {{ job.currency }}
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Job Description -->
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
+                        <div class="prose max-w-none text-gray-700">
+                            <p>{{ job.description }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Requirements -->
+                    {% if job.requirements %}
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
+                        <div class="prose max-w-none text-gray-700">
+                            <p>{{ job.requirements }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Benefits -->
+                    {% if job.benefits %}
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Benefits</h2>
+                        <div class="prose max-w-none text-gray-700">
+                            <p>{{ job.benefits }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Application Form -->
+                {% if current_user.is_authenticated and current_user.role == 'job_seeker' and not has_applied %}
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Apply for this Position</h2>
+                    
+                    <form id="application-form" method="POST" action="{{ url_for('jobs.apply_job', job_id=job.id) }}">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="cover_letter" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Cover Letter *
+                                </label>
+                                <textarea id="cover_letter" name="cover_letter" rows="6" 
+                                          class="form-textarea" 
+                                          placeholder="Explain why you're a good fit for this position..."></textarea>
+                            </div>
+                            
+                            <div>
+                                <label for="resume" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Resume/CV *
+                                </label>
+                                <div class="file-upload-area" id="resume-upload-area">
+                                    <div class="text-center">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                        <p class="text-gray-600 mb-2">Click to upload your resume</p>
+                                        <p class="text-sm text-gray-500">PDF, DOC, or DOCX files only</p>
+                                    </div>
+                                    <input type="file" id="resume-file" name="resume" class="hidden" accept=".pdf,.doc,.docx">
+                                </div>
+                                <div id="resume-preview" class="mt-4 hidden">
+                                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-file-pdf text-red-500 mr-3"></i>
+                                            <span id="resume-file-name" class="text-sm text-gray-700"></span>
+                                        </div>
+                                        <button type="button" onclick="removeResume()" class="text-red-500 hover:text-red-700">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-4 pt-4 border-t">
+                                <button type="button" class="btn-secondary" onclick="clearForm()">
+                                    <i class="fas fa-eraser mr-2"></i>Clear
+                                </button>
+                                <button type="submit" class="btn-primary" id="apply-button">
+                                    <i class="fas fa-paper-plane mr-2"></i>Apply Now
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                {% elif current_user.is_authenticated and current_user.role == 'job_seeker' and has_applied %}
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-check-circle text-blue-600 text-xl"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-blue-800">Application Submitted</h3>
+                            <p class="text-blue-700">You have already applied for this position.</p>
+                        </div>
+                    </div>
+                </div>
+                {% elif current_user.is_authenticated and current_user.role != 'job_seeker' %}
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-info-circle text-yellow-600 text-xl"></i>
+                        <div>
+                            <h3 class="text-lg font-semibold text-yellow-800">Business Account</h3>
+                            <p class="text-yellow-700">Only job seekers can apply for positions.</p>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <div class="text-center">
+                        <i class="fas fa-user text-gray-400 text-3xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Login to Apply</h3>
+                        <p class="text-gray-600 mb-4">Please login as a job seeker to apply for this position.</p>
+                        <a href="{{ url_for('auth.login') }}" class="btn-primary">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+                <!-- Business Info -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">About the Employer</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-building text-blue-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">{{ job.business_name }}</h3>
+                                <p class="text-sm text-gray-600">{{ business.category.title() if business else 'Local Business' }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if business %}
+                        <div class="pt-3 border-t border-gray-200">
+                            <div class="space-y-2 text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
+                                    <span class="text-gray-600">{{ business.address }}</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-phone text-gray-400"></i>
+                                    <span class="text-gray-600">{{ business.phone }}</span>
+                                </div>
+                                {% if business.email %}
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-envelope text-gray-400"></i>
+                                    <span class="text-gray-600">{{ business.email }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="pt-3 border-t border-gray-200">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <div class="flex text-yellow-400">
+                                    {% for i in range(5) %}
+                                        <i class="fas fa-star text-sm {{ 'text-yellow-400' if i < business_rating else 'text-gray-300' }}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="text-sm text-gray-600">({{ business_review_count }} reviews)</span>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-3 border-t border-gray-200">
+                            <a href="{{ url_for('businesses.business_detail', business_id=job.business_id) }}" 
+                               class="btn-secondary w-full text-center block">
+                                <i class="fas fa-building mr-2"></i>View Business
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Job Details -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Job Details</h2>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Job Type:</span>
+                            <span class="font-medium">{{ job.type.replace('_', ' ').title() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Category:</span>
+                            <span class="font-medium">{{ job.category.title() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Location:</span>
+                            <span class="font-medium">{{ job.location }}</span>
+                        </div>
+                        {% if job.expires_at %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Deadline:</span>
+                            <span class="font-medium">{{ job.expires_at }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Posted:</span>
+                            <span class="font-medium">{{ job.created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Share Job -->
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Share This Job</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="shareJob('facebook')" class="flex-1 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
+                            <i class="fab fa-facebook-f"></i>
+                        </button>
+                        <button onclick="shareJob('twitter')" class="flex-1 bg-blue-400 text-white p-2 rounded hover:bg-blue-500">
+                            <i class="fab fa-twitter"></i>
+                        </button>
+                        <button onclick="shareJob('linkedin')" class="flex-1 bg-blue-700 text-white p-2 rounded hover:bg-blue-800">
+                            <i class="fab fa-linkedin-in"></i>
+                        </button>
+                        <button onclick="copyLink()" class="flex-1 bg-gray-600 text-white p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Resume upload handling
+    document.getElementById('resume-upload-area').addEventListener('click', () => {
+        document.getElementById('resume-file').click();
+    });
+    
+    document.getElementById('resume-file').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            document.getElementById('resume-file-name').textContent = file.name;
+            document.getElementById('resume-preview').classList.remove('hidden');
+            document.getElementById('resume-upload-area').style.display = 'none';
+        }
+    });
+    
+    function removeResume() {
+        document.getElementById('resume-file').value = '';
+        document.getElementById('resume-preview').classList.add('hidden');
+        document.getElementById('resume-upload-area').style.display = 'block';
+    }
+    
+    function clearForm() {
+        document.getElementById('cover_letter').value = '';
+        removeResume();
+    }
+    
+    // Application form submission
+    document.getElementById('application-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const applyButton = document.getElementById('apply-button');
+        
+        // Show loading state
+        applyButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Applying...';
+        applyButton.disabled = true;
+        
+        try {
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                // Show success message
+                showAlert('success', result.message);
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                // Show error message
+                showAlert('error', result.error || 'An error occurred');
+                applyButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Apply Now';
+                applyButton.disabled = false;
+            }
+        } catch (error) {
+            showAlert('error', 'Network error. Please try again.');
+            applyButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Apply Now';
+            applyButton.disabled = false;
+        }
+    });
+    
+    // Share functions
+    function shareJob(platform) {
+        const url = encodeURIComponent(window.location.href);
+        const title = encodeURIComponent('{{ job.title }} at {{ job.business_name }}');
+        
+        let shareUrl = '';
+        switch(platform) {
+            case 'facebook':
+                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
+                break;
+            case 'twitter':
+                shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
+                break;
+            case 'linkedin':
+                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
+                break;
+        }
+        
+        window.open(shareUrl, '_blank', 'width=600,height=400');
+    }
+    
+    function copyLink() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showAlert('success', 'Link copied to clipboard!');
+        });
+    }
+    
+    function showAlert(type, message) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+            type === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
+            type === 'error' ? 'bg-red-100 border border-red-200 text-red-800' :
+            'bg-blue-100 border border-blue-200 text-blue-800'
+        }`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000);
+    }
+</script>
+{% endblock %}

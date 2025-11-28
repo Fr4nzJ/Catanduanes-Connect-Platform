@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Verification Review - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-white flex items-center space-x-3">
+                        <i class="fas fa-check-circle"></i>
+                        <span>Verification Review</span>
+                    </h1>
+                    <p class="mt-2 text-red-100">Review and manage user verifications</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-xl shadow-lg p-2 mb-8 inline-flex space-x-1">
+            <a href="?status=pending" class="{% if status == 'pending' %}bg-gradient-to-r from-red-600 to-red-700 text-white{% else %}text-gray-700 hover:bg-red-50{% endif %} px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                Pending
+                {% if pending_count %}
+                <span class="ml-2 py-0.5 px-2.5 rounded-full text-xs font-bold {% if status == 'pending' %}bg-red-500 text-white{% else %}bg-red-100 text-red-600{% endif %}">
+                    {{ pending_count }}
+                </span>
+                {% endif %}
+            </a>
+            <a href="?status=verified" class="{% if status == 'verified' %}bg-green-600 text-white{% else %}text-gray-700 hover:bg-green-50{% endif %} px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                Verified
+            </a>
+            <a href="?status=rejected" class="{% if status == 'rejected' %}bg-red-600 text-white{% else %}text-gray-700 hover:bg-gray-100{% endif %} px-6 py-3 rounded-lg font-semibold transition-all duration-300">
+                Rejected
+            </a>
+        </div>
+    </div>
+
+    <!-- Verification List -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        {% if verifications %}
+        <div class="bg-white shadow-sm rounded-lg divide-y divide-gray-200">
+            {% for verification in verifications %}
+            <div class="p-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        {% if verification.u.profile_image %}
+                        <img class="h-12 w-12 rounded-full" src="{{ verification.u.profile_image }}" alt="">
+                        {% else %}
+                        <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user text-gray-400"></i>
+                        </div>
+                        {% endif %}
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">
+                                {{ verification.u.first_name }} {{ verification.u.last_name }}
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                                {{ verification.user_type|title }} Account
+                                <span class="mx-2">&middot;</span>
+                                Submitted {{ verification.v.created_at|datetime }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        {% if verification.v.status == 'pending' %}
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                            Pending Review
+                        </span>
+                        {% elif verification.v.status == 'verified' %}
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                            Verified
+                        </span>
+                        {% else %}
+                        <span class="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                            Rejected
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Document Preview -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-medium text-gray-900">Submitted Documents</h4>
+                    <div class="mt-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        {% for doc in verification.v.documents %}
+                        <div class="relative rounded-lg border border-gray-200 bg-white p-4">
+                            <div class="flex items-center space-x-4">
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-file-alt text-2xl text-gray-400"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-medium text-gray-900">
+                                        {{ doc.document_type|title }}
+                                    </p>
+                                    <p class="truncate text-sm text-gray-500">
+                                        Uploaded {{ doc.uploaded_at|datetime }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <a href="{{ url_for('verification.view_document', doc_id=doc.id) }}" target="_blank" class="text-blue-600 hover:text-blue-900">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {% if verification.v.status == 'pending' %}
+                <!-- Review Actions -->
+                <div class="mt-6">
+                    <div class="flex items-center justify-between space-x-4">
+                        <div class="flex-1">
+                            <form action="{{ url_for('verification.review_verification', verification_id=verification.v.id) }}" method="POST" class="flex items-start space-x-4">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <div class="flex-1">
+                                    <label for="reviewer_notes" class="sr-only">Rejection Reason</label>
+                                    <textarea id="reviewer_notes" name="reviewer_notes" rows="2" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Add notes (required for rejection)"></textarea>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <button type="submit" name="action" value="verify" class="btn-success">
+                                        Verify
+                                    </button>
+                                    <button type="submit" name="action" value="reject" class="btn-danger">
+                                        Reject
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% elif verification.v.reviewer_notes %}
+                <!-- Reviewer Notes -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-medium text-gray-900">Reviewer Notes</h4>
+                    <div class="mt-2 text-sm text-gray-500">
+                        {{ verification.v.reviewer_notes }}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="mt-6">
+            <nav class="flex items-center justify-between" aria-label="Pagination">
+                <div class="hidden sm:block">
+                    <p class="text-sm text-gray-700">
+                        Showing <span class="font-medium">{{ pagination.start }}</span> to <span class="font-medium">{{ pagination.end }}</span> of <span class="font-medium">{{ pagination.total }}</span> results
+                    </p>
+                </div>
+                <div class="flex justify-end flex-1 sm:justify-end">
+                    <div class="flex space-x-2">
+                        {% if pagination.has_prev %}
+                        <a href="?page={{ pagination.prev_num }}&status={{ status }}" class="btn-secondary">
+                            Previous
+                        </a>
+                        {% endif %}
+                        {% if pagination.has_next %}
+                        <a href="?page={{ pagination.next_num }}&status={{ status }}" class="btn-secondary">
+                            Next
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-12">
+            <i class="fas fa-clipboard-check text-gray-400 text-5xl mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900">No verifications to review</h3>
+            <p class="mt-1 text-sm text-gray-500">
+                {% if status == 'pending' %}
+                There are no pending verifications at the moment.
+                {% elif status == 'verified' %}
+                No verifications have been approved yet.
+                {% else %}
+                No verifications have been rejected yet.
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

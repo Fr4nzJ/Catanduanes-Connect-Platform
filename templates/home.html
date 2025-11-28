@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-24">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-5xl md:text-7xl font-bold mb-6">
+                Connect. Work. Grow.
+            </h1>
+            <p class="text-xl md:text-2xl mb-10 max-w-3xl mx-auto leading-relaxed">
+                Your gateway to opportunities, businesses, and services in Catanduanes. 
+                Join our community and discover what's possible.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('jobs.list_jobs') }}" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-briefcase mr-2"></i>Find Jobs
+                </a>
+                <a href="{{ url_for('businesses.list_businesses') }}" class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-blue-600 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-building mr-2"></i>Explore Businesses
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Stats -->
+<section class="py-16 bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent mb-3" id="stats-jobs">0</div>
+                <div class="text-gray-700 font-semibold">Active Jobs</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-briefcase mr-1"></i>Opportunities
+                </div>
+            </div>
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-indigo-600 bg-clip-text text-transparent mb-3" id="stats-businesses">0</div>
+                <div class="text-gray-700 font-semibold">Businesses</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-store mr-1"></i>Local Shops
+                </div>
+            </div>
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="text-4xl font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent mb-3" id="stats-services">0</div>
+                <div class="text-gray-700 font-semibold">Services</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-concierge-bell mr-1"></i>Providers
+                </div>
+            </div>
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="text-4xl font-bold bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent mb-3" id="stats-users">0</div>
+                <div class="text-gray-700 font-semibold">Community Members</div>
+                <div class="text-sm text-gray-500 mt-1">
+                    <i class="fas fa-users mr-1"></i>Growing
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Jobs -->
+<section class="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center gap-2 bg-blue-100 px-4 py-2 rounded-full mb-6">
+                <i class="fas fa-fire text-orange-500"></i>
+                <span class="text-sm font-semibold text-blue-700">Featured Opportunities</span>
+            </div>
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Latest Job Opportunities</h2>
+            <p class="text-xl text-gray-600">Discover the hottest job openings in Catanduanes</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="featured-jobs">
+            <!-- Jobs will be loaded here -->
+        </div>
+        
+        <div class="text-center mt-12">
+            <a href="{{ url_for('jobs.list_jobs') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
+                <i class="fas fa-briefcase"></i>View All Jobs
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Featured Businesses -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <div class="inline-flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full mb-6">
+                <i class="fas fa-star text-yellow-500"></i>
+                <span class="text-sm font-semibold text-green-700">Top Rated</span>
+            </div>
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Featured Businesses</h2>
+            <p class="text-xl text-gray-600">Support local businesses and discover amazing services</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="featured-businesses">
+            <!-- Businesses will be loaded here -->
+        </div>
+        
+        <div class="text-center mt-12">
+            <a href="{{ url_for('businesses.list_businesses') }}" class="inline-flex items-center gap-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-8 py-4 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300">
+                <i class="fas fa-store"></i>Explore All Businesses
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works -->
+<section class="py-20 bg-gradient-to-br from-gray-50 to-blue-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">How It Works</h2>
+            <p class="text-xl text-gray-600">Getting started is simple and completely free</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-user-plus text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">1. Create Account</h3>
+                <p class="text-gray-600 leading-relaxed">Sign up for free and build your professional profile in minutes</p>
+            </div>
+            
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-search text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">2. Find Opportunities</h3>
+                <p class="text-gray-600 leading-relaxed">Browse thousands of jobs, businesses, and services in Catanduanes</p>
+            </div>
+            
+            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
+                <div class="bg-gradient-to-br from-green-500 to-green-600 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-handshake text-white text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-3">3. Connect & Grow</h3>
+                <p class="text-gray-600 leading-relaxed">Connect with opportunities and achieve your career goals</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-20 bg-gradient-to-r from-blue-600 to-indigo-600">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-5xl font-bold text-white mb-6">Ready to Get Started?</h2>
+        <p class="text-xl text-blue-100 mb-10 max-w-2xl mx-auto leading-relaxed">Join thousands of users finding opportunities in Catanduanes. Start building your future today!</p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.signup') }}" class="bg-white text-blue-600 px-8 py-4 rounded-lg font-semibold hover:bg-gray-100 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-star mr-2"></i>Create Free Account
+                </a>
+            {% endif %}
+            <a href="{{ url_for('jobs.list_jobs') }}" class="bg-transparent border-2 border-white text-white px-8 py-4 rounded-lg font-semibold hover:bg-white hover:text-blue-600 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-arrow-right mr-2"></i>Browse Opportunities
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Load homepage statistics
+document.addEventListener('DOMContentLoaded', function() {
+    loadHomepageStats();
+    loadFeaturedContent();
+});
+
+async function loadHomepageStats() {
+    try {
+        const response = await fetch('/api/homepage/stats');
+        const stats = await response.json();
+        
+        // Animate counters
+        animateCounter('stats-jobs', stats.jobs);
+        animateCounter('stats-businesses', stats.businesses);
+        animateCounter('stats-services', stats.services);
+        animateCounter('stats-users', stats.users);
+    } catch (error) {
+        console.error('Failed to load stats:', error);
+    }
+}
+
+async function loadFeaturedContent() {
+    try {
+        // Load featured jobs
+        const jobsResponse = await fetch('/api/homepage/featured-jobs');
+        const jobs = await jobsResponse.json();
+        displayFeaturedJobs(jobs);
+        
+        // Load featured businesses
+        const businessesResponse = await fetch('/api/homepage/featured-businesses');
+        const businesses = await businessesResponse.json();
+        displayFeaturedBusinesses(businesses);
+    } catch (error) {
+        console.error('Failed to load featured content:', error);
+    }
+}
+
+function animateCounter(elementId, target) {
+    const element = document.getElementById(elementId);
+    let current = 0;
+    const increment = target / 50;
+    
+    const timer = setInterval(() => {
+        current += increment;
+        if (current >= target) {
+            current = target;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(current);
+    }, 20);
+}
+
+function displayFeaturedJobs(jobs) {
+    const container = document.getElementById('featured-jobs');
+    container.innerHTML = jobs.map(job => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">${job.title}</h3>
+                    <p class="text-blue-600 font-medium">${job.business_name}</p>
+                </div>
+                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    ${job.type.replace('_', ' ').toUpperCase()}
+                </span>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">${job.description}</p>
+            
+            <div class="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <span><i class="fas fa-map-marker-alt mr-1"></i>${job.location}</span>
+                <span><i class="fas fa-clock mr-1"></i>${job.salary_range || 'Negotiable'}</span>
+            </div>
+            
+            <a href="/jobs/${job.id}" class="block w-full bg-blue-600 text-white text-center py-2 rounded-md hover:bg-blue-700 transition-colors">
+                View Details
+            </a>
+        </div>
+    `).join('');
+}
+
+function displayFeaturedBusinesses(businesses) {
+    const container = document.getElementById('featured-businesses');
+    container.innerHTML = businesses.map(business => `
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div class="flex items-start justify-between mb-4">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-1">${business.name}</h3>
+                    <p class="text-blue-600 font-medium capitalize">${business.category.replace('_', ' ')}</p>
+                </div>
+                <div class="flex items-center">
+                    ${business.rating ? `
+                        <div class="flex items-center">
+                            <i class="fas fa-star text-yellow-400 mr-1"></i>
+                            <span class="text-sm font-medium">${business.rating.toFixed(1)}</span>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <p class="text-gray-600 text-sm mb-4 line-clamp-3">${business.description}</p>
+            
+            <div class="flex items-center text-sm text-gray-500 mb-4">
+                <i class="fas fa-map-marker-alt mr-1"></i>
+                <span>${business.address}</span>
+            </div>
+            
+            <a href="/businesses/${business.id}" class="block w-full bg-blue-600 text-white text-center py-2 rounded-md hover:bg-blue-700 transition-colors">
+                View Business
+            </a>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

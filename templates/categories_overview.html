@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Categories - Catanduanes Connect Platform{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h1 class="text-4xl font-bold mb-2">Business Categories</h1>
+            <p class="text-blue-100">Explore our comprehensive directory of business categories</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <!-- Back Button -->
+        <a href="{{ url_for('businesses.list_businesses') }}" class="inline-flex items-center text-blue-600 hover:text-blue-800 font-semibold mb-8 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to All Businesses
+        </a>
+
+        <!-- Categories Grid -->
+        {% if categories %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for category in categories %}
+                    <a href="{{ url_for('businesses.category_detail', category=category.name) }}" 
+                       class="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                        <!-- Card Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-8 text-white">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-2xl font-bold capitalize">{{ category.name }}</h3>
+                                <i class="fas fa-chevron-right text-3xl opacity-50 group-hover:opacity-100 transition-opacity transform group-hover:translate-x-1"></i>
+                            </div>
+                            <div class="bg-white bg-opacity-20 h-1 rounded-full"></div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-6">
+                            <!-- Statistics Grid -->
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <!-- Total Businesses -->
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-blue-600">{{ category.count }}</div>
+                                    <p class="text-gray-600 text-xs mt-1">
+                                        {{ 'Business' if category.count == 1 else 'Businesses' }}
+                                    </p>
+                                </div>
+
+                                <!-- Average Rating -->
+                                <div class="text-center">
+                                    <div class="flex justify-center items-center space-x-1 mb-1">
+                                        <i class="fas fa-star text-yellow-400"></i>
+                                        <span class="text-3xl font-bold text-gray-900">{{ "%.1f"|format(category.avg_rating) }}</span>
+                                    </div>
+                                    <p class="text-gray-600 text-xs">Average Rating</p>
+                                </div>
+
+                                <!-- Verified -->
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-green-600">{{ category.verified_count }}</div>
+                                    <p class="text-gray-600 text-xs mt-1">Verified</p>
+                                </div>
+
+                                <!-- Verification Rate -->
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold text-purple-600">{{ "%.0f"|format(category.verified_percentage) }}%</div>
+                                    <p class="text-gray-600 text-xs mt-1">Verified Rate</p>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-semibold text-gray-600">Verification Progress</span>
+                                    <span class="text-xs font-semibold text-gray-600">{{ "%.0f"|format(category.verified_percentage) }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-green-400 to-green-600 h-2 rounded-full transition-all duration-300"
+                                         style="width: {{ category.verified_percentage }}%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Browse Button -->
+                            <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors font-semibold text-sm">
+                                Browse {{ category.name | title }}
+                            </button>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="mt-12 bg-white rounded-lg shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Overall Statistics</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-600">{{ categories | length }}</div>
+                        <p class="text-gray-600 mt-2">Total Categories</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-green-600">{{ categories | map(attribute='count') | sum }}</div>
+                        <p class="text-gray-600 mt-2">Total Businesses</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-yellow-600">
+                            {{ "%.2f"|format((categories | map(attribute='avg_rating') | sum) / (categories | length)) }}
+                        </div>
+                        <p class="text-gray-600 mt-2">Avg Rating</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-purple-600">
+                            {{ "%.0f"|format((categories | map(attribute='verified_count') | sum) / (categories | map(attribute='count') | sum) * 100) }}%
+                        </div>
+                        <p class="text-gray-600 mt-2">Verified Rate</p>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow-lg p-12 text-center">
+                <i class="fas fa-folder-open text-gray-300 text-6xl mb-4 inline-block"></i>
+                <h3 class="text-2xl font-bold text-gray-900 mb-2">No Categories Found</h3>
+                <p class="text-gray-600 mb-6">
+                    No business categories are available at the moment.
+                </p>
+                <a href="{{ url_for('businesses.list_businesses') }}" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors font-semibold">
+                    <i class="fas fa-arrow-left mr-2"></i>Browse Businesses
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

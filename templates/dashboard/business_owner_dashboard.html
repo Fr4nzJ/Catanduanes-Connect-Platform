@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+
+{% block title %}Business Owner Dashboard - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Business Dashboard</h1>
+                    <p class="mt-2 text-gray-600">Manage your businesses and job postings</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{{ url_for('businesses.create_business') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Add Business
+                    </a>
+                    <a href="{{ url_for('jobs.create_job') }}" class="btn-primary">
+                        <i class="fas fa-plus mr-2"></i>Post Job
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification Status -->
+    {% if verification %}
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900">Verification Status</h2>
+                    <p class="mt-1 text-sm text-gray-500">
+                        {% if verification.status == 'pending' %}
+                        Your documents are being reviewed
+                        {% elif verification.status == 'verified' %}
+                        Your business is verified
+                        {% else %}
+                        Your verification was rejected
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if verification.status == 'pending' %}
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                        Pending Review
+                    </span>
+                    {% elif verification.status == 'verified' %}
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full bg-green-100 text-green-800">
+                        Verified
+                    </span>
+                    {% else %}
+                    <span class="px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+                        Rejected
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            {% if verification.status == 'rejected' and verification.reviewer_notes %}
+            <div class="mt-4 p-4 bg-red-50 rounded-md">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-red-800">Rejection Reason</h3>
+                        <p class="mt-2 text-sm text-red-700">{{ verification.reviewer_notes }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            {% if verification.status != 'verified' %}
+            <div class="mt-4">
+                <a href="{{ url_for('verification.upload_verification') }}" class="btn-primary">
+                    Upload Documents
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Stats Grid -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <!-- Business Count -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-building text-blue-500 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Total Businesses
+                                </dt>
+                                <dd class="text-3xl font-semibold text-gray-900">
+                                    {{ stats.business_count or 0 }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Job Postings -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-briefcase text-indigo-500 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Active Jobs
+                                </dt>
+                                <dd class="text-3xl font-semibold text-gray-900">
+                                    {{ stats.job_count or 0 }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Applications -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-file-alt text-green-500 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Total Applications
+                                </dt>
+                                <dd class="text-3xl font-semibold text-gray-900">
+                                    {{ stats.application_count or 0 }}
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reviews -->
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+                <div class="p-5">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-star text-yellow-500 text-3xl"></i>
+                        </div>
+                        <div class="ml-5 w-0 flex-1">
+                            <dl>
+                                <dt class="text-sm font-medium text-gray-500 truncate">
+                                    Average Rating
+                                </dt>
+                                <dd class="text-3xl font-semibold text-gray-900">
+                                    {{ "%.1f"|format(stats.avg_rating or 0) }}
+                                    <span class="text-sm text-gray-500">({{ stats.review_count or 0 }} reviews)</span>
+                                </dd>
+                            </dl>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white shadow-sm rounded-lg">
+            <div class="px-4 py-5 sm:p-6">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">
+                    Recent Applications
+                </h3>
+                {% if not applications %}
+                <p class="mt-4 text-sm text-gray-500">No applications yet.</p>
+                {% else %}
+                <div class="mt-4 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Applicant
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Job
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Status
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Applied
+                                </th>
+                                <th class="px-6 py-3 bg-gray-50"></th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for application in applications %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ application.applicant_name }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ application.job_title }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                        {% if application.a.status == 'pending' %}
+                                        bg-yellow-100 text-yellow-800
+                                        {% elif application.a.status == 'accepted' %}
+                                        bg-green-100 text-green-800
+                                        {% else %}
+                                        bg-red-100 text-red-800
+                                        {% endif %}">
+                                        {{ application.a.status|title }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ application.a.created_at|datetime }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                    <a href="#" class="text-blue-600 hover:text-blue-900">View Details</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

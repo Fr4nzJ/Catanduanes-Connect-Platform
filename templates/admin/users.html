@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Admin - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-bold text-white flex items-center space-x-3 mb-2">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </h1>
+            <p class="text-red-100">Manage platform users and their permissions</p>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 p-8 mb-8">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label for="search" class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                    <input type="text" class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300" id="search" name="search" 
+                           placeholder="Username or email" value="{{ search }}">
+                </div>
+                <div>
+                    <label for="role" class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                    <select class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300" id="role" name="role">
+                        <option value="">All Roles</option>
+                        <option value="job_seeker" {% if role_filter == 'job_seeker' %}selected{% endif %}>Job Seeker</option>
+                        <option value="business_owner" {% if role_filter == 'business_owner' %}selected{% endif %}>Business Owner</option>
+                        <option value="service_client" {% if role_filter == 'service_client' %}selected{% endif %}>Service Client</option>
+                        <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="status" class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                    <select class="w-full px-4 py-2 border-2 border-red-300 rounded-lg focus:ring-red-500 focus:border-red-500 transition-all duration-300" id="status" name="status">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                        <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+                            <option value="unverified" {% if status_filter == 'unverified' %}selected{% endif %}>Unverified</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Filter
+                        </button>
+                        <a href="{{ url_for('admin.users') }}" class="btn btn-secondary ms-2">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ total_users }}</h5>
+                <p class="card-text">Total Users</p>
+            </div>
+        </div>
+    </div>
+    {% for role, count in role_distribution.items() %}
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">{{ count }}</h5>
+                <p class="card-text">{{ role.replace('_', ' ').title() }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Users Table -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Users</h5>
+            </div>
+            <div class="card-body">
+                {% if users %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Verified</th>
+                                    <th>Created</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ user.id[:8] }}...</small>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ user.role.replace('_', ' ').title() }}</span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_verified %}
+                                            <span class="badge bg-success">Verified</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Unverified</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.created_at[:10] if user.created_at else 'N/A' }}</td>
+                                    <td>{{ user.last_login[:10] if user.last_login else 'Never' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('admin.user_detail', user_id=user.id) }}" 
+                                               class="btn btn-info" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <button class="btn btn-warning toggle-status" 
+                                                    data-user-id="{{ user.id }}" 
+                                                    data-current-status="{{ user.is_active }}"
+                                                    title="Toggle Status">
+                                                <i class="fas fa-power-off"></i>
+                                            </button>
+                                            {% if not user.is_verified %}
+                                            <button class="btn btn-success verify-user" 
+                                                    data-user-id="{{ user.id }}"
+                                                    title="Verify User">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <h5>No users found</h5>
+                        <p>Try adjusting your search criteria</p>
+                    </div>
+                {% endif %}
+            </div>
+            {% if total_pages > 1 %}
+            <div class="card-footer">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page-1, search=search, role=role_filter, status=status_filter) }}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for p in range(1, total_pages + 1) %}
+                            {% if p == page %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ p }}</span>
+                            </li>
+                            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('admin.users', page=p, search=search, role=role_filter, status=status_filter) }}">
+                                    {{ p }}
+                                </a>
+                            </li>
+                            {% elif p == page - 3 or p == page + 3 %}
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page < total_pages %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('admin.users', page=page+1, search=search, role=role_filter, status=status_filter) }}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle user status
+    document.querySelectorAll('.toggle-status').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const currentStatus = this.dataset.currentStatus === 'True';
+            
+            if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this user?`)) {
+                fetch(`/admin/users/${userId}/toggle-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Error toggling user status');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error toggling user status');
+                });
+            }
+        });
+    });
+    
+    // Verify user
+    document.querySelectorAll('.verify-user').forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            
+            if (confirm('Are you sure you want to verify this user?')) {
+                // Add verification logic here
+                alert('User verification feature coming soon!');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
