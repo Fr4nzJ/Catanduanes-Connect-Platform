@@ -1,0 +1,672 @@
+#!/usr/bin/env python3
+"""
+Additional 30 businesses for Catanduanes Connect
+These businesses are located on actual land in Catanduanes (not in the ocean)
+Added to diversify business types and locations across municipalities
+"""
+
+import os
+import sys
+import uuid
+from datetime import datetime, timedelta
+from dotenv import load_dotenv
+
+# Add the project root to Python path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from database import Neo4jConnection, safe_run, _node_to_dict
+from models import User, Business, Job, Review, Notification
+
+# Load environment variables
+load_dotenv()
+
+def create_additional_businesses(db, owner_id=None):
+    """
+    Create 30 additional businesses with actual Catanduanes land coordinates
+    
+    Catanduanes actual land coordinates reference points:
+    - Virac (Capital): ~13.58°N, 124.38°E
+    - San Andres: ~13.65°N, 124.42°E
+    - Baras: ~13.70°N, 124.40°E
+    - Viga: ~13.55°N, 124.35°E
+    - Gigmoto: ~13.52°N, 124.32°E
+    - Panganiban: ~13.60°N, 124.45°E
+    - Pandan: ~13.50°N, 124.38°E
+    - Caramoran: ~13.48°N, 124.35°E
+    - Bagamanoc: ~13.55°N, 124.48°E
+    """
+    
+    print("Creating 30 additional businesses with accurate Catanduanes land coordinates...")
+    
+    businesses = [
+        # Virac Area Businesses (13.57-13.59°N, 124.37-124.39°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Central Market & Supermarket',
+            'description': 'One-stop shopping destination offering fresh groceries, household items, and local products from Catanduanes farmers.',
+            'category': 'retail',
+            'address': 'Main Street, Virac Town Center',
+            'latitude': 13.5785,
+            'longitude': 124.3815,
+            'phone': '0528112350',
+            'email': 'info@viracmarket.com',
+            'website': 'https://viracmarket.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-101',
+            'permit_file': 'businesses/virac-market/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': datetime.utcnow().isoformat(),
+            'rating': 4.5,
+            'review_count': 23
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Catanduanes Textile Weaving Workshop',
+            'description': 'Traditional textile weaving center producing authentic Catanduanes fabrics and handicrafts with modern designs.',
+            'category': 'arts_crafts',
+            'address': 'Handicraft District, Virac',
+            'latitude': 13.5795,
+            'longitude': 124.3845,
+            'phone': '0528112351',
+            'email': 'info@catandtextile.com',
+            'website': 'https://catandtextile.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-102',
+            'permit_file': 'businesses/textile-workshop/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=30)).isoformat(),
+            'rating': 4.7,
+            'review_count': 18
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Dental Clinic',
+            'description': 'Modern dental clinic providing comprehensive dental care, orthodontics, and cosmetic dentistry services.',
+            'category': 'healthcare',
+            'address': 'Medical Complex, Virac',
+            'latitude': 13.5805,
+            'longitude': 124.3835,
+            'phone': '0528112352',
+            'email': 'info@viracdentalclinic.com',
+            'website': 'https://viracdentalclinic.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-103',
+            'permit_file': 'businesses/dental-clinic/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=15)).isoformat(),
+            'rating': 4.8,
+            'review_count': 31
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Catanduanes Coffee Roastery',
+            'description': 'Artisanal coffee roastery specializing in locally sourced Catanduanes coffee beans with specialty drinks and cafe atmosphere.',
+            'category': 'food_beverage',
+            'address': 'Commercial Avenue, Virac',
+            'latitude': 13.5815,
+            'longitude': 124.3825,
+            'phone': '0528112353',
+            'email': 'info@catandcoffee.com',
+            'website': 'https://catandcoffee.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-104',
+            'permit_file': 'businesses/coffee-roastery/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=20)).isoformat(),
+            'rating': 4.6,
+            'review_count': 42
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Island Construction & Engineering',
+            'description': 'Full-service construction company specializing in residential, commercial, and infrastructure projects.',
+            'category': 'construction',
+            'address': 'Industrial Zone, Virac',
+            'latitude': 13.5775,
+            'longitude': 124.3855,
+            'phone': '0528112354',
+            'email': 'info@islandconstruction.com',
+            'website': 'https://islandconstruction.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-105',
+            'permit_file': 'businesses/construction/permit.pdf',
+            'is_verified': False,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=5)).isoformat(),
+            'rating': 4.3,
+            'review_count': 10
+        },
+
+        # San Andres Area (13.64-13.66°N, 124.41-124.43°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'San Andres Coconut Processing Center',
+            'description': 'State-of-the-art facility for processing coconut into various products including coir, copra, and coconut oil.',
+            'category': 'agriculture',
+            'address': 'Agricultural Hub, San Andres',
+            'latitude': 13.6485,
+            'longitude': 124.4185,
+            'phone': '0528112355',
+            'email': 'info@sanandrescoconut.com',
+            'website': 'https://sanandrescoconut.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-106',
+            'permit_file': 'businesses/coconut-center/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=45)).isoformat(),
+            'rating': 4.4,
+            'review_count': 16
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'San Andres Resort & Spa',
+            'description': 'Tropical beach resort offering accommodation, spa services, water sports, and island tours.',
+            'category': 'hospitality',
+            'address': 'Beachfront, San Andres',
+            'latitude': 13.6495,
+            'longitude': 124.4195,
+            'phone': '0528112356',
+            'email': 'info@sanandresresort.com',
+            'website': 'https://sanandresresort.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-107',
+            'permit_file': 'businesses/resort-spa/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=60)).isoformat(),
+            'rating': 4.7,
+            'review_count': 58
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'San Andres Vocational Training Center',
+            'description': 'Educational institution offering vocational courses in hospitality, fishing, and agriculture.',
+            'category': 'education',
+            'address': 'Education Park, San Andres',
+            'latitude': 13.6475,
+            'longitude': 124.4175,
+            'phone': '0528112357',
+            'email': 'info@sanandrestrain.com',
+            'website': 'https://sanandrestrain.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-108',
+            'permit_file': 'businesses/training-center/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=35)).isoformat(),
+            'rating': 4.5,
+            'review_count': 24
+        },
+
+        # Baras Area (13.69-13.71°N, 124.39-124.41°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Baras Agricultural Equipment Store',
+            'description': 'Comprehensive supplier of agricultural equipment, tools, seeds, and farming supplies for local farmers.',
+            'category': 'retail',
+            'address': 'Farm Supply District, Baras',
+            'latitude': 13.7005,
+            'longitude': 124.4015,
+            'phone': '0528112358',
+            'email': 'info@barasagriequip.com',
+            'website': 'https://barasagriequip.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-109',
+            'permit_file': 'businesses/agri-equipment/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=25)).isoformat(),
+            'rating': 4.4,
+            'review_count': 19
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Baras Veterinary Clinic & Animal Feed',
+            'description': 'Full-service veterinary clinic providing animal healthcare, vaccination, and quality animal feed products.',
+            'category': 'healthcare',
+            'address': 'Livestock Center, Baras',
+            'latitude': 13.7015,
+            'longitude': 124.4025,
+            'phone': '0528112359',
+            'email': 'info@barasvet.com',
+            'website': 'https://barasvet.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-110',
+            'permit_file': 'businesses/veterinary/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=18)).isoformat(),
+            'rating': 4.6,
+            'review_count': 27
+        },
+
+        # Viga Area (13.54-13.56°N, 124.34-124.36°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Viga Marine Products Trading',
+            'description': 'Export-focused seafood trading company specializing in dried fish and marine products from Catanduanes.',
+            'category': 'agriculture',
+            'address': 'Port District, Viga',
+            'latitude': 13.5505,
+            'longitude': 124.3515,
+            'phone': '0528112360',
+            'email': 'info@vigamarine.com',
+            'website': 'https://vigamarine.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-111',
+            'permit_file': 'businesses/marine-products/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=40)).isoformat(),
+            'rating': 4.5,
+            'review_count': 21
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Viga Community Pharmacy',
+            'description': 'Licensed pharmacy offering prescription medications, healthcare products, and basic medical consultation.',
+            'category': 'healthcare',
+            'address': 'Town Center, Viga',
+            'latitude': 13.5495,
+            'longitude': 124.3495,
+            'phone': '0528112361',
+            'email': 'info@vigapharmacy.com',
+            'website': 'https://vigapharmacy.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-112',
+            'permit_file': 'businesses/pharmacy/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=12)).isoformat(),
+            'rating': 4.7,
+            'review_count': 35
+        },
+
+        # Gigmoto Area (13.51-13.53°N, 124.31-124.33°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Gigmoto Abaca Weaving Cooperative',
+            'description': 'Traditional abaca fiber weaving cooperative producing authentic Catanduanes handicrafts and textiles.',
+            'category': 'arts_crafts',
+            'address': 'Artisan Village, Gigmoto',
+            'latitude': 13.5225,
+            'longitude': 124.3215,
+            'phone': '0528112362',
+            'email': 'info@gigmotoabaca.com',
+            'website': 'https://gigmotoabaca.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-113',
+            'permit_file': 'businesses/abaca-weaving/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=50)).isoformat(),
+            'rating': 4.8,
+            'review_count': 41
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Gigmoto General Store',
+            'description': 'General merchandise store offering groceries, household goods, and basic supplies to local residents.',
+            'category': 'retail',
+            'address': 'Main Street, Gigmoto',
+            'latitude': 13.5235,
+            'longitude': 124.3225,
+            'phone': '0528112363',
+            'email': 'info@gigmotostore.com',
+            'website': 'https://gigmotostore.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-114',
+            'permit_file': 'businesses/general-store/permit.pdf',
+            'is_verified': False,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=8)).isoformat(),
+            'rating': 4.2,
+            'review_count': 14
+        },
+
+        # Panganiban Area (13.59-13.61°N, 124.44-124.46°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Panganiban Cave Tours & Adventure',
+            'description': 'Eco-tourism company offering guided cave tours, kayaking, and island adventures in Panganiban.',
+            'category': 'hospitality',
+            'address': 'Tourism Center, Panganiban',
+            'latitude': 13.6015,
+            'longitude': 124.4515,
+            'phone': '0528112364',
+            'email': 'info@panganibantouring.com',
+            'website': 'https://panganibantouring.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-115',
+            'permit_file': 'businesses/cave-tours/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=33)).isoformat(),
+            'rating': 4.9,
+            'review_count': 67
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Panganiban Nipa Hut Restaurant',
+            'description': 'Traditional Filipino restaurant in a scenic nipa hut setting, serving authentic local cuisine and fresh seafood.',
+            'category': 'food_beverage',
+            'address': 'Beachfront, Panganiban',
+            'latitude': 13.6025,
+            'longitude': 124.4525,
+            'phone': '0528112365',
+            'email': 'info@panganibanrestaurant.com',
+            'website': 'https://panganibanrestaurant.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-116',
+            'permit_file': 'businesses/nipa-restaurant/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=28)).isoformat(),
+            'rating': 4.7,
+            'review_count': 52
+        },
+
+        # Pandan Area (13.49-13.51°N, 124.37-124.39°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Pandan Pineapple Plantation & Processing',
+            'description': 'Large-scale pineapple farm and processing facility producing fresh pineapples and pineapple byproducts.',
+            'category': 'agriculture',
+            'address': 'Agricultural Area, Pandan',
+            'latitude': 13.5005,
+            'longitude': 124.3815,
+            'phone': '0528112366',
+            'email': 'info@pandanpineapple.com',
+            'website': 'https://pandanpineapple.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-117',
+            'permit_file': 'businesses/pineapple-farm/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=55)).isoformat(),
+            'rating': 4.5,
+            'review_count': 26
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Pandan Hardware & Building Materials',
+            'description': 'Complete hardware store and building materials supplier for construction and home improvement needs.',
+            'category': 'retail',
+            'address': 'Commercial District, Pandan',
+            'latitude': 13.4995,
+            'longitude': 124.3805,
+            'phone': '0528112367',
+            'email': 'info@pandanhardware.com',
+            'website': 'https://pandanhardware.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-118',
+            'permit_file': 'businesses/hardware/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=22)).isoformat(),
+            'rating': 4.4,
+            'review_count': 17
+        },
+
+        # Caramoran Area (13.47-13.49°N, 124.34-124.36°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Caramoran Beach Resort',
+            'description': 'Family-friendly beach resort with accommodation, restaurant, and water sports activities.',
+            'category': 'hospitality',
+            'address': 'Beachfront, Caramoran',
+            'latitude': 13.4805,
+            'longitude': 124.3515,
+            'phone': '0528112368',
+            'email': 'info@caramoranresort.com',
+            'website': 'https://caramoranresort.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-119',
+            'permit_file': 'businesses/caramoran-resort/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=42)).isoformat(),
+            'rating': 4.6,
+            'review_count': 44
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Caramoran Diving Center',
+            'description': 'Professional diving school offering PADI certification courses and guided diving expeditions.',
+            'category': 'hospitality',
+            'address': 'Water Sports Hub, Caramoran',
+            'latitude': 13.4815,
+            'longitude': 124.3525,
+            'phone': '0528112369',
+            'email': 'info@caramorandiving.com',
+            'website': 'https://caramorandiving.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-120',
+            'permit_file': 'businesses/diving-center/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=37)).isoformat(),
+            'rating': 4.8,
+            'review_count': 53
+        },
+
+        # Bagamanoc Area (13.54-13.56°N, 124.47-124.49°E)
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Bagamanoc Lighthouse Hotel',
+            'description': 'Unique hotel offering stunning views of the famous Bagamanoc Lighthouse with comfort and modern amenities.',
+            'category': 'hospitality',
+            'address': 'Lighthouse Area, Bagamanoc',
+            'latitude': 13.5505,
+            'longitude': 124.4815,
+            'phone': '0528112370',
+            'email': 'info@lighthousehotel.com',
+            'website': 'https://lighthousehotel.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-121',
+            'permit_file': 'businesses/lighthouse-hotel/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=48)).isoformat(),
+            'rating': 4.7,
+            'review_count': 61
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Bagamanoc Seafood Grill',
+            'description': 'Upscale seafood restaurant specializing in grilled fresh catch with ocean views.',
+            'category': 'food_beverage',
+            'address': 'Waterfront, Bagamanoc',
+            'latitude': 13.5515,
+            'longitude': 124.4825,
+            'phone': '0528112371',
+            'email': 'info@bagamanocdining.com',
+            'website': 'https://bagamanocdining.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-122',
+            'permit_file': 'businesses/seafood-grill/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=24)).isoformat(),
+            'rating': 4.8,
+            'review_count': 48
+        },
+
+        # Additional Virac businesses for diversity
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Language & Skills Academy',
+            'description': 'Educational institution offering English language courses, IT training, and professional skill development.',
+            'category': 'education',
+            'address': 'Education Park, Virac',
+            'latitude': 13.5825,
+            'longitude': 124.3805,
+            'phone': '0528112372',
+            'email': 'info@viracacademy.com',
+            'website': 'https://viracacademy.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-123',
+            'permit_file': 'businesses/language-academy/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=19)).isoformat(),
+            'rating': 4.6,
+            'review_count': 29
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Catanduanes Print & Design Studio',
+            'description': 'Full-service printing and graphic design studio offering signage, promotional materials, and digital design services.',
+            'category': 'services',
+            'address': 'Business District, Virac',
+            'latitude': 13.5835,
+            'longitude': 124.3815,
+            'phone': '0528112373',
+            'email': 'info@catandprint.com',
+            'website': 'https://catandprint.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-124',
+            'permit_file': 'businesses/print-studio/permit.pdf',
+            'is_verified': False,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=7)).isoformat(),
+            'rating': 4.3,
+            'review_count': 12
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Laundry & Dry Cleaning',
+            'description': 'Professional laundry and dry cleaning service for corporate and individual clients.',
+            'category': 'services',
+            'address': 'Service Center, Virac',
+            'latitude': 13.5845,
+            'longitude': 124.3825,
+            'phone': '0528112374',
+            'email': 'info@viraclaundry.com',
+            'website': 'https://viraclaundry.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-125',
+            'permit_file': 'businesses/laundry/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=14)).isoformat(),
+            'rating': 4.5,
+            'review_count': 21
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Island Auto Repair & Service Center',
+            'description': 'Complete automotive service center offering maintenance, repairs, and parts for all vehicle types.',
+            'category': 'services',
+            'address': 'Industrial Area, Virac',
+            'latitude': 13.5775,
+            'longitude': 124.3875,
+            'phone': '0528112375',
+            'email': 'info@islandauto.com',
+            'website': 'https://islandauto.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-126',
+            'permit_file': 'businesses/auto-service/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=32)).isoformat(),
+            'rating': 4.4,
+            'review_count': 26
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Catanduanes Real Estate & Property Management',
+            'description': 'Leading real estate agency offering property sales, rentals, and management services across Catanduanes.',
+            'category': 'services',
+            'address': 'Commercial Complex, Virac',
+            'latitude': 13.5865,
+            'longitude': 124.3835,
+            'phone': '0528112376',
+            'email': 'info@catandrealestate.com',
+            'website': 'https://catandrealestate.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-127',
+            'permit_file': 'businesses/real-estate/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=38)).isoformat(),
+            'rating': 4.5,
+            'review_count': 34
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Beauty & Wellness Salon',
+            'description': 'Full-service salon offering hair, skin, nail, and wellness services with professional staff.',
+            'category': 'services',
+            'address': 'Beauty District, Virac',
+            'latitude': 13.5875,
+            'longitude': 124.3845,
+            'phone': '0528112377',
+            'email': 'info@viracbeauty.com',
+            'website': 'https://viracbeauty.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-128',
+            'permit_file': 'businesses/beauty-salon/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=26)).isoformat(),
+            'rating': 4.7,
+            'review_count': 37
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Catanduanes Bakery & Pastry Shop',
+            'description': 'Traditional bakery producing fresh bread, pastries, and specialty cakes using quality local ingredients.',
+            'category': 'food_beverage',
+            'address': 'Market District, Virac',
+            'latitude': 13.5795,
+            'longitude': 124.3795,
+            'phone': '0528112378',
+            'email': 'info@catandbakery.com',
+            'website': 'https://catandbakery.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-129',
+            'permit_file': 'businesses/bakery/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=11)).isoformat(),
+            'rating': 4.8,
+            'review_count': 45
+        },
+        {
+            'id': str(uuid.uuid4()),
+            'name': 'Virac Medical Clinic & Pharmacy',
+            'description': 'Comprehensive medical clinic with doctors, laboratory services, and attached pharmacy.',
+            'category': 'healthcare',
+            'address': 'Medical District, Virac',
+            'latitude': 13.5805,
+            'longitude': 124.3855,
+            'phone': '0528112379',
+            'email': 'info@viracmedical.com',
+            'website': 'https://viracmedical.com',
+            'owner_id': owner_id or str(uuid.uuid4()),
+            'permit_number': 'BP-2024-130',
+            'permit_file': 'businesses/medical-clinic/permit.pdf',
+            'is_verified': True,
+            'is_active': True,
+            'created_at': (datetime.utcnow() - timedelta(days=29)).isoformat(),
+            'rating': 4.7,
+            'review_count': 36
+        }
+    ]
+    
+    print(f"\nTotal businesses to create: {len(businesses)}")
+    return businesses
+
+
+if __name__ == '__main__':
+    # This script is meant to be imported and used with an existing database connection
+    # Use it like:
+    # from seed_additional import create_additional_businesses
+    # businesses = create_additional_businesses(db, owner_id)
+    print("This is a helper module. Import create_additional_businesses() in your seed script.")

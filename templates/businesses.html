@@ -114,11 +114,27 @@
             </form>
         </div>
         
-        <!-- Results Count -->
+        <!-- Results Count and Map Toggle -->
         <div class="mb-6 flex items-center justify-between">
             <p class="text-lg font-semibold text-gray-800">
                 <i class="fas fa-store text-blue-600 mr-2"></i>Found <span class="text-blue-600">{{ pagination.total }}</span> businesses
             </p>
+            <button id="map-toggle-btn" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-map mr-2"></i>View on Map
+            </button>
+        </div>
+
+        <!-- Map Container (Hidden by default) -->
+        <div id="map-container" class="hidden bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-map text-green-600 mr-2"></i>Businesses Map
+                </h2>
+                <button id="map-close-btn" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="map" style="height: 600px; width: 100%; z-index: 0;"></div>
         </div>
         
         <!-- Businesses Grid -->
@@ -272,4 +288,166 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Map Script -->
+<script>
+    // Store businesses data globally
+    let businessesData = {{ businesses_data | tojson }};
+    let map = null;
+    let markersGroup = null;
+
+    // Initialize map function
+    function initializeMap() {
+        if (map) return; // Map already initialized
+
+        // Default to Catanduanes coordinates (approximate center)
+        const defaultLat = 13.9339;
+        const defaultLng = 124.5267;
+
+        // Create map
+        map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+            minZoom: 10
+        }).addTo(map);
+
+        // Create a feature group for markers
+        markersGroup = L.featureGroup().addTo(map);
+
+        // Group businesses by coordinates
+        const locationMap = {};
+        businessesData.forEach((business) => {
+            if (business.latitude && business.longitude) {
+                const lat = parseFloat(business.latitude);
+                const lng = parseFloat(business.longitude);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const key = `${lat},${lng}`;
+                    if (!locationMap[key]) {
+                        locationMap[key] = [];
+                    }
+                    locationMap[key].push(business);
+                }
+            }
+        });
+
+        // Create markers for each unique location
+        let markerCount = 0;
+        Object.keys(locationMap).forEach((key) => {
+            const businesses = locationMap[key];
+            const [lat, lng] = key.split(',').map(parseFloat);
+            
+            // Determine marker color based on verification status (use first business or any verified)
+            const hasVerified = businesses.some(b => b.is_verified);
+            const markerColor = hasVerified ? '#10b981' : '#f59e0b';
+            const markerIcon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${hasVerified ? 'green' : 'orange'}.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            // Generate popup content - single business or list
+            let popupContent;
+            if (businesses.length === 1) {
+                // Single business - show as before
+                const business = businesses[0];
+                popupContent = `
+                    <div class="w-full">
+                        <h3 class="font-bold text-lg mb-2">${business.name}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${business.category || 'N/A'}</p>
+                        <p class="text-sm text-gray-600 mb-3">${business.address || 'No address'}</p>
+                        <div class="flex items-center mb-3">
+                            <div class="flex text-yellow-400">
+                                ${Array.from({length: 5}, (_, i) => 
+                                    i < Math.floor(business.rating) 
+                                        ? '<i class="fas fa-star"></i>' 
+                                        : '<i class="far fa-star"></i>'
+                                ).join('')}
+                            </div>
+                            <span class="ml-2 font-semibold">${(business.rating || 0).toFixed(1)}</span>
+                        </div>
+                        <a href="${'{{ url_for("businesses.business_detail", business_id="") }}' + business.id}" 
+                           class="w-full bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition-all inline-block text-center">
+                            View Details
+                        </a>
+                    </div>
+                `;
+            } else {
+                // Multiple businesses - show as list
+                popupContent = `
+                    <div class="w-full">
+                        <h3 class="font-bold text-lg mb-3">${businesses.length} Businesses at this Location</h3>
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            ${businesses.map((business) => `
+                                <div class="border-b pb-3 last:border-b-0">
+                                    <h4 class="font-semibold text-base mb-1">${business.name}</h4>
+                                    <p class="text-xs text-gray-600 mb-1">${business.category || 'N/A'}</p>
+                                    <p class="text-xs text-gray-600 mb-2">${business.address || 'No address'}</p>
+                                    <div class="flex items-center mb-2">
+                                        <div class="flex text-yellow-400 text-sm">
+                                            ${Array.from({length: 5}, (_, i) => 
+                                                i < Math.floor(business.rating) 
+                                                    ? '<i class="fas fa-star"></i>' 
+                                                    : '<i class="far fa-star"></i>'
+                                            ).join('')}
+                                        </div>
+                                        <span class="ml-1 text-xs font-semibold">${(business.rating || 0).toFixed(1)}</span>
+                                    </div>
+                                    <a href="${'{{ url_for("businesses.business_detail", business_id="") }}' + business.id}" 
+                                       class="w-full bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-blue-700 transition-all inline-block text-center">
+                                        View Details
+                                    </a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Create marker with popup
+            const marker = L.marker([lat, lng], { icon: markerIcon })
+                .bindPopup(popupContent);
+
+            marker.addTo(markersGroup);
+            markerCount++;
+        });
+
+        // Fit map to show all markers
+        if (markerCount > 0) {
+            map.fitBounds(markersGroup.getBounds(), { padding: [50, 50] });
+        }
+
+        // Invalidate map size after it's visible
+        setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    // Toggle map visibility
+    document.getElementById('map-toggle-btn').addEventListener('click', function() {
+        const mapContainer = document.getElementById('map-container');
+        mapContainer.classList.toggle('hidden');
+
+        if (!mapContainer.classList.contains('hidden')) {
+            // Initialize map if not already done
+            initializeMap();
+        }
+    });
+
+    // Close map button
+    document.getElementById('map-close-btn').addEventListener('click', function() {
+        document.getElementById('map-container').classList.add('hidden');
+    });
+
+    // Close map when pressing Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.getElementById('map-container').classList.add('hidden');
+        }
+    });
+</script>
 {% endblock %}

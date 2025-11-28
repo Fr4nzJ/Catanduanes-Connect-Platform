@@ -154,12 +154,15 @@ def list_businesses():
     
     # Convert to Business objects and handle pagination
     business_list = []
+    business_dicts = []  # Keep dictionaries for JSON serialization in map
     for record in businesses:
         business_data = _node_to_dict(record['b'])
         logger.info(f"Processing business: ID={business_data.get('id')}, Name={business_data.get('name')}")
         business = Business(**business_data)
         logger.info(f"Created Business object: ID={business.id}, Name={business.name}")
         business_list.append(business)
+        # Also store as dict for map feature (JSON serializable)
+        business_dicts.append(business_data)
         
     # Calculate pagination values
     total_pages = (total + per_page - 1) // per_page
@@ -180,6 +183,7 @@ def list_businesses():
     
     return render_template('businesses.html',
         businesses=business_list,
+        businesses_data=business_dicts,  # Pass dicts for map JSON serialization
         form=form,
         pagination=pagination,
         total_pages=total_pages,
