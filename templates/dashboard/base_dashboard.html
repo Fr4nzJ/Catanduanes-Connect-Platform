@@ -38,11 +38,11 @@
                 <div class="text-right">
                     <div class="mb-2">
                         <span class="text-sm text-gray-600">Verification Status:</span>
-                        <span class="badge badge-{{ 'success' if verification_status == 'verified' else 'warning' if verification_status == 'pending' else 'danger' }} ml-2">
-                            {{ verification_status.title() }}
+                        <span class="badge badge-{{ 'success' if (verification_status or 'pending') == 'approved' else 'warning' if (verification_status or 'pending') == 'pending' else 'danger' }} ml-2">
+                            {{ (verification_status or 'pending').title() }}
                         </span>
                     </div>
-                    {% if verification_status != 'verified' %}
+                    {% if (verification_status or 'pending') != 'approved' %}
                     <a href="{{ url_for('verification.upload_verification') }}" class="btn-warning text-sm">
                         <i class="fas fa-upload mr-1"></i>Upload Documents
                     </a>

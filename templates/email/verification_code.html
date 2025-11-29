@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+            border: 1px solid #ddd;
+        }
+        .code-box {
+            background-color: #f0f8ff;
+            border: 2px solid #007bff;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            border-radius: 5px;
+        }
+        .code {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+            letter-spacing: 5px;
+        }
+        .footer {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+            font-size: 12px;
+            color: #666;
+        }
+        .role-badge {
+            display: inline-block;
+            background-color: #28a745;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Catanduanes Connect</h1>
+            <p>Account Verification</p>
+        </div>
+        
+        <div class="content">
+            <h2>Welcome, {{ username }}!</h2>
+            <p>Thank you for registering with Catanduanes Connect as a {{ role|title }}.</p>
+            
+            <p>To complete your account setup, please verify your email using the code below:</p>
+            
+            <div class="code-box">
+                <div class="code">{{ code }}</div>
+                <p style="margin-top: 10px; color: #666;">This code expires in 10 minutes</p>
+            </div>
+            
+            <p><strong>How to verify:</strong></p>
+            <ol>
+                <li>Go to the verification page in your Catanduanes Connect account</li>
+                <li>Enter the code above</li>
+                <li>Click "Verify Code"</li>
+            </ol>
+            
+            <p style="color: #d9534f;">
+                <strong>Important:</strong> Do not share this code with anyone. Catanduanes Connect support will never ask you for this code.
+            </p>
+            
+            <div class="footer">
+                <p>If you did not create this account, please contact us immediately at support@catanduanesconnect.com</p>
+                <p>© 2025 Catanduanes Connect. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

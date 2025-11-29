@@ -743,7 +743,8 @@ def complete_registration():
                     role: $role,
                     google_id: $google_id,
                     profile_picture: $picture,
-                    is_verified: true,
+                    is_verified: false,
+                    verification_status: 'pending',
                     is_active: true,
                     created_at: $created_at
                 })
@@ -763,7 +764,7 @@ def complete_registration():
                     username=username,
                     role=role,
                     profile_picture=google_user.get('picture'),
-                    is_verified=True,
+                    is_verified=False,
                     is_active=True)
         login_user(user)
 
@@ -804,8 +805,16 @@ def verify_otp():
     is_phone = bool(current_user.phone)
     # Using renamed function to avoid naming conflict with the route
     if validate_otp_code(str(current_user.id), code, is_phone):
-        flash('Verified successfully!', 'success')
-        return redirect(url_for('dashboard.index'))
+        # Set verification_status to 'pending' (OTP just confirmed contact info)
+        db = get_neo4j_db()
+        with db.session() as session:
+            safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                SET u.verification_status = 'pending'
+            """, {'user_id': current_user.id})
+        
+        flash('OTP verified successfully! Now proceed to email verification.', 'success')
+        return redirect(url_for('verification.verify_email'))
     else:
         flash('Invalid or expired code.', 'error')
         return redirect(url_for('auth.verify_otp'))

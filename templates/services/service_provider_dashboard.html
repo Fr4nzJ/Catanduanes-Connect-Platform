@@ -40,11 +40,11 @@
                 <div class="text-right">
                     <div class="mb-2">
                         <span class="text-sm text-gray-600">Verification Status:</span>
-                        <span class="badge badge-{{ 'success' if verification_status == 'verified' else 'warning' if verification_status == 'pending' else 'danger' }} ml-2">
-                            {{ verification_status.title() }}
+                        <span class="badge badge-{{ 'success' if (verification_status or 'pending') == 'approved' else 'warning' if (verification_status or 'pending') == 'pending' else 'danger' }} ml-2">
+                            {{ (verification_status or 'pending').title() }}
                         </span>
                     </div>
-                    {% if verification_status != 'verified' %}
+                    {% if (verification_status or 'pending') != 'approved' %}
                     <a href="{{ url_for('verification.upload_verification') }}" class="btn-warning text-sm">
                         <i class="fas fa-upload mr-1"></i>Upload Documents
                     </a>
@@ -305,7 +305,7 @@
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-gray-600">Identity Verified</span>
-                                {% if verification_status == 'verified' %}
+                                {% if (verification_status or 'pending') == 'approved' %}
                                     <i class="fas fa-check-circle text-green-500"></i>
                                 {% else %}
                                     <a href="{{ url_for('verification.upload_verification') }}" class="text-blue-600 hover:text-blue-800">
@@ -313,7 +313,7 @@
                                     </a>
                                 {% endif %}
                             </div>
-                            {% if verification_status == 'rejected' %}
+                            {% if (verification_status or 'pending') == 'rejected' %}
                             <div class="bg-red-50 border border-red-200 rounded-lg p-3 mt-3">
                                 <p class="text-sm text-red-700">
                                     <i class="fas fa-exclamation-triangle mr-1"></i>

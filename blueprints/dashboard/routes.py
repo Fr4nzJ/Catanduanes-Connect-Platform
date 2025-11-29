@@ -52,11 +52,11 @@ def business_owner():
         verification = safe_run(session, """
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
+            WITH u, v ORDER BY v.created_at DESC LIMIT 1
             RETURN u.verification_status as status,
                    v.submitted_at as submitted_at,
                    v.reviewed_at as reviewed_at,
                    v.reviewer_notes as notes
-            ORDER BY v.submitted_at DESC LIMIT 1
         """, {'user_id': current_user.id})
     
     return render_template('dashboard/business_owner_dashboard.html',
@@ -93,11 +93,11 @@ def job_seeker():
         verification = safe_run(session, """
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
+            WITH u, v ORDER BY v.created_at DESC LIMIT 1
             RETURN u.verification_status as status,
                    v.submitted_at as submitted_at,
                    v.reviewed_at as reviewed_at,
                    v.reviewer_notes as notes
-            ORDER BY v.submitted_at DESC LIMIT 1
         """, {'user_id': current_user.id})
         
         # Get recommended jobs
@@ -113,11 +113,15 @@ def job_seeker():
             ORDER BY newJob.created_at DESC
             LIMIT 5
         """, {'user_id': current_user.id})
+        
+        verification_info = verification[0] if verification else {}
+        verification_status = verification_info.get('status', 'pending')
     
     return render_template('dashboard/job_seeker_dashboard.html',
         stats=stats[0] if stats else {},
         applications=applications,
-        verification=verification[0] if verification else {},
+        verification=verification_info,
+        verification_status=verification_status,
         recommended_jobs=recommended_jobs
     )
 
@@ -151,15 +155,19 @@ def service_provider():
         verification = safe_run(session, """
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
+            WITH u, v ORDER BY v.created_at DESC LIMIT 1
             RETURN u.verification_status as status,
                    v.submitted_at as submitted_at,
                    v.reviewed_at as reviewed_at,
                    v.reviewer_notes as notes
-            ORDER BY v.submitted_at DESC LIMIT 1
         """, {'user_id': current_user.id})
+        
+        verification_info = verification[0] if verification else {}
+        verification_status = verification_info.get('status', 'pending')
     
     return render_template('dashboard/service_provider_dashboard.html',
         stats=stats[0] if stats else {},
         bookings=bookings,
-        verification=verification[0] if verification else {}
+        verification=verification_info,
+        verification_status=verification_status
     )

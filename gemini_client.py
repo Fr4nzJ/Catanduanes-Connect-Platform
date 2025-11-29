@@ -283,3 +283,46 @@ class GeminiChat:
         except Exception as e:
             logger.error(f"Error getting response from Gemini: {str(e)}")
             return "I apologize, but I'm having trouble processing your request right now. Please try again later."
+
+
+# Global chat instance
+_chat_instance = None
+
+
+def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
+    """
+    Get a simple response from Gemini API without conversation history.
+    
+    Args:
+        prompt: The prompt to send to Gemini
+        temperature: Temperature for response generation (0.0-1.0)
+    
+    Returns:
+        str: The response from Gemini
+    """
+    try:
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-2.5-flash')
+        
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": temperature,
+                "top_p": 0.8,
+                "top_k": 40,
+                "max_output_tokens": 2048,
+            }
+        )
+        
+        if response and hasattr(response, 'text') and response.text:
+            return response.text.strip()
+        
+        return "Unable to generate response"
+        
+    except Exception as e:
+        logger.error(f"Error getting response from Gemini: {str(e)}")
+        raise

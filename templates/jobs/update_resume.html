@@ -1,0 +1,1511 @@
+{% extends "base.html" %}
+
+{% block title %}My Resume - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .resume-container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    #header {
+        height: 50px;
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+    #header h1 {
+        color: white;
+        font-size: 24px;
+        font-weight: 600;
+    }
+
+    .left {
+        height: 100%;
+        width: 50px;
+        background: linear-gradient(180deg, #e0f2ff 0%, #d0e8ff 100%);
+        float: left;
+        position: sticky;
+        left: 0;
+        top: 80px;
+    }
+
+    .right {
+        height: 100%;
+        width: 50px;
+        background: linear-gradient(180deg, #e0f2ff 0%, #d0e8ff 100%);
+        float: right;
+        position: sticky;
+        right: 0;
+        top: 80px;
+    }
+
+    .stuff {
+        display: block;
+        margin: 30px 0;
+        padding: 40px 50px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .stuff h1 {
+        text-align: center;
+        color: #333;
+        font-size: 32px;
+        margin-bottom: 10px;
+    }
+
+    .stuff h2 {
+        text-align: center;
+        color: #667eea;
+        font-size: 24px;
+        margin-bottom: 20px;
+    }
+
+    .stuff hr {
+        border: none;
+        border-top: 2px solid #667eea;
+        margin: 30px 0;
+    }
+
+    .form-section {
+        margin-bottom: 30px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        color: #333;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"],
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        transition: border-color 0.3s;
+    }
+
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group input[type="tel"]:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+    }
+
+    .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #333;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 10px;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+
+    .list-item {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+    }
+
+    .list-item input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .add-btn {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background 0.3s;
+    }
+
+    .add-btn:hover {
+        background: #5568d3;
+    }
+
+    .remove-btn {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-top: 8px;
+        transition: background 0.3s;
+    }
+
+    .remove-btn:hover {
+        background: #ff5252;
+    }
+
+    #footer {
+        height: 60px;
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        clear: both;
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding: 0 30px;
+        margin-top: 30px;
+        box-shadow: 0 -2px 4px rgba(0,0,0,0.1);
+    }
+
+    #footer h2 {
+        color: white;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 15px;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 1px solid #eee;
+        justify-content: center;
+    }
+
+    .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #5568d3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-secondary:hover {
+        background: #5a6268;
+    }
+
+    .btn-success {
+        background: #28a745;
+        color: white;
+    }
+
+    .btn-success:hover {
+        background: #218838;
+    }
+
+    .info-box {
+        background: #e7f3ff;
+        border-left: 4px solid #2196F3;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 20px;
+        color: #1565c0;
+        font-size: 14px;
+    }
+
+    @media only screen and (max-width: 768px) {
+        .left, .right {
+            display: none;
+        }
+        .stuff {
+            padding: 20px;
+        }
+        .stuff h1 {
+            font-size: 24px;
+        }
+        .stuff h2 {
+            font-size: 18px;
+        }
+    }
+
+    .preview-section {
+        background: #f0f4ff;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 30px;
+    }
+
+    .preview-section h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+
+    .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #eee;
+    }
+
+    .tab-btn {
+        padding: 10px 20px;
+        background: none;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        color: #666;
+        transition: all 0.3s;
+    }
+
+    .tab-btn.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+    }
+
+    .tab-btn:hover {
+        color: #667eea;
+    }
+
+    .profile-picture-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .profile-picture-preview {
+        width: 150px;
+        height: 150px;
+        border-radius: 8px;
+        background: #e9ecef;
+        border: 2px solid #667eea;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .profile-picture-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .profile-picture-placeholder {
+        font-size: 48px;
+        color: #ccc;
+    }
+
+    .form-group input[type="file"] {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+
+    .form-group input[type="file"]::file-selector-button {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 500;
+        margin-right: 10px;
+    }
+
+    .form-group input[type="file"]::file-selector-button:hover {
+        background: #5568d3;
+    }
+
+    .name-fields-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+    }
+
+    @media only screen and (max-width: 768px) {
+        .name-fields-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* AI Assistant Styles */
+    .ai-assistant-container {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 999;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 15px;
+    }
+
+    .ai-circle {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        transition: all 0.3s ease;
+        border: 3px solid white;
+        font-size: 32px;
+    }
+
+    .ai-circle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-circle.thinking {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.6);
+        }
+    }
+
+    .ai-bubble {
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 12px;
+        padding: 15px 20px;
+        max-width: 350px;
+        max-height: 400px;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        animation: slideIn 0.4s ease-out;
+        position: relative;
+    }
+
+    .ai-bubble::after {
+        content: '';
+        position: absolute;
+        bottom: -10px;
+        right: 20px;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 0px solid transparent;
+        border-top: 10px solid #667eea;
+    }
+
+    .ai-bubble.error {
+        border-color: #ff6b6b;
+    }
+
+    .ai-bubble.error::after {
+        border-top-color: #ff6b6b;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .ai-bubble-title {
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+    }
+
+    .ai-bubble-content {
+        color: #333;
+        font-size: 13px;
+        line-height: 1.5;
+        overflow-y: auto;
+        padding-right: 8px;
+        flex: 1;
+        min-height: 0;
+    }
+
+    .ai-bubble-content::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .ai-bubble-content::-webkit-scrollbar-track {
+        background: #f0f0f0;
+        border-radius: 10px;
+    }
+
+    .ai-bubble-content::-webkit-scrollbar-thumb {
+        background: #667eea;
+        border-radius: 10px;
+    }
+
+    .ai-bubble-content::-webkit-scrollbar-thumb:hover {
+        background: #5568d3;
+    }
+
+    .ai-bubble-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 12px;
+        flex-shrink: 0;
+    }
+
+    .ai-action-btn {
+        padding: 6px 12px;
+        border: 1px solid #667eea;
+        border-radius: 4px;
+        background: white;
+        color: #667eea;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 500;
+        transition: all 0.2s;
+    }
+
+    .ai-action-btn:hover {
+        background: #667eea;
+        color: white;
+    }
+
+    .ai-action-btn.primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .ai-action-btn.primary:hover {
+        background: #5568d3;
+    }
+
+    .language-btn {
+        padding: 5px 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+        color: #333;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .language-btn:hover {
+        background: #f0f0f0;
+        border-color: #667eea;
+    }
+
+    .language-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .ai-close-btn {
+        background: none;
+        border: none;
+        color: #999;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        margin-left: 8px;
+    }
+
+    .ai-close-btn:hover {
+        color: #333;
+    }
+
+    .ai-suggestion-list {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0 0 0;
+    }
+
+    .ai-suggestion-list li {
+        padding: 8px 0 8px 20px;
+        position: relative;
+        color: #555;
+        font-size: 13px;
+    }
+
+    .ai-suggestion-list li:before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .ai-suggestion-list li.warning:before {
+        content: '⚠';
+        color: #ffc107;
+    }
+
+    @media only screen and (max-width: 768px) {
+        .ai-assistant-container {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .ai-circle {
+            width: 60px;
+            height: 60px;
+            font-size: 28px;
+        }
+
+        .ai-bubble {
+            max-width: 280px;
+        }
+    }
+
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+</style>
+
+<div class="resume-container">
+    <div id="header">
+        <h1><i class="fas fa-file-alt"></i> My Resume</h1>
+    </div>
+
+    <div class="left"></div>
+
+    <div class="stuff">
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('edit')">
+                <i class="fas fa-edit"></i> Edit Resume
+            </button>
+            <button class="tab-btn" onclick="switchTab('preview')">
+                <i class="fas fa-eye"></i> Preview
+            </button>
+        </div>
+
+        <!-- Edit Tab -->
+        <div id="edit-tab" class="tab-content">
+            <div class="info-box">
+                <i class="fas fa-info-circle"></i> Fill in your information below. All fields are optional - add only what applies to you.
+            </div>
+
+            <form id="resume-form">
+                <!-- Personal Information -->
+                <div class="section-title">Personal Information</div>
+                
+                <!-- Profile Picture -->
+                <div class="profile-picture-container">
+                    <div class="profile-picture-preview" id="profilePicturePreview">
+                        <span class="profile-picture-placeholder">📷</span>
+                    </div>
+                    <div class="form-group" style="width: 100%; margin: 0;">
+                        <label for="profilePicture">Profile Picture (1:1 Aspect Ratio)</label>
+                        <input type="file" id="profilePicture" name="profilePicture" accept="image/*">
+                        <small style="color: #666; display: block; margin-top: 8px;">JPG, PNG or GIF (Max 5MB). Recommended size: 300x300px or larger</small>
+                    </div>
+                </div>
+
+                <!-- Name Fields -->
+                <div class="form-group">
+                    <label>Name</label>
+                    <div class="name-fields-grid">
+                        <input type="text" id="firstName" name="firstName" placeholder="First Name" onchange="updateFullName()">
+                        <input type="text" id="middleName" name="middleName" placeholder="Middle Name (Optional)" onchange="updateFullName()">
+                    </div>
+                    <div class="name-fields-grid">
+                        <input type="text" id="lastName" name="lastName" placeholder="Last Name" onchange="updateFullName()">
+                        <input type="text" id="suffix" name="suffix" placeholder="Suffix (e.g., Jr., Sr., Ph.D.)" onchange="updateFullName()">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" placeholder="your.email@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone" placeholder="(123) 456-7890">
+                    </div>
+                </div>
+
+                <!-- Interests -->
+                <div class="section-title">
+                    <i class="fas fa-heart"></i> Interests
+                </div>
+                <div id="interests-list"></div>
+                <button type="button" class="add-btn" onclick="addItem('interests')">
+                    <i class="fas fa-plus"></i> Add Interest
+                </button>
+
+                <!-- Skills -->
+                <div class="section-title">
+                    <i class="fas fa-star"></i> Skills
+                </div>
+                <div id="skills-list"></div>
+                <button type="button" class="add-btn" onclick="addItem('skills')">
+                    <i class="fas fa-plus"></i> Add Skill
+                </button>
+
+                <!-- Education -->
+                <div class="section-title">
+                    <i class="fas fa-graduation-cap"></i> Education
+                </div>
+                <div id="education-list"></div>
+                <button type="button" class="add-btn" onclick="addItem('education')">
+                    <i class="fas fa-plus"></i> Add Education
+                </button>
+
+                <!-- Experience -->
+                <div class="section-title">
+                    <i class="fas fa-briefcase"></i> Experience
+                </div>
+                <div id="experience-list"></div>
+                <button type="button" class="add-btn" onclick="addItem('experience')">
+                    <i class="fas fa-plus"></i> Add Experience
+                </button>
+
+                <!-- Extracurriculars -->
+                <div class="section-title">
+                    <i class="fas fa-star-half-alt"></i> Extracurriculars
+                </div>
+                <div id="extracurriculars-list"></div>
+                <button type="button" class="add-btn" onclick="addItem('extracurriculars')">
+                    <i class="fas fa-plus"></i> Add Activity
+                </button>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="resetResume()">
+                        <i class="fas fa-redo"></i> Clear All
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="saveResume()">
+                        <i class="fas fa-save"></i> Save Resume
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Preview Tab -->
+        <div id="preview-tab" class="tab-content" style="display: none;">
+            <div class="preview-section">
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <div class="profile-picture-preview" id="previewProfilePicture" style="width: 100px; height: 100px;">
+                        <span class="profile-picture-placeholder" style="font-size: 32px;">📷</span>
+                    </div>
+                    <div>
+                        <h1 style="margin: 0; color: #333;">Resume</h1>
+                        <h2 id="preview-name" style="margin: 5px 0 0 0; color: #667eea;">Your Name</h2>
+                    </div>
+                </div>
+                <hr>
+                
+                <div id="preview-interests" style="display: none;">
+                    <p class="section-title">Interests</p>
+                    <ul id="preview-interests-list"></ul>
+                </div>
+
+                <div id="preview-skills" style="display: none;">
+                    <p class="section-title">Skills</p>
+                    <ul id="preview-skills-list"></ul>
+                </div>
+
+                <div id="preview-education" style="display: none;">
+                    <p class="section-title">Education</p>
+                    <ul id="preview-education-list"></ul>
+                </div>
+
+                <div id="preview-experience" style="display: none;">
+                    <p class="section-title">Experience</p>
+                    <ul id="preview-experience-list"></ul>
+                </div>
+
+                <div id="preview-extracurriculars" style="display: none;">
+                    <p class="section-title">Extracurriculars</p>
+                    <ul id="preview-extracurriculars-list"></ul>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button type="button" class="btn btn-secondary" onclick="switchTab('edit')">
+                    <i class="fas fa-arrow-left"></i> Back to Edit
+                </button>
+                <button type="button" class="btn btn-primary" onclick="printResume()">
+                    <i class="fas fa-print"></i> Print Resume
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="right"></div>
+
+    <div id="footer">
+        <h2 id="footer-name">Your Name</h2>
+    </div>
+</div>
+
+<!-- AI Assistant -->
+<div class="ai-assistant-container" id="aiAssistantContainer">
+    <div class="ai-circle" id="aiCircle" title="Click for AI assistance">🤖</div>
+</div>
+
+<script>
+    let resumeData = {
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        suffix: '',
+        fullName: '',
+        profilePicture: null,
+        profilePictureBase64: '',
+        email: '',
+        phone: '',
+        interests: [],
+        skills: [],
+        education: [],
+        experience: [],
+        extracurriculars: []
+    };
+
+    // Language preference for AI responses
+    let aiLanguage = 'English'; // Default language
+
+    function setAILanguage(lang) {
+        aiLanguage = lang;
+        // Update button states
+        document.querySelectorAll('.language-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+
+    // Load resume data on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadResume();
+        renderAllLists();
+    });
+
+    function addItem(section) {
+        if (!resumeData[section]) {
+            resumeData[section] = [];
+        }
+        resumeData[section].push('');
+        renderList(section);
+    }
+
+    function removeItem(section, index) {
+        resumeData[section].splice(index, 1);
+        renderList(section);
+    }
+
+    function updateItem(section, index, value) {
+        resumeData[section][index] = value;
+    }
+
+    function renderList(section) {
+        const container = document.getElementById(section + '-list');
+        container.innerHTML = '';
+
+        resumeData[section].forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+                <input type="text" 
+                       value="${item}" 
+                       placeholder="Enter ${section.slice(0, -1)}"
+                       onchange="updateItem('${section}', ${index}, this.value)">
+                <button type="button" class="remove-btn" onclick="removeItem('${section}', ${index})">
+                    <i class="fas fa-trash"></i> Remove
+                </button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function renderAllLists() {
+        ['interests', 'skills', 'education', 'experience', 'extracurriculars'].forEach(section => {
+            renderList(section);
+        });
+    }
+
+    function updatePersonalInfo(field, value) {
+        resumeData[field] = value;
+        updateFooter();
+    }
+
+    function updateFooter() {
+        document.getElementById('footer-name').textContent = resumeData.fullName || 'Your Name';
+    }
+
+    function updateFullName() {
+        const firstName = document.getElementById('firstName').value.trim();
+        const middleName = document.getElementById('middleName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const suffix = document.getElementById('suffix').value.trim();
+
+        let fullName = firstName;
+        if (middleName) fullName += ' ' + middleName;
+        if (lastName) fullName += ' ' + lastName;
+        if (suffix) fullName += ', ' + suffix;
+
+        resumeData.firstName = firstName;
+        resumeData.middleName = middleName;
+        resumeData.lastName = lastName;
+        resumeData.suffix = suffix;
+        resumeData.fullName = fullName.trim();
+
+        updateFooter();
+    }
+
+    function handleProfilePictureUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size exceeds 5MB. Please choose a smaller image.');
+            event.target.value = '';
+            return;
+        }
+
+        // Read file as base64
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const base64 = e.target.result;
+            resumeData.profilePictureBase64 = base64;
+            resumeData.profilePicture = file.name;
+
+            // Update preview
+            const preview = document.getElementById('profilePicturePreview');
+            preview.innerHTML = `<img src="${base64}" alt="Profile Picture">`;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function switchTab(tab) {
+        // Hide all tabs
+        document.getElementById('edit-tab').style.display = 'none';
+        document.getElementById('preview-tab').style.display = 'none';
+
+        // Remove active class
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+
+        // Show selected tab
+        document.getElementById(tab + '-tab').style.display = 'block';
+
+        // Add active class
+        event.target.classList.add('active');
+
+        if (tab === 'preview') {
+            updatePreview();
+        }
+    }
+
+    function updatePreview() {
+        // Update name
+        document.getElementById('preview-name').textContent = resumeData.fullName || 'Your Name';
+
+        // Update profile picture
+        const previewPicture = document.getElementById('previewProfilePicture');
+        if (resumeData.profilePictureBase64) {
+            previewPicture.innerHTML = `<img src="${resumeData.profilePictureBase64}" alt="Profile Picture">`;
+        } else {
+            previewPicture.innerHTML = '<span class="profile-picture-placeholder" style="font-size: 32px;">📷</span>';
+        }
+
+        // Update interests
+        updatePreviewSection('interests');
+        updatePreviewSection('skills');
+        updatePreviewSection('education');
+        updatePreviewSection('experience');
+        updatePreviewSection('extracurriculars');
+    }
+
+    function updatePreviewSection(section) {
+        const preview = document.getElementById('preview-' + section);
+        const previewList = document.getElementById('preview-' + section + '-list');
+
+        if (resumeData[section].length === 0) {
+            preview.style.display = 'none';
+            return;
+        }
+
+        preview.style.display = 'block';
+        previewList.innerHTML = resumeData[section]
+            .filter(item => item.trim() !== '')
+            .map(item => `<li>${item}</li>`)
+            .join('');
+    }
+
+    function saveResume() {
+        // Update personal info from form
+        resumeData.firstName = document.getElementById('firstName').value.trim();
+        resumeData.middleName = document.getElementById('middleName').value.trim();
+        resumeData.lastName = document.getElementById('lastName').value.trim();
+        resumeData.suffix = document.getElementById('suffix').value.trim();
+        updateFullName();
+        resumeData.email = document.getElementById('email').value;
+        resumeData.phone = document.getElementById('phone').value;
+
+        // Send to server via API
+        fetch('{{ url_for("jobs.update_resume") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(resumeData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('Resume saved successfully! You can now use this information when applying for jobs.');
+                updateFooter();
+                // Save to localStorage as backup
+                localStorage.setItem('resumeData', JSON.stringify(resumeData));
+            } else {
+                alert('Error saving resume: ' + (data.error || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Save to localStorage as fallback
+            localStorage.setItem('resumeData', JSON.stringify(resumeData));
+            alert('Resume saved locally. It will be synced to the server when the connection is restored.');
+            updateFooter();
+        });
+    }
+
+    function loadResume() {
+        const saved = localStorage.getItem('resumeData');
+        if (saved) {
+            resumeData = JSON.parse(saved);
+            document.getElementById('firstName').value = resumeData.firstName || '';
+            document.getElementById('middleName').value = resumeData.middleName || '';
+            document.getElementById('lastName').value = resumeData.lastName || '';
+            document.getElementById('suffix').value = resumeData.suffix || '';
+            document.getElementById('email').value = resumeData.email || '';
+            document.getElementById('phone').value = resumeData.phone || '';
+            
+            // Load profile picture if available
+            if (resumeData.profilePictureBase64) {
+                const preview = document.getElementById('profilePicturePreview');
+                preview.innerHTML = `<img src="${resumeData.profilePictureBase64}" alt="Profile Picture">`;
+            }
+            
+            updateFullName();
+        }
+    }
+
+    function resetResume() {
+        if (confirm('Are you sure you want to clear all resume data? This cannot be undone.')) {
+            resumeData = {
+                firstName: '',
+                middleName: '',
+                lastName: '',
+                suffix: '',
+                fullName: '',
+                profilePicture: null,
+                profilePictureBase64: '',
+                email: '',
+                phone: '',
+                interests: [],
+                skills: [],
+                education: [],
+                experience: [],
+                extracurriculars: []
+            };
+            document.getElementById('resume-form').reset();
+            const preview = document.getElementById('profilePicturePreview');
+            preview.innerHTML = '<span class="profile-picture-placeholder">📷</span>';
+            renderAllLists();
+            updateFooter();
+            localStorage.removeItem('resumeData');
+            alert('Resume cleared.');
+        }
+    }
+
+    function printResume() {
+        window.print();
+    }
+
+    // Add event listeners for personal info
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('profilePicture').addEventListener('change', handleProfilePictureUpload);
+        document.getElementById('email').addEventListener('change', (e) => {
+            updatePersonalInfo('email', e.target.value);
+        });
+        document.getElementById('phone').addEventListener('change', (e) => {
+            updatePersonalInfo('phone', e.target.value);
+        });
+        initializeAIAssistant();
+    });
+
+    /* ===== AI ASSISTANT FUNCTIONS ===== */
+    function initializeAIAssistant() {
+        const aiCircle = document.getElementById('aiCircle');
+        aiCircle.addEventListener('click', showAIMenu);
+    }
+
+    function showAIMenu() {
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) {
+            existingBubble.remove();
+            return;
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✨ AI Resume Assistant</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0 0 12px 0;">How can I help you with your resume?</p>
+                
+                <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <button class="language-btn ${aiLanguage === 'English' ? 'active' : ''}" onclick="setAILanguage('English')">
+                        EN
+                    </button>
+                    <button class="language-btn ${aiLanguage === 'Tagalog' ? 'active' : ''}" onclick="setAILanguage('Tagalog')">
+                        TL
+                    </button>
+                    <button class="language-btn ${aiLanguage === 'Bicol' ? 'active' : ''}" onclick="setAILanguage('Bicol')">
+                        BL
+                    </button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="ai-action-btn primary" onclick="analyzeResume()">
+                        <i class="fas fa-magnifying-glass"></i> Analyze Resume
+                    </button>
+                    <button class="ai-action-btn" onclick="getImprovementSuggestions()">
+                        <i class="fas fa-lightbulb"></i> Get Suggestions
+                    </button>
+                    <button class="ai-action-btn" onclick="checkCompletion()">
+                        <i class="fas fa-check-circle"></i> Check Completion
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, document.getElementById('aiCircle'));
+    }
+
+    function analyzeResume() {
+        const aiCircle = document.getElementById('aiCircle');
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        aiCircle.classList.add('thinking');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>📊 Resume Analysis</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Analyzing your resume...</p>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, aiCircle);
+
+        // Collect resume data
+        const resumeText = buildResumeText();
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+
+        // Call Gemini API
+        fetch('{{ url_for("jobs.analyze_resume") }}', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.analysis, 'analysis');
+            } else {
+                displayAIError('Unable to analyze resume. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            displayAIError('Error analyzing resume: ' + error.message);
+        });
+    }
+
+    function getImprovementSuggestions() {
+        const aiCircle = document.getElementById('aiCircle');
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        aiCircle.classList.add('thinking');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>💡 Getting Suggestions</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Generating personalized suggestions...</p>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, aiCircle);
+
+        const resumeText = buildResumeText();
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+
+        fetch('{{ url_for("jobs.get_resume_suggestions") }}', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.suggestions, 'suggestions');
+            } else {
+                displayAIError('Unable to generate suggestions. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            displayAIError('Error generating suggestions: ' + error.message);
+        });
+    }
+
+    function checkCompletion() {
+        const aiCircle = document.getElementById('aiCircle');
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        aiCircle.classList.add('thinking');
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✅ Checking Completion</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Evaluating resume completeness...</p>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, aiCircle);
+
+        const resumeText = buildResumeText();
+
+        // Get CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || 
+                         document.querySelector('input[name="csrf_token"]')?.value;
+
+        fetch('{{ url_for("jobs.check_resume_completion") }}', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.completion, 'completion');
+            } else {
+                displayAIError('Unable to check completion. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            displayAIError('Error checking completion: ' + error.message);
+        });
+    }
+
+    function buildResumeText() {
+        // Update personal info from form before building
+        resumeData.firstName = document.getElementById('firstName').value.trim();
+        resumeData.middleName = document.getElementById('middleName').value.trim();
+        resumeData.lastName = document.getElementById('lastName').value.trim();
+        resumeData.suffix = document.getElementById('suffix').value.trim();
+        updateFullName();
+        resumeData.email = document.getElementById('email').value;
+        resumeData.phone = document.getElementById('phone').value;
+
+        let text = '';
+        
+        // Personal Information
+        text += '=== PERSONAL INFORMATION ===\n';
+        if (resumeData.firstName) text += `First Name: ${resumeData.firstName}\n`;
+        if (resumeData.middleName) text += `Middle Name: ${resumeData.middleName}\n`;
+        if (resumeData.lastName) text += `Last Name: ${resumeData.lastName}\n`;
+        if (resumeData.suffix) text += `Suffix: ${resumeData.suffix}\n`;
+        if (resumeData.email) text += `Email: ${resumeData.email}\n`;
+        if (resumeData.phone) text += `Phone: ${resumeData.phone}\n`;
+        
+        // Interests
+        if (resumeData.interests && resumeData.interests.length > 0) {
+            const filteredInterests = resumeData.interests.filter(item => item.trim());
+            if (filteredInterests.length > 0) {
+                text += '\n=== INTERESTS ===\n';
+                filteredInterests.forEach(interest => {
+                    text += `• ${interest}\n`;
+                });
+            }
+        }
+        
+        // Skills
+        if (resumeData.skills && resumeData.skills.length > 0) {
+            const filteredSkills = resumeData.skills.filter(item => item.trim());
+            if (filteredSkills.length > 0) {
+                text += '\n=== SKILLS ===\n';
+                filteredSkills.forEach(skill => {
+                    text += `• ${skill}\n`;
+                });
+            }
+        }
+        
+        // Education
+        if (resumeData.education && resumeData.education.length > 0) {
+            const filteredEducation = resumeData.education.filter(item => item.trim());
+            if (filteredEducation.length > 0) {
+                text += '\n=== EDUCATION ===\n';
+                filteredEducation.forEach(edu => {
+                    text += `• ${edu}\n`;
+                });
+            }
+        }
+        
+        // Experience
+        if (resumeData.experience && resumeData.experience.length > 0) {
+            const filteredExperience = resumeData.experience.filter(item => item.trim());
+            if (filteredExperience.length > 0) {
+                text += '\n=== EXPERIENCE ===\n';
+                filteredExperience.forEach(exp => {
+                    text += `• ${exp}\n`;
+                });
+            }
+        }
+        
+        // Extracurriculars
+        if (resumeData.extracurriculars && resumeData.extracurriculars.length > 0) {
+            const filteredExtracurriculars = resumeData.extracurriculars.filter(item => item.trim());
+            if (filteredExtracurriculars.length > 0) {
+                text += '\n=== EXTRACURRICULAR ACTIVITIES ===\n';
+                filteredExtracurriculars.forEach(activity => {
+                    text += `• ${activity}\n`;
+                });
+            }
+        }
+
+        return text;
+    }
+
+    function displayAIResponse(response, type) {
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+
+        let title = '🤖 AI Assistant';
+        let icon = '💬';
+
+        if (type === 'analysis') {
+            title = '📊 Resume Analysis';
+            icon = '📊';
+        } else if (type === 'suggestions') {
+            title = '💡 Improvement Suggestions';
+            icon = '💡';
+        } else if (type === 'completion') {
+            title = '✅ Completion Status';
+            icon = '✅';
+        }
+
+        let contentHTML = `
+            <div class="ai-bubble-title">
+                <span>${icon} ${title}</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                ${formatAIResponse(response)}
+            </div>
+        `;
+
+        bubble.innerHTML = contentHTML;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, document.getElementById('aiCircle'));
+    }
+
+    function formatAIResponse(response) {
+        if (!response) return '<p style="margin: 0;">No response received.</p>';
+
+        if (typeof response === 'string') {
+            return `<p style="margin: 0; white-space: pre-wrap;">${escapeHtml(response)}</p>`;
+        }
+
+        if (response.score !== undefined) {
+            // Completion response
+            return `
+                <p style="margin: 0 0 12px 0; font-size: 14px;"><strong>Completion Score: ${response.score}%</strong></p>
+                <ul class="ai-suggestion-list">
+                    ${response.issues.map(issue => `<li class="${issue.includes('Missing') ? 'warning' : ''}">${escapeHtml(issue)}</li>`).join('')}
+                </ul>
+                <div class="ai-bubble-actions">
+                    <button class="ai-action-btn primary" onclick="saveResume()">Save & Continue</button>
+                </div>
+            `;
+        }
+
+        if (Array.isArray(response)) {
+            // Suggestions response
+            return `
+                <ul class="ai-suggestion-list">
+                    ${response.map((suggestion, idx) => `<li key="${idx}">${escapeHtml(suggestion)}</li>`).join('')}
+                </ul>
+            `;
+        }
+
+        return `<p style="margin: 0; white-space: pre-wrap;">${escapeHtml(JSON.stringify(response, null, 2))}</p>`;
+    }
+
+    function displayAIError(error) {
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble error';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title" style="color: #ff6b6b;">
+                <span>⚠️ Error</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #ff6b6b;">${escapeHtml(error)}</p>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').insertBefore(bubble, document.getElementById('aiCircle'));
+    }
+
+    function escapeHtml(text) {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Override chat functions for this page only
+    window.toggleChat = function() {
+        console.log('Chat disabled on this page. Use AI Resume Assistant instead.');
+    };
+
+    // Hide the chat button and modal when page loads
+    window.addEventListener('load', function() {
+        const chatButton = document.querySelector('.fixed.bottom-6.right-6.z-50');
+        const chatModal = document.getElementById('chat-modal');
+        if (chatButton) chatButton.style.display = 'none';
+        if (chatModal) chatModal.style.display = 'none';
+    });
+</script>
+{% endblock %}

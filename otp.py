@@ -24,7 +24,7 @@ def save_otp(user_id: str, otp: str, is_phone: bool = False, ttl: int = 10):
                     {"uid": user_id, "otp": otp, "exp": expires})
 
 def verify_otp(user_id: str, otp: str, is_phone: bool = False) -> bool:
-    """Check OTP, mark verified if correct"""
+    """Check OTP, mark with pending verification status if correct"""
     with get_neo4j_db().session() as s:
         rec = safe_run(s, f"""MATCH (u:User {{id: $uid}})
                               WHERE u.{'phone' if is_phone else 'email'}_otp = $otp
@@ -33,8 +33,7 @@ def verify_otp(user_id: str, otp: str, is_phone: bool = False) -> bool:
         if not rec:
             return False
         safe_run(s, """MATCH (u:User {id: $uid})
-                       SET u.is_verified = true,
-                           u.verified_at = datetime()
+                       SET u.verification_status = 'pending'
                        REMOVE u.email_otp, u.phone_otp, u.email_otp_expires, u.phone_otp_expires""",
                 {"uid": user_id})
         return True
