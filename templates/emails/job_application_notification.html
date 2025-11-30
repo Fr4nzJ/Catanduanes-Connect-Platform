@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px 10px 0 0;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .job-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .job-info h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .applicant-info {
+            background: #f0f7ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .applicant-info p {
+            margin: 8px 0;
+        }
+        .label {
+            font-weight: 600;
+            color: #333;
+        }
+        .cover-letter {
+            background: white;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #666;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            opacity: 0.9;
+        }
+        .footer {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 0 0 10px 10px;
+            border: 1px solid #ddd;
+            border-top: none;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .divider {
+            border-top: 2px solid #eee;
+            margin: 20px 0;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📬 New Job Application</h1>
+            <p>You have received a new application for a job posting</p>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <p>Hello,</p>
+            <p>You have received a new application for the job posting <strong>"{{ job_title }}"</strong> at <strong>{{ business_name }}</strong>.</p>
+
+            <!-- Job Info -->
+            <div class="job-info">
+                <h3>📋 Job Details</h3>
+                <p><strong>Position:</strong> {{ job_title }}</p>
+                <p><strong>Company:</strong> {{ business_name }}</p>
+                <p><strong>Application Date:</strong> {{ application_date }}</p>
+            </div>
+
+            <!-- Applicant Info -->
+            <div class="applicant-info">
+                <h3 style="margin-top: 0; color: #333;">👤 Applicant Information</h3>
+                <p><span class="label">Name:</span> {{ applicant_name }}</p>
+                <p><span class="label">Email:</span> <a href="mailto:{{ applicant_email }}" style="color: #667eea;">{{ applicant_email }}</a></p>
+                {% if applicant_phone %}
+                <p><span class="label">Phone:</span> {{ applicant_phone }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Cover Letter -->
+            {% if cover_letter %}
+            <div>
+                <h3 style="color: #333; margin-bottom: 10px;">💌 Cover Letter</h3>
+                <div class="cover-letter">
+                    {{ cover_letter }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Divider -->
+            <div class="divider"></div>
+
+            <!-- Action -->
+            <p style="text-align: center;">
+                <a href="{{ app_dashboard_url }}" class="cta-button">
+                    View Application Dashboard
+                </a>
+            </p>
+
+            <p>You can review this application and contact the applicant directly or through your application dashboard.</p>
+
+            <p style="color: #666; font-size: 14px;">
+                <strong>💡 Tip:</strong> Respond to applications promptly to increase your chances of attracting quality talent.
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>© 2025 Catanduanes Connect Platform. All rights reserved.</p>
+            <p>This is an automated message. Please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+</html>

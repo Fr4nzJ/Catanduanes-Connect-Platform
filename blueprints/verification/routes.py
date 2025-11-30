@@ -8,6 +8,7 @@ from database import get_neo4j_db, safe_run, _node_to_dict
 from tasks import send_email_task, create_notification_task
 from decorators import role_required
 from otp import generate_otp, save_email_otp, verify_email_otp
+from forms import VerificationForm
 
 admin_required = role_required('admin')
 verification_bp = Blueprint('verification', __name__)
@@ -158,16 +159,32 @@ def upload_verification():
         return redirect(url_for('dashboard.index'))
 
     if request.method == 'POST':
-        if 'documents[]' not in request.files:
-            flash('No documents selected.', 'danger')
-            return redirect(request.url)
+        form = VerificationForm()
+        
+        # Validate form
+        if not form.validate_on_submit():
+            flash('Form validation failed. Please check all required fields.', 'danger')
+            return render_template('verification_upload.html', form=form)
 
-        files = request.files.getlist('documents[]')
-        document_types = request.form.getlist('document_types[]')
+        # Collect files from form
+        files_to_upload = []
+        file_fields = [
+            ('id_document', 'ID Document'),
+            ('business_permit', 'Business Permit'),
+            ('dti_registration', 'DTI Registration'),
+            ('resume', 'Resume'),
+            ('certifications', 'Certifications'),
+            ('address_proof', 'Address Proof'),
+        ]
+        
+        for field_name, doc_type in file_fields:
+            file_field = getattr(form, field_name, None)
+            if file_field and file_field.data:
+                files_to_upload.append((file_field.data, doc_type))
 
-        if not files or not document_types or len(files) != len(document_types):
-            flash('Please provide all required documents and their types.', 'danger')
-            return redirect(request.url)
+        if not files_to_upload:
+            flash('No valid documents were uploaded. Please select at least one document.', 'danger')
+            return render_template('verification_upload.html', form=form)
 
         db = get_neo4j_db()
         with db.session() as session:
@@ -234,7 +251,7 @@ def upload_verification():
             )
             os.makedirs(upload_path, exist_ok=True)
 
-            for file, doc_type in zip(files, document_types):
+            for file, doc_type in files_to_upload:
                 if file and file.filename and allowed_file(file.filename):
                     filename = secure_filename(file.filename)
                     file_id = str(uuid.uuid4())
@@ -274,7 +291,8 @@ def upload_verification():
             return redirect(url_for('verification.status'))
 
     # GET request - show upload form
-    return render_template('verification/verification_upload.html')
+    form = VerificationForm()
+    return render_template('verification_upload.html', form=form)
 
 @verification_bp.route('/verification/status')
 @login_required

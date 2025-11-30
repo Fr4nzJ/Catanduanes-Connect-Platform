@@ -690,13 +690,23 @@ def toggle_user_status(user_id):
         
         # Create notification for user
         action = 'activated' if new_status else 'deactivated'
-        create_notification_task.delay(
-            user_id=user_id,
-            type='account_status',
-            title=f'Account {action.title()}',
-            message=f'Your account has been {action} by an administrator.',
-            data={'action': action, 'admin_id': current_user.id}
-        )
+        
+        # Verify user exists before creating notification
+        user_check_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})
+            RETURN u.id as id
+        """, {'user_id': user_id})
+        
+        if user_check_result:
+            create_notification_task.delay(
+                user_id=user_id,
+                type='account_status',
+                title=f'Account {action.title()}',
+                message=f'Your account has been {action} by an administrator.',
+                data={'action': action, 'admin_id': current_user.id}
+            )
+        else:
+            logger.warning(f"User {user_id} not found for notification")
     
     return {'success': True, 'new_status': new_status}
 
@@ -815,14 +825,26 @@ def verify_business(business_id):
             'verified_by': current_user.id
         })
         
-        # Create notification for business owner
-        create_notification_task.delay(
-            user_id=owner['id'],
-            type='business_verified',
-            title='Business Verified',
-            message=f'Your business "{business_data["name"]}" has been verified by an administrator.',
-            data={'business_id': business_id, 'business_name': business_data['name']}
-        )
+        # Create notification for business owner - verify owner exists first
+        if owner and owner.get('id'):
+            # Verify owner user exists in database
+            owner_check_result = safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                RETURN u.id as id
+            """, {'user_id': owner['id']})
+            
+            if owner_check_result:
+                create_notification_task.delay(
+                    user_id=owner['id'],
+                    type='business_verified',
+                    title='Business Verified',
+                    message=f'Your business "{business_data["name"]}" has been verified by an administrator.',
+                    data={'business_id': business_id, 'business_name': business_data['name']}
+                )
+            else:
+                logger.warning(f"Business owner {owner['id']} not found for notification")
+        else:
+            logger.warning(f"No owner found for business {business_id}")
         
         # Send verification email
         send_email_task.delay(

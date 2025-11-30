@@ -153,12 +153,30 @@ class Business:
 class Job:
     """Job listing model"""
     
+    # Job type constants
+    JOB_TYPES = {
+        'full_time': 'Full Time',
+        'part_time': 'Part Time',
+        'contract': 'Contract',
+        'internship': 'Internship',
+        'freelance': 'Freelance'
+    }
+    
+    # Employment setup types
+    SETUP_TYPES = {
+        'on_site': 'On-Site',
+        'remote': 'Remote',
+        'hybrid': 'Hybrid'
+    }
+    
     def __init__(self, **kwargs):
         self.id = kwargs.get('id') or str(uuid.uuid4())
+        self.uuid = kwargs.get('uuid') or str(uuid.uuid4())
         self.title = kwargs.get('title')
         self.description = kwargs.get('description')
         self.category = kwargs.get('category')
-        self.type = kwargs.get('type', 'full_time')  # full_time, part_time, contract, internship
+        self.type = kwargs.get('type', 'full_time')  # full_time, part_time, contract, internship, freelance
+        self.setup = kwargs.get('setup', 'on_site')  # on_site, remote, hybrid
         self.salary_min = kwargs.get('salary_min')
         self.salary_max = kwargs.get('salary_max')
         self.currency = kwargs.get('currency', 'PHP')
@@ -167,21 +185,53 @@ class Job:
         self.longitude = kwargs.get('longitude')
         self.business_id = kwargs.get('business_id')
         self.business_name = kwargs.get('business_name')
+        self.business_rating = kwargs.get('business_rating', 0.0)
         self.requirements = kwargs.get('requirements', [])
         self.benefits = kwargs.get('benefits', [])
         self.is_active = kwargs.get('is_active', True)
         self.created_at = kwargs.get('created_at', datetime.utcnow().isoformat())
         self.expires_at = kwargs.get('expires_at')
         self.applications_count = kwargs.get('applications_count', 0)
+        self.views_count = kwargs.get('views_count', 0)
         
+    @property
+    def salary_range_display(self) -> str:
+        """Display salary range in formatted string"""
+        if self.salary_min and self.salary_max:
+            return f"₱{self.salary_min:,.0f} - ₱{self.salary_max:,.0f}"
+        elif self.salary_min:
+            return f"₱{self.salary_min:,.0f}+"
+        elif self.salary_max:
+            return f"Up to ₱{self.salary_max:,.0f}"
+        return "Competitive"
+    
+    @property
+    def type_display(self) -> str:
+        """Get display name for job type"""
+        return self.JOB_TYPES.get(self.type, self.type)
+    
+    @property
+    def setup_display(self) -> str:
+        """Get display name for work setup"""
+        return self.SETUP_TYPES.get(self.setup, self.setup)
+    
+    @property
+    def is_expired(self) -> bool:
+        """Check if job posting has expired"""
+        if self.expires_at:
+            return datetime.fromisoformat(self.expires_at) < datetime.utcnow()
+        return False
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert job to dictionary"""
         return {
             'id': self.id,
+            'uuid': self.uuid,
             'title': self.title,
             'description': self.description,
             'category': self.category,
             'type': self.type,
+            'setup': self.setup,
             'salary_min': self.salary_min,
             'salary_max': self.salary_max,
             'currency': self.currency,
@@ -190,12 +240,17 @@ class Job:
             'longitude': self.longitude,
             'business_id': self.business_id,
             'business_name': self.business_name,
+            'business_rating': self.business_rating,
             'requirements': self.requirements,
             'benefits': self.benefits,
             'is_active': self.is_active,
             'created_at': self.created_at,
             'expires_at': self.expires_at,
-            'applications_count': self.applications_count
+            'applications_count': self.applications_count,
+            'views_count': self.views_count,
+            'salary_range_display': self.salary_range_display,
+            'type_display': self.type_display,
+            'setup_display': self.setup_display
         }
 
 # class Service:
@@ -299,25 +354,63 @@ class Notification:
 class JobApplication:
     """Job application model"""
     
+    # Application status constants
+    STATUSES = {
+        'pending': 'Pending',
+        'accepted': 'Accepted',
+        'rejected': 'Rejected',
+        'withdrawn': 'Withdrawn'
+    }
+    
     def __init__(self, **kwargs):
         self.id = kwargs.get('id') or str(uuid.uuid4())
+        self.uuid = kwargs.get('uuid') or str(uuid.uuid4())
         self.job_id = kwargs.get('job_id')
+        self.job_title = kwargs.get('job_title')
+        self.business_id = kwargs.get('business_id')
+        self.business_name = kwargs.get('business_name')
+        self.business_email = kwargs.get('business_email')
         self.applicant_id = kwargs.get('applicant_id')
         self.applicant_name = kwargs.get('applicant_name')
+        self.applicant_email = kwargs.get('applicant_email')
+        self.applicant_phone = kwargs.get('applicant_phone')
         self.cover_letter = kwargs.get('cover_letter')
         self.resume_file = kwargs.get('resume_file')
-        self.status = kwargs.get('status', 'pending')  # pending, accepted, rejected
+        self.status = kwargs.get('status', 'pending')  # pending, accepted, rejected, withdrawn
         self.created_at = kwargs.get('created_at', datetime.utcnow().isoformat())
+        self.updated_at = kwargs.get('updated_at', datetime.utcnow().isoformat())
+    
+    @property
+    def status_display(self) -> str:
+        """Get display name for application status"""
+        return self.STATUSES.get(self.status, self.status)
+    
+    @property
+    def days_ago(self) -> int:
+        """Get number of days since application was created"""
+        created = datetime.fromisoformat(self.created_at)
+        delta = datetime.utcnow() - created
+        return delta.days
         
     def to_dict(self) -> Dict[str, Any]:
         """Convert job application to dictionary"""
         return {
             'id': self.id,
+            'uuid': self.uuid,
             'job_id': self.job_id,
+            'job_title': self.job_title,
+            'business_id': self.business_id,
+            'business_name': self.business_name,
+            'business_email': self.business_email,
             'applicant_id': self.applicant_id,
             'applicant_name': self.applicant_name,
+            'applicant_email': self.applicant_email,
+            'applicant_phone': self.applicant_phone,
             'cover_letter': self.cover_letter,
             'resume_file': self.resume_file,
             'status': self.status,
-            'created_at': self.created_at
+            'created_at': self.created_at,
+            'updated_at': self.updated_at,
+            'status_display': self.status_display,
+            'days_ago': self.days_ago
         }

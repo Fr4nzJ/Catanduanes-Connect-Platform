@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+
+{% block title %}Apply for {{ job.title }} - Catanduanes Connect{% endblock %}
+
+{% block extra_css %}
+<style>
+    .apply-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .apply-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 20px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .apply-header h1 {
+        margin: 0 0 10px 0;
+        font-size: 2em;
+    }
+
+    .apply-header p {
+        margin: 5px 0;
+        opacity: 0.9;
+    }
+
+    .apply-form {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .form-group {
+        margin-bottom: 25px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+        font-weight: 600;
+        font-size: 1em;
+    }
+
+    .form-group textarea,
+    .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-family: inherit;
+        font-size: 1em;
+        transition: all 0.3s ease;
+        box-sizing: border-box;
+    }
+
+    .form-group textarea:focus,
+    .form-group input:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 8px rgba(102,126,234,0.3);
+    }
+
+    .form-group textarea {
+        min-height: 200px;
+        resize: vertical;
+    }
+
+    .file-upload-area {
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: #f9f9f9;
+    }
+
+    .file-upload-area:hover {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+
+    .file-upload-area.drag-over {
+        border-color: #667eea;
+        background: #f0f4ff;
+    }
+
+    .file-upload-area i {
+        font-size: 3em;
+        color: #667eea;
+        margin-bottom: 10px;
+    }
+
+    .file-upload-area p {
+        margin: 10px 0;
+        color: #333;
+    }
+
+    .file-upload-area .text-small {
+        font-size: 0.9em;
+        color: #666;
+    }
+
+    #resume-file {
+        display: none;
+    }
+
+    .file-preview {
+        background: #f0f4ff;
+        padding: 15px;
+        border-radius: 5px;
+        margin-top: 10px;
+        display: none;
+    }
+
+    .file-preview.show {
+        display: block;
+    }
+
+    .file-preview-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px;
+        background: white;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+    }
+
+    .file-preview-item i {
+        margin-right: 10px;
+        color: #667eea;
+    }
+
+    .file-preview-item button {
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 0.9em;
+    }
+
+    .file-preview-item button:hover {
+        background: #ff5252;
+    }
+
+    .required-note {
+        color: #999;
+        font-size: 0.9em;
+        margin-top: 5px;
+    }
+
+    .job-summary {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border-left: 4px solid #667eea;
+    }
+
+    .job-summary h3 {
+        margin-top: 0;
+        color: #333;
+    }
+
+    .job-summary-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    .job-summary-item:last-child {
+        border-bottom: none;
+    }
+
+    .job-summary-item .label {
+        color: #666;
+        font-weight: 500;
+    }
+
+    .job-summary-item .value {
+        color: #333;
+        font-weight: 600;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        justify-content: center;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 14px 40px;
+        border-radius: 5px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102,126,234,0.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-cancel {
+        background: #f0f0f0;
+        color: #333;
+        border: 1px solid #ddd;
+        padding: 14px 40px;
+        border-radius: 5px;
+        font-size: 1.1em;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-cancel:hover {
+        background: #e0e0e0;
+    }
+
+    .success-message {
+        background: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    .error-message {
+        background: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .apply-header h1 {
+            font-size: 1.5em;
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .btn-submit,
+        .btn-cancel {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="apply-container">
+    <!-- Header -->
+    <div class="apply-header">
+        <h1>Apply for Position</h1>
+        <p>{{ job.title }} at {{ job.business_name }}</p>
+    </div>
+
+    <!-- Job Summary -->
+    <div class="job-summary">
+        <h3>📋 Job Summary</h3>
+        <div class="job-summary-item">
+            <span class="label">Position</span>
+            <span class="value">{{ job.title }}</span>
+        </div>
+        <div class="job-summary-item">
+            <span class="label">Company</span>
+            <span class="value">{{ job.business_name }}</span>
+        </div>
+        <div class="job-summary-item">
+            <span class="label">Employment Type</span>
+            <span class="value">{{ job.type_display }}</span>
+        </div>
+        <div class="job-summary-item">
+            <span class="label">Salary Range</span>
+            <span class="value">{{ job.salary_range_display }}</span>
+        </div>
+        <div class="job-summary-item">
+            <span class="label">Location</span>
+            <span class="value">{{ job.location }}</span>
+        </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="success-message" id="successMessage">
+        <strong>✓ Application submitted successfully!</strong> You can track your application status in your dashboard.
+    </div>
+    <div class="error-message" id="errorMessage"></div>
+
+    <!-- Application Form -->
+    <div class="apply-form">
+        <form id="applicationForm" method="POST" enctype="multipart/form-data">
+            <!-- Cover Letter -->
+            <div class="form-group">
+                <label for="cover_letter">Cover Letter *</label>
+                <textarea id="cover_letter" name="cover_letter" 
+                          placeholder="Tell us why you're interested in this position and what makes you a great fit...
+&#10;
+You can share:
+- Your relevant experience
+- Why you're passionate about this role
+- What you can contribute to the company
+- Any additional information you'd like to share"
+                          required></textarea>
+                <div class="required-note">💡 A thoughtful cover letter increases your chances of being considered</div>
+            </div>
+
+            <!-- Resume Upload -->
+            <div class="form-group">
+                <label for="resume">Resume/CV *</label>
+                <div class="file-upload-area" id="resumeUploadArea">
+                    <div style="margin-bottom: 10px;">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <p style="margin: 0 0 5px 0; font-weight: 600;">Click to upload or drag and drop</p>
+                    <p class="text-small" style="margin: 0;">PDF, DOC, or DOCX files only • Max 5MB</p>
+                </div>
+                <input type="file" id="resume" name="resume" accept=".pdf,.doc,.docx" required>
+                <div class="file-preview" id="filePreview">
+                    <div class="file-preview-item">
+                        <div>
+                            <i class="fas fa-file" id="fileIcon"></i>
+                            <span id="fileName"></span>
+                        </div>
+                        <button type="button" onclick="removeFile()">Remove</button>
+                    </div>
+                </div>
+                <div class="required-note">📎 Your resume helps employers evaluate your qualifications</div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" class="btn-cancel">← Back to Job</a>
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Application
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Additional Info -->
+    <div style="background: #f0f4ff; padding: 20px; border-radius: 8px; margin-top: 30px; text-align: center; color: #333;">
+        <p style="margin: 0;">
+            <strong>After you apply:</strong><br>
+            You can track your application status, view feedback, and communicate with the employer through your dashboard.
+        </p>
+    </div>
+</div>
+
+<script>
+    // File upload handling
+    const resumeUploadArea = document.getElementById('resumeUploadArea');
+    const resumeInput = document.getElementById('resume');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileIcon = document.getElementById('fileIcon');
+
+    // Click to upload
+    resumeUploadArea.addEventListener('click', () => {
+        resumeInput.click();
+    });
+
+    // File selection
+    resumeInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            displayFile(file);
+        }
+    });
+
+    // Drag and drop
+    resumeUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        resumeUploadArea.classList.add('drag-over');
+    });
+
+    resumeUploadArea.addEventListener('dragleave', () => {
+        resumeUploadArea.classList.remove('drag-over');
+    });
+
+    resumeUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        resumeUploadArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file && isValidFile(file)) {
+            resumeInput.files = e.dataTransfer.files;
+            displayFile(file);
+        } else {
+            showError('Please upload a valid PDF, DOC, or DOCX file.');
+        }
+    });
+
+    function displayFile(file) {
+        fileName.textContent = file.name;
+        
+        // Set icon based on file type
+        if (file.type === 'application/pdf') {
+            fileIcon.className = 'fas fa-file-pdf';
+            fileIcon.style.color = '#d93026';
+        } else if (file.type === 'application/msword' || 
+                   file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            fileIcon.className = 'fas fa-file-word';
+            fileIcon.style.color = '#2b579a';
+        } else {
+            fileIcon.className = 'fas fa-file';
+            fileIcon.style.color = '#667eea';
+        }
+        
+        filePreview.classList.add('show');
+        resumeUploadArea.style.display = 'none';
+    }
+
+    function removeFile() {
+        resumeInput.value = '';
+        filePreview.classList.remove('show');
+        resumeUploadArea.style.display = 'block';
+    }
+
+    function isValidFile(file) {
+        const validTypes = ['application/pdf', 'application/msword', 
+                          'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        const validExtensions = ['.pdf', '.doc', '.docx'];
+        const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+        
+        return validTypes.includes(file.type) || validExtensions.includes(extension);
+    }
+
+    // Form submission
+    document.getElementById('applicationForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const coverLetter = document.getElementById('cover_letter').value.trim();
+        const resumeFile = document.getElementById('resume').files[0];
+
+        // Validation
+        if (!coverLetter) {
+            showError('Please write a cover letter.');
+            return;
+        }
+
+        if (!resumeFile) {
+            showError('Please upload your resume.');
+            return;
+        }
+
+        if (!isValidFile(resumeFile)) {
+            showError('Please upload a valid PDF, DOC, or DOCX file.');
+            return;
+        }
+
+        // Submit
+        const formData = new FormData();
+        formData.append('cover_letter', coverLetter);
+        formData.append('resume', resumeFile);
+
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" style="margin-right: 8px;"></i>Submitting...';
+
+        try {
+            const response = await fetch(e.target.action, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                showSuccess('Application submitted successfully! Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '{{ url_for("jobs.job_detail", job_id=job.id) }}';
+                }, 2000);
+            } else {
+                const data = await response.json();
+                showError(data.error || 'Failed to submit application. Please try again.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Application';
+            }
+        } catch (error) {
+            showError('Network error. Please check your connection and try again.');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane" style="margin-right: 8px;"></i>Submit Application';
+        }
+    });
+
+    function showSuccess(message) {
+        const successMsg = document.getElementById('successMessage');
+        successMsg.textContent = message;
+        successMsg.style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+
+    function showError(message) {
+        const errorMsg = document.getElementById('errorMessage');
+        errorMsg.textContent = message;
+        errorMsg.style.display = 'block';
+        document.getElementById('successMessage').style.display = 'none';
+        window.scrollTo(0, 0);
+    }
+</script>
+{% endblock %}

@@ -3,17 +3,19 @@
 {% block title %}Job Seeker Dashboard - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-green-50 to-emerald-50">
     <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="bg-white shadow-md border-b border-green-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Job Seeker Dashboard</h1>
-                    <p class="mt-2 text-gray-600">Manage your job applications and profile</p>
+                    <h1 class="text-4xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                        Job Seeker Dashboard
+                    </h1>
+                    <p class="mt-2 text-gray-600">Manage your applications, resume, and find your next opportunity</p>
                 </div>
                 <div class="flex space-x-3">
-                    <a href="{{ url_for('jobs.list_jobs') }}" class="btn-primary">
+                    <a href="{{ url_for('jobs.list_jobs') }}" class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold">
                         <i class="fas fa-search mr-2"></i>Browse Jobs
                     </a>
                 </div>
@@ -21,34 +23,377 @@
         </div>
     </div>
 
-    <!-- Profile & Verification Status -->
+    <!-- Profile Welcome Card -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+        <div class="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg shadow-md border-l-4 border-green-500 p-6 mb-8">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-user-graduate text-blue-600 text-2xl"></i>
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-user-graduate text-white text-2xl"></i>
                     </div>
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-900">Welcome, {{ current_user.username }}</h2>
-                        <p class="text-gray-600">Job Seeker Account</p>
+                        <h2 class="text-2xl font-bold text-gray-900">Welcome back, {{ current_user.username }}!</h2>
+                        <p class="text-gray-600">Job Seeker Account • Continue your journey</p>
                     </div>
                 </div>
                 <div class="text-right">
-                    <div class="mb-2">
+                    <div class="mb-3">
                         <span class="text-sm text-gray-600">Verification Status:</span>
-                        <span class="badge badge-{{ 'success' if (verification_status or 'pending') == 'approved' else 'warning' if (verification_status or 'pending') == 'pending' else 'danger' }} ml-2">
-                            {{ (verification_status or 'pending').title() }}
-                        </span>
+                        <div class="mt-1 flex items-center gap-2">
+                            {% set v_status = verification_status or 'pending' %}
+                            {% if v_status == 'approved' %}
+                            <span class="px-4 py-2 text-sm font-bold rounded-full bg-green-100 text-green-800 flex items-center">
+                                <i class="fas fa-check-circle mr-2"></i>Verified
+                            </span>
+                            {% elif v_status == 'pending' %}
+                            <span class="px-4 py-2 text-sm font-bold rounded-full bg-yellow-100 text-yellow-800 flex items-center">
+                                <i class="fas fa-clock mr-2"></i>Pending
+                            </span>
+                            {% else %}
+                            <span class="px-4 py-2 text-sm font-bold rounded-full bg-red-100 text-red-800 flex items-center">
+                                <i class="fas fa-times-circle mr-2"></i>Rejected
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
-                    {% if (verification_status or 'pending') != 'approved' %}
-                    <a href="{{ url_for('verification.upload_verification') }}" class="btn-warning text-sm">
-                        <i class="fas fa-upload mr-1"></i>Upload Documents
+                    {% if v_status != 'approved' %}
+                    <a href="{{ url_for('verification.upload_verification') }}" class="inline-flex items-center px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold text-sm">
+                        <i class="fas fa-upload mr-2"></i>Upload Documents
                     </a>
                     {% endif %}
                 </div>
             </div>
         </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Applications & Jobs -->
+            <div class="lg:col-span-2">
+                <!-- My Applications -->
+                <div class="bg-white rounded-lg shadow-md mb-8">
+                    <div class="px-6 py-5 border-b-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-file-alt mr-3 text-green-600"></i>My Applications
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        {% if applications %}
+                            <div class="space-y-4">
+                                {% for application in applications %}
+                                    <div class="border border-gray-200 rounded-lg p-5 hover:shadow-lg hover:border-green-300 transition-all duration-200 bg-gradient-to-br from-white to-gray-50">
+                                        <div class="flex items-start justify-between mb-3">
+                                            <div class="flex-1">
+                                                <h3 class="text-lg font-bold text-gray-900 mb-1">
+                                                    <a href="{{ url_for('jobs.job_detail', job_id=application.job.id) }}" 
+                                                       class="text-green-600 hover:text-emerald-700 transition-colors">{{ application.job.title }}</a>
+                                                </h3>
+                                                <p class="text-sm text-green-600 font-semibold mb-2">
+                                                    <i class="fas fa-building mr-1"></i>{{ application.business_name }}
+                                                </p>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <a href="{{ url_for('jobs.job_detail', job_id=application.job.id) }}" 
+                                                   class="px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors font-semibold text-sm flex items-center">
+                                                    <i class="fas fa-eye mr-1"></i>View Job
+                                                </a>
+                                                {% if application.resume_file %}
+                                                <a href="{{ url_for('static', filename='uploads/' + application.resume_file) }}" 
+                                                   target="_blank" class="px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors font-semibold text-sm flex items-center">
+                                                    <i class="fas fa-file-pdf mr-1"></i>Resume
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <p class="text-gray-700 text-sm leading-relaxed mb-3">{{ application.job.description[:150] }}{% if application.job.description|length > 150 %}...{% endif %}</p>
+                                        
+                                        <div class="flex flex-wrap gap-3 mb-3 pb-3 border-b border-gray-100 text-sm">
+                                            <span class="text-gray-600"><i class="fas fa-map-marker-alt text-red-500 mr-1"></i>{{ application.job.location or 'Location TBA' }}</span>
+                                            <span class="text-gray-600"><i class="fas fa-calendar text-blue-500 mr-1"></i>{{ application.created_at|datetime if application.created_at else 'Recently' }}</span>
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold {% if application.status == 'pending' %}bg-yellow-100 text-yellow-800{% elif application.status == 'reviewed' %}bg-blue-100 text-blue-800{% elif application.status == 'accepted' %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                                {{ application.status.title() }}
+                                            </span>
+                                        </div>
+                                        
+                                        {% if application.cover_letter %}
+                                        <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
+                                            <p class="text-xs text-gray-600 font-semibold mb-1">Cover Letter Preview:</p>
+                                            <p class="text-sm text-gray-700">{{ application.cover_letter[:120] }}{% if application.cover_letter|length > 120 %}...{% endif %}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-12">
+                                <div class="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-4">
+                                    <i class="fas fa-file-alt text-3xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">No Applications Yet</h3>
+                                <p class="text-gray-600 mb-6">Start applying to jobs to see your applications here.</p>
+                                <a href="{{ url_for('jobs.list_jobs') }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold">
+                                    <i class="fas fa-search mr-2"></i>Find Jobs
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recommended Jobs -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-5 border-b-2 border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-star mr-3 text-blue-600"></i>Recommended Jobs
+                        </h2>
+                    </div>
+                    
+                    <div class="p-6">
+                        {% if recommended_jobs %}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {% for job in recommended_jobs %}
+                                    <div class="border border-gray-200 rounded-lg p-5 hover:shadow-lg hover:border-blue-300 transition-all duration-200 bg-gradient-to-br from-white to-gray-50">
+                                        <div class="flex items-start justify-between mb-2">
+                                            <h3 class="text-lg font-bold text-gray-900 flex-1">
+                                                <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" 
+                                                   class="text-blue-600 hover:text-cyan-700 transition-colors">{{ job.title }}</a>
+                                            </h3>
+                                        </div>
+                                        <p class="text-sm text-blue-600 font-semibold mb-2">
+                                            <i class="fas fa-building mr-1"></i>{{ job.business_name or 'Business Name' }}
+                                        </p>
+                                        <p class="text-sm text-gray-700 mb-3">{{ job.description[:100] }}{% if job.description|length > 100 %}...{% endif %}</p>
+                                        
+                                        <div class="flex items-center justify-between text-sm text-gray-600 mb-3 pb-3 border-b border-gray-100">
+                                            <span><i class="fas fa-map-marker-alt text-red-500 mr-1"></i>{{ job.location or 'Location TBA' }}</span>
+                                            <span><i class="fas fa-calendar text-gray-400 mr-1"></i>{{ job.created_at|datetime if job.created_at else 'Recent' }}</span>
+                                        </div>
+                                        
+                                        {% if job.business_rating and job.business_rating > 0 %}
+                                        <div class="flex items-center mb-3">
+                                            <div class="flex text-yellow-400">
+                                                {% for i in range(5) %}
+                                                    <i class="fas fa-star text-sm {% if i < job.business_rating|int %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
+                                                {% endfor %}
+                                            </div>
+                                            <span class="text-xs text-gray-600 ml-2">{{ "{:.1f}"|format(job.business_rating) }}</span>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" 
+                                           class="block w-full px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white text-center rounded-lg hover:shadow-md transition-all font-semibold text-sm">
+                                            <i class="fas fa-arrow-right mr-1"></i>View Details
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-lightbulb text-3xl text-gray-300 mb-3"></i>
+                                <p class="text-gray-500 text-sm">No recommended jobs at the moment</p>
+                                <p class="text-gray-400 text-xs mt-1">Complete your profile to get better recommendations</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Resume, Actions & Status -->
+            <div class="space-y-6">
+                <!-- Resume Management -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-5 border-b-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-file-pdf mr-2 text-purple-600"></i>Resume Management
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">Resume Status</p>
+                                    <p class="text-xs text-gray-500">Your job application readiness</p>
+                                </div>
+                                {% if current_user.resume_data %}
+                                    <span class="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-bold flex items-center">
+                                        <i class="fas fa-check-circle mr-1"></i>Updated
+                                    </span>
+                                {% else %}
+                                    <span class="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-bold flex items-center">
+                                        <i class="fas fa-exclamation-circle mr-1"></i>Pending
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <p class="text-xs text-gray-600 leading-relaxed">Update your resume to showcase your skills and experience to employers.</p>
+                            <a href="{{ url_for('jobs.update_resume') }}" 
+                               class="block w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-center rounded-lg hover:shadow-md transition-all font-semibold">
+                                <i class="fas fa-edit mr-1"></i>Update Resume
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-5 border-b-2 border-indigo-200 bg-gradient-to-r from-indigo-50 to-blue-50">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-bolt mr-2 text-indigo-600"></i>Quick Actions
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <a href="{{ url_for('auth.profile') }}" 
+                               class="flex items-center space-x-3 p-3 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg hover:shadow-md border border-indigo-100 hover:border-indigo-300 transition-all">
+                                <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-user-circle text-indigo-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-semibold text-gray-900">Edit Profile</span>
+                                    <p class="text-xs text-gray-500">Update your information</p>
+                                </div>
+                            </a>
+                            <a href="{{ url_for('verification.upload_verification') }}" 
+                               class="flex items-center space-x-3 p-3 bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg hover:shadow-md border border-orange-100 hover:border-orange-300 transition-all">
+                                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-upload text-orange-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-semibold text-gray-900">Upload Documents</span>
+                                    <p class="text-xs text-gray-500">Verify your identity</p>
+                                </div>
+                            </a>
+                            <a href="{{ url_for('auth.change_password') }}" 
+                               class="flex items-center space-x-3 p-3 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg hover:shadow-md border border-red-100 hover:border-red-300 transition-all">
+                                <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-key text-red-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <span class="text-sm font-semibold text-gray-900">Change Password</span>
+                                    <p class="text-xs text-gray-500">Update security settings</p>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Account Status -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-5 border-b-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-shield-check mr-2 text-green-600"></i>Account Status
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                                <p class="text-sm font-semibold text-gray-900">Email Verified</p>
+                                <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                            </div>
+                            <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                                <p class="text-sm font-semibold text-gray-900">Profile Complete</p>
+                                <i class="fas fa-check-circle text-2xl text-blue-500"></i>
+                            </div>
+                            <div class="flex items-center justify-between p-3 {% if v_status == 'approved' %}bg-green-50{% elif v_status == 'rejected' %}bg-red-50{% else %}bg-yellow-50{% endif %} rounded-lg border {% if v_status == 'approved' %}border-green-100{% elif v_status == 'rejected' %}border-red-100{% else %}border-yellow-100{% endif %}">
+                                <p class="text-sm font-semibold text-gray-900">Identity Verified</p>
+                                {% if v_status == 'approved' %}
+                                    <i class="fas fa-check-circle text-2xl text-green-500"></i>
+                                {% elif v_status == 'rejected' %}
+                                    <a href="{{ url_for('verification.upload_verification') }}" class="text-red-600 hover:text-red-800 font-semibold text-sm">
+                                        Resubmit
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('verification.upload_verification') }}" class="text-blue-600 hover:text-blue-800 font-semibold text-sm">
+                                        Verify
+                                    </a>
+                                {% endif %}
+                            </div>
+                            {% if v_status == 'rejected' %}
+                            <div class="bg-red-50 border-l-4 border-red-500 rounded-lg p-3">
+                                <p class="text-xs text-red-800 font-semibold flex items-center">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>Verification Rejected
+                                </p>
+                                <p class="text-xs text-red-700 mt-1">Please resubmit your documents with valid information.</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Search Tips -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-5 border-b-2 border-cyan-200 bg-gradient-to-r from-cyan-50 to-teal-50">
+                        <h2 class="text-lg font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-lightbulb mr-2 text-cyan-600"></i>Pro Tips
+                        </h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="space-y-3 text-sm">
+                            <div class="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                <span class="text-gray-700">Complete your profile for better matches</span>
+                            </div>
+                            <div class="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                <span class="text-gray-700">Keep your resume updated regularly</span>
+                            </div>
+                            <div class="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                <span class="text-gray-700">Customize cover letters for each job</span>
+                            </div>
+                            <div class="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                <span class="text-gray-700">Apply early for better visibility</span>
+                            </div>
+                            <div class="flex items-start space-x-2 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <i class="fas fa-check-circle text-green-500 mt-1 flex-shrink-0"></i>
+                                <span class="text-gray-700">Respond quickly to employer messages</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    a, button {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .bg-white {
+        transition: all 0.3s ease-in-out;
+    }
+</style>
+{% endblock %}
 
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -1,0 +1,400 @@
+{% extends "base.html" %}
+
+{% block title %}Job Listings - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="mb-12">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                        <i class="fas fa-briefcase text-blue-600 mr-3"></i>Job Opportunities
+                    </h1>
+                    <p class="text-xl text-gray-600">
+                        Find your next career opportunity in Catanduanes
+                    </p>
+                </div>
+                <div class="mt-6 md:mt-0 flex gap-3 flex-wrap">
+                    {% if current_user.is_authenticated and current_user.role == 'business_owner' %}
+                    <a href="{{ url_for('jobs.create_job') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-plus mr-2"></i>Post a Job
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8 backdrop-blur-sm">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-filter text-blue-600 mr-2"></i>Filter & Search
+            </h2>
+            <form method="GET" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="md:col-span-2">
+                        <label for="q" class="block text-sm font-bold text-gray-700 mb-2">Search</label>
+                        <input type="text" name="q" id="q" value="{{ search_query }}"
+                               placeholder="Job title or keyword"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                    
+                    <div>
+                        <label for="category" class="block text-sm font-bold text-gray-700 mb-2">Category</label>
+                        <select name="category" id="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="">All Categories</option>
+                            {% for cat, count in category_counts.items() %}
+                            <option value="{{ cat }}" {% if category == cat %}selected{% endif %}>{{ cat }} ({{ count }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="type" class="block text-sm font-bold text-gray-700 mb-2">Employment Type</label>
+                        <select name="type" id="type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="">All Types</option>
+                            <option value="full_time" {% if job_type == 'full_time' %}selected{% endif %}>Full Time</option>
+                            <option value="part_time" {% if job_type == 'part_time' %}selected{% endif %}>Part Time</option>
+                            <option value="contract" {% if job_type == 'contract' %}selected{% endif %}>Contract</option>
+                            <option value="internship" {% if job_type == 'internship' %}selected{% endif %}>Internship</option>
+                            <option value="freelance" {% if job_type == 'freelance' %}selected{% endif %}>Freelance</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="setup" class="block text-sm font-bold text-gray-700 mb-2">Work Setup</label>
+                        <select name="setup" id="setup" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="">All Setups</option>
+                            <option value="on_site" {% if setup == 'on_site' %}selected{% endif %}>On-Site</option>
+                            <option value="remote" {% if setup == 'remote' %}selected{% endif %}>Remote</option>
+                            <option value="hybrid" {% if setup == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="location" class="block text-sm font-bold text-gray-700 mb-2">Location</label>
+                        <input type="text" name="location" id="location" value="{{ location }}"
+                               placeholder="City or area"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                    </div>
+
+                    <div>
+                        <label for="sort" class="block text-sm font-bold text-gray-700 mb-2">Sort by</label>
+                        <select name="sort" id="sort" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                            <option value="latest" {% if sort_by == 'latest' %}selected{% endif %}>Latest First</option>
+                            <option value="salary_high" {% if sort_by == 'salary_high' %}selected{% endif %}>Highest Salary</option>
+                            <option value="salary_low" {% if sort_by == 'salary_low' %}selected{% endif %}>Lowest Salary</option>
+                            <option value="alphabetical" {% if sort_by == 'alphabetical' %}selected{% endif %}>A - Z</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-end space-x-2">
+                        <button type="submit" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                        <a href="{{ url_for('jobs.list_jobs') }}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md">
+                            <i class="fas fa-redo mr-2"></i>Clear
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Results Count and Map Toggle -->
+        <div class="mb-6 flex items-center justify-between">
+            <p class="text-lg font-semibold text-gray-800">
+                <i class="fas fa-briefcase text-blue-600 mr-2"></i>Found <span class="text-blue-600">{{ total_jobs }}</span> job{% if total_jobs != 1 %}s{% endif %}
+            </p>
+            <button id="map-toggle-btn" class="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-map mr-2"></i>View on Map
+            </button>
+        </div>
+
+        <!-- Map Container (Hidden by default) -->
+        <div id="map-container" class="hidden bg-white rounded-xl shadow-lg overflow-hidden mb-8">
+            <div class="flex justify-between items-center p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                <h2 class="text-2xl font-bold text-gray-900">
+                    <i class="fas fa-map text-green-600 mr-2"></i>Jobs Map
+                </h2>
+                <button id="map-close-btn" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div id="map" style="height: 600px; width: 100%; z-index: 0;"></div>
+        </div>
+        
+        <!-- Jobs Grid -->
+        {% if jobs %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {% for job in jobs %}
+                    <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                        <!-- Job Header -->
+                        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 relative">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-white truncate">{{ job.title }}</h3>
+                                    <p class="text-blue-100 text-sm mt-2">{{ job.business_name }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Job Body -->
+                        <div class="p-6">
+                            <!-- Job Type and Salary -->
+                            <div class="mb-5 pb-4 border-b border-gray-200">
+                                <div class="flex items-center justify-between flex-wrap gap-2">
+                                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ job.type_display }}
+                                    </span>
+                                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ job.setup_display }}
+                                    </span>
+                                    {% if job.salary_min or job.salary_max %}
+                                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        {{ job.salary_range_display }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Description -->
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                {{ job.description or 'No description provided' }}
+                            </p>
+
+                            <!-- Job Info -->
+                            <div class="space-y-2 mb-5 text-sm">
+                                {% if job.location %}
+                                    <div class="flex items-start text-gray-600 hover:text-blue-600 transition-colors">
+                                        <i class="fas fa-map-marker-alt mr-3 mt-0.5 text-blue-500 flex-shrink-0"></i>
+                                        <span class="line-clamp-2 text-xs">{{ job.location }}</span>
+                                    </div>
+                                {% endif %}
+                                {% if job.category %}
+                                    <div class="flex items-center text-gray-600">
+                                        <i class="fas fa-tag mr-3 text-blue-500 flex-shrink-0"></i>
+                                        <span class="text-xs">{{ job.category }}</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Action Button -->
+                            <div class="pt-4 border-t border-gray-200">
+                                <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" 
+                                   class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 text-center shadow-md">
+                                    <i class="fas fa-eye mr-2"></i>View Job Details
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-xl shadow-lg p-16 text-center">
+                <i class="fas fa-inbox text-blue-300 text-7xl mb-6 inline-block"></i>
+                <h3 class="text-3xl font-bold text-gray-900 mb-3">No Jobs Found</h3>
+                <p class="text-gray-600 text-lg mb-8">
+                    Try adjusting your search criteria or check back later for more opportunities.
+                </p>
+                <a href="{{ url_for('jobs.list_jobs') }}" class="inline-block bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-redo mr-2"></i>Clear Filters
+                </a>
+            </div>
+        {% endif %}
+
+        <!-- Pagination -->
+        {% if total_pages > 1 %}
+            {% set args = request.args.copy() %}
+            {% set _ = args.pop('page', none) %}
+            <div class="flex items-center justify-center space-x-2 mt-12">
+                {% if current_page > 1 %}
+                    <a href="{{ url_for('jobs.list_jobs', page=1, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-chevron-left mr-2"></i>First
+                    </a>
+                    <a href="{{ url_for('jobs.list_jobs', page=current_page-1, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-chevron-left mr-2"></i>Previous
+                    </a>
+                {% endif %}
+
+                <div class="flex items-center space-x-2">
+                    {% for p in range(max(1, current_page - 2), min(total_pages + 1, current_page + 3)) %}
+                        {% if p == current_page %}
+                            <span class="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-bold shadow-lg">
+                                {{ p }}
+                            </span>
+                        {% else %}
+                            <a href="{{ url_for('jobs.list_jobs', page=p, **args) }}" 
+                               class="px-4 py-3 bg-white text-gray-700 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-400 shadow-md">
+                                {{ p }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% if current_page < total_pages %}
+                    <a href="{{ url_for('jobs.list_jobs', page=current_page+1, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Next<i class="fas fa-chevron-right ml-2"></i>
+                    </a>
+                    <a href="{{ url_for('jobs.list_jobs', page=total_pages, **args) }}" 
+                       class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        Last<i class="fas fa-chevron-right ml-2"></i>
+                    </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Leaflet Map Library -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Store jobs data globally
+    let jobsData = {{ jobs_data | tojson }};
+    let map = null;
+    let markersGroup = null;
+
+    // Initialize map function
+    function initializeMap() {
+        if (map) return; // Map already initialized
+
+        // Default to Catanduanes coordinates (approximate center)
+        const defaultLat = 13.9339;
+        const defaultLng = 124.5267;
+
+        // Create map
+        map = L.map('map').setView([defaultLat, defaultLng], 13);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 19,
+            minZoom: 10
+        }).addTo(map);
+
+        // Create a feature group for markers
+        markersGroup = L.featureGroup().addTo(map);
+
+        // Group jobs by coordinates
+        const locationMap = {};
+        jobsData.forEach((job) => {
+            if (job.latitude && job.longitude) {
+                const lat = parseFloat(job.latitude);
+                const lng = parseFloat(job.longitude);
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const key = `${lat},${lng}`;
+                    if (!locationMap[key]) {
+                        locationMap[key] = [];
+                    }
+                    locationMap[key].push(job);
+                }
+            }
+        });
+
+        // Create markers for each unique location
+        let markerCount = 0;
+        Object.keys(locationMap).forEach((key) => {
+            const jobs = locationMap[key];
+            const [lat, lng] = key.split(',').map(parseFloat);
+            
+            // Use blue marker for jobs
+            const markerIcon = L.icon({
+                iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png`,
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                iconSize: [25, 41],
+                iconAnchor: [12, 41],
+                popupAnchor: [1, -34],
+                shadowSize: [41, 41]
+            });
+
+            // Generate popup content
+            let popupContent;
+            if (jobs.length === 1) {
+                // Single job
+                const job = jobs[0];
+                popupContent = `
+                    <div class="w-full">
+                        <h3 class="font-bold text-lg mb-2">${job.title}</h3>
+                        <p class="text-sm text-gray-600 mb-2">${job.business_name}</p>
+                        <p class="text-sm text-gray-600 mb-2">${job.type_display}</p>
+                        <p class="text-sm text-gray-600 mb-3">${job.location || 'No location'}</p>
+                        ${job.salary_range_display ? `<p class="text-sm font-semibold text-green-600 mb-3">${job.salary_range_display}</p>` : ''}
+                        <a href="/jobs/${job.id}" 
+                           class="w-full bg-blue-600 text-white px-4 py-2 rounded font-semibold hover:bg-blue-700 transition-all inline-block text-center">
+                            View Job
+                        </a>
+                    </div>
+                `;
+            } else {
+                // Multiple jobs at same location
+                popupContent = `
+                    <div class="w-full">
+                        <h3 class="font-bold text-lg mb-3">${jobs.length} Jobs at this Location</h3>
+                        <div class="space-y-3 max-h-96 overflow-y-auto">
+                            ${jobs.map((job) => `
+                                <div class="border-b pb-3 last:border-b-0">
+                                    <h4 class="font-semibold text-base mb-1">${job.title}</h4>
+                                    <p class="text-xs text-gray-600 mb-1">${job.business_name}</p>
+                                    <p class="text-xs text-gray-600 mb-1">${job.type_display}</p>
+                                    <p class="text-xs text-gray-600 mb-2">${job.location || 'No location'}</p>
+                                    ${job.salary_range_display ? `<p class="text-xs font-semibold text-green-600 mb-2">${job.salary_range_display}</p>` : ''}
+                                    <a href="/jobs/${job.id}" 
+                                       class="w-full bg-blue-600 text-white px-3 py-1.5 rounded text-xs font-semibold hover:bg-blue-700 transition-all inline-block text-center">
+                                        View Job
+                                    </a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Create marker with popup
+            const marker = L.marker([lat, lng], { icon: markerIcon })
+                .bindPopup(popupContent);
+
+            marker.addTo(markersGroup);
+            markerCount++;
+        });
+
+        // Fit map to show all markers
+        if (markerCount > 0) {
+            map.fitBounds(markersGroup.getBounds(), { padding: [50, 50] });
+        }
+
+        // Invalidate map size after it's visible
+        setTimeout(() => map.invalidateSize(), 100);
+    }
+
+    // Toggle map visibility
+    document.getElementById('map-toggle-btn').addEventListener('click', function() {
+        const mapContainer = document.getElementById('map-container');
+        mapContainer.classList.toggle('hidden');
+
+        if (!mapContainer.classList.contains('hidden')) {
+            // Initialize map if not already done
+            initializeMap();
+        }
+    });
+
+    // Close map button
+    document.getElementById('map-close-btn').addEventListener('click', function() {
+        document.getElementById('map-container').classList.add('hidden');
+    });
+
+    // Close map when pressing Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.getElementById('map-container').classList.add('hidden');
+        }
+    });
+</script>
+{% endblock %}

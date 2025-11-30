@@ -3,407 +3,274 @@
 {% block title %}{{ job.title }} - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center space-x-4">
-                <a href="{{ url_for('jobs.list_jobs') }}" class="text-blue-600 hover:text-blue-800">
-                    <i class="fas fa-arrow-left text-lg"></i>
-                </a>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-6xl mx-auto">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{{ url_for('jobs.list_jobs') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                <i class="fas fa-chevron-left mr-2"></i>Back to Jobs
+            </a>
+        </div>
+
+        <!-- Job Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl shadow-lg p-8 mb-8">
+            <h1 class="text-4xl font-bold mb-3">{{ job.title }}</h1>
+            <p class="text-xl text-blue-100 mb-4">{{ job.business_name }}</p>
+            
+            <!-- Job Metadata -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6 pt-6 border-t border-blue-400">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ job.title }}</h1>
-                    <p class="mt-1 text-gray-600">
-                        <a href="{{ url_for('businesses.business_detail', business_id=job.business_id) }}" 
-                           class="text-blue-600 hover:text-blue-800">{{ job.business_name }}</a>
-                    </p>
+                    <p class="text-blue-200 text-sm">Employment Type</p>
+                    <p class="text-white font-semibold">{{ job.type_display }}</p>
+                </div>
+                <div>
+                    <p class="text-blue-200 text-sm">Work Setup</p>
+                    <p class="text-white font-semibold">{{ job.setup_display }}</p>
+                </div>
+                <div>
+                    <p class="text-blue-200 text-sm">Category</p>
+                    <p class="text-white font-semibold">{{ job.category }}</p>
+                </div>
+                <div>
+                    <p class="text-blue-200 text-sm">Location</p>
+                    <p class="text-white font-semibold">{{ job.location }}</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Job Details -->
-            <div class="lg:col-span-2">
-                <!-- Job Info Card -->
-                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                        <div class="text-center">
-                            <i class="fas fa-clock text-blue-600 text-xl mb-2"></i>
-                            <p class="text-sm text-gray-600">Type</p>
-                            <p class="font-semibold text-gray-900">{{ job.type.replace('_', ' ').title() }}</p>
-                        </div>
-                        <div class="text-center">
-                            <i class="fas fa-map-marker-alt text-blue-600 text-xl mb-2"></i>
-                            <p class="text-sm text-gray-600">Location</p>
-                            <p class="font-semibold text-gray-900">{{ job.location }}</p>
-                        </div>
-                        <div class="text-center">
-                            <i class="fas fa-calendar text-blue-600 text-xl mb-2"></i>
-                            <p class="text-sm text-gray-600">Posted</p>
-                            <p class="font-semibold text-gray-900">{{ job.created_at }}</p>
-                        </div>
-                        <div class="text-center">
-                            <i class="fas fa-users text-blue-600 text-xl mb-2"></i>
-                            <p class="text-sm text-gray-600">Applications</p>
-                            <p class="font-semibold text-gray-900">{{ job.applications_count or 0 }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Salary Info -->
-                    {% if job.salary_min or job.salary_max %}
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-money-bill-wave text-green-600"></i>
-                            <span class="font-semibold text-green-800">
-                                {% if job.salary_min and job.salary_max %}
-                                    ₱{{ "{:,.0f}".format(job.salary_min) }} - ₱{{ "{:,.0f}".format(job.salary_max) }} {{ job.currency }}
-                                {% elif job.salary_min %}
-                                    Starting from ₱{{ "{:,.0f}".format(job.salary_min) }} {{ job.currency }}
-                                {% elif job.salary_max %}
-                                    Up to ₱{{ "{:,.0f}".format(job.salary_max) }} {{ job.currency }}
-                                {% endif %}
-                            </span>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Job Description -->
-                    <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Job Description</h2>
-                        <div class="prose max-w-none text-gray-700">
-                            <p>{{ job.description }}</p>
-                        </div>
-                    </div>
-
-                    <!-- Requirements -->
-                    {% if job.requirements %}
-                    <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Requirements</h2>
-                        <div class="prose max-w-none text-gray-700">
-                            <p>{{ job.requirements }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <!-- Benefits -->
-                    {% if job.benefits %}
-                    <div class="mb-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Benefits</h2>
-                        <div class="prose max-w-none text-gray-700">
-                            <p>{{ job.benefits }}</p>
-                        </div>
-                    </div>
-                    {% endif %}
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <!-- Left Column (Main Content) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Description -->
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-briefcase text-blue-600 mr-3"></i>About the Role
+                    </h2>
+                    <p class="text-gray-600 leading-relaxed">{{ job.description }}</p>
                 </div>
 
-                <!-- Application Form -->
-                {% if current_user.is_authenticated and current_user.role == 'job_seeker' and not has_applied %}
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Apply for this Position</h2>
-                    
-                    <form id="application-form" method="POST" action="{{ url_for('jobs.apply_job', job_id=job.id) }}">
-                        <div class="space-y-4">
-                            <div>
-                                <label for="cover_letter" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Cover Letter *
-                                </label>
-                                <textarea id="cover_letter" name="cover_letter" rows="6" 
-                                          class="form-textarea" 
-                                          placeholder="Explain why you're a good fit for this position..."></textarea>
+                <!-- Requirements -->
+                {% if job.requirements %}
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-list text-blue-600 mr-3"></i>Requirements
+                    </h2>
+                    <ul class="space-y-3">
+                        {% if job.requirements is string %}
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 mt-1 mr-3"></i>
+                                <span class="text-gray-600">{{ job.requirements }}</span>
+                            </li>
+                        {% else %}
+                            {% for req in job.requirements %}
+                            <li class="flex items-start">
+                                <i class="fas fa-check text-green-600 mt-1 mr-3"></i>
+                                <span class="text-gray-600">{{ req }}</span>
+                            </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Benefits -->
+                {% if job.benefits %}
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-gift text-blue-600 mr-3"></i>Benefits
+                    </h2>
+                    <ul class="space-y-3">
+                        {% if job.benefits is string %}
+                            <li class="flex items-start">
+                                <i class="fas fa-star text-yellow-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">{{ job.benefits }}</span>
+                            </li>
+                        {% else %}
+                            {% for benefit in job.benefits %}
+                            <li class="flex items-start">
+                                <i class="fas fa-star text-yellow-500 mt-1 mr-3"></i>
+                                <span class="text-gray-600">{{ benefit }}</span>
+                            </li>
+                            {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- About Company -->
+                {% if business %}
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-building text-blue-600 mr-3"></i>About the Company
+                    </h2>
+                    <div class="border-l-4 border-blue-600 pl-4">
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">{{ business.name }}</h3>
+                        {% if business.rating %}
+                        <div class="flex items-center mb-3">
+                            <div class="flex text-yellow-400">
+                                {% for i in range(5) %}
+                                    {% if i < business.rating | int %}
+                                        <i class="fas fa-star"></i>
+                                    {% elif i < business.rating %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
                             </div>
-                            
-                            <div>
-                                <label for="resume" class="block text-sm font-medium text-gray-700 mb-2">
-                                    Resume/CV *
-                                </label>
-                                <div class="file-upload-area" id="resume-upload-area">
-                                    <div class="text-center">
-                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                                        <p class="text-gray-600 mb-2">Click to upload your resume</p>
-                                        <p class="text-sm text-gray-500">PDF, DOC, or DOCX files only</p>
-                                    </div>
-                                    <input type="file" id="resume-file" name="resume" class="hidden" accept=".pdf,.doc,.docx">
-                                </div>
-                                <div id="resume-preview" class="mt-4 hidden">
-                                    <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                                        <div class="flex items-center">
-                                            <i class="fas fa-file-pdf text-red-500 mr-3"></i>
-                                            <span id="resume-file-name" class="text-sm text-gray-700"></span>
-                                        </div>
-                                        <button type="button" onclick="removeResume()" class="text-red-500 hover:text-red-700">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="flex justify-end space-x-4 pt-4 border-t">
-                                <button type="button" class="btn-secondary" onclick="clearForm()">
-                                    <i class="fas fa-eraser mr-2"></i>Clear
-                                </button>
-                                <button type="submit" class="btn-primary" id="apply-button">
-                                    <i class="fas fa-paper-plane mr-2"></i>Apply Now
-                                </button>
-                            </div>
+                            <span class="ml-2 text-sm text-gray-600">{{ "%.1f"|format(business.rating) }}/5 ({{ business.review_count }} reviews)</span>
                         </div>
-                    </form>
-                </div>
-                {% elif current_user.is_authenticated and current_user.role == 'job_seeker' and has_applied %}
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-check-circle text-blue-600 text-xl"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-blue-800">Application Submitted</h3>
-                            <p class="text-blue-700">You have already applied for this position.</p>
-                        </div>
-                    </div>
-                </div>
-                {% elif current_user.is_authenticated and current_user.role != 'job_seeker' %}
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-                    <div class="flex items-center space-x-3">
-                        <i class="fas fa-info-circle text-yellow-600 text-xl"></i>
-                        <div>
-                            <h3 class="text-lg font-semibold text-yellow-800">Business Account</h3>
-                            <p class="text-yellow-700">Only job seekers can apply for positions.</p>
-                        </div>
-                    </div>
-                </div>
-                {% else %}
-                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
-                    <div class="text-center">
-                        <i class="fas fa-user text-gray-400 text-3xl mb-4"></i>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Login to Apply</h3>
-                        <p class="text-gray-600 mb-4">Please login as a job seeker to apply for this position.</p>
-                        <a href="{{ url_for('auth.login') }}" class="btn-primary">
-                            <i class="fas fa-sign-in-alt mr-2"></i>Login
+                        {% endif %}
+                        <p class="text-gray-600 mb-4">{{ business.description }}</p>
+                        {% if business.website %}
+                        <a href="{{ business.website }}" target="_blank" rel="noopener noreferrer" 
+                           class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                            <i class="fas fa-globe mr-2"></i>Visit Website
                         </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Similar Jobs -->
+                {% if similar_jobs %}
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-briefcase text-blue-600 mr-3"></i>Similar Opportunities
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for sim_job in similar_jobs %}
+                        <a href="{{ url_for('jobs.job_detail', job_id=sim_job.id) }}"
+                           class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200 hover:border-blue-400 hover:shadow-lg transition-all duration-300 transform hover:scale-105">
+                            <h4 class="font-bold text-gray-900 mb-2 text-lg">{{ sim_job.title }}</h4>
+                            <p class="text-sm text-blue-600 font-semibold mb-1">{{ sim_job.business_name }}</p>
+                            <p class="text-sm text-green-600 font-semibold">{{ sim_job.salary_range_display }}</p>
+                        </a>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Sidebar -->
+            <!-- Right Sidebar -->
             <div class="space-y-6">
-                <!-- Business Info -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">About the Employer</h2>
-                    <div class="space-y-3">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-building text-blue-600 text-xl"></i>
-                            </div>
-                            <div>
-                                <h3 class="font-semibold text-gray-900">{{ job.business_name }}</h3>
-                                <p class="text-sm text-gray-600">{{ business.category.title() if business else 'Local Business' }}</p>
-                            </div>
-                        </div>
-                        
-                        {% if business %}
-                        <div class="pt-3 border-t border-gray-200">
-                            <div class="space-y-2 text-sm">
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-map-marker-alt text-gray-400"></i>
-                                    <span class="text-gray-600">{{ business.address }}</span>
-                                </div>
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-phone text-gray-400"></i>
-                                    <span class="text-gray-600">{{ business.phone }}</span>
-                                </div>
-                                {% if business.email %}
-                                <div class="flex items-center space-x-2">
-                                    <i class="fas fa-envelope text-gray-400"></i>
-                                    <span class="text-gray-600">{{ business.email }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="pt-3 border-t border-gray-200">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <div class="flex text-yellow-400">
-                                    {% for i in range(5) %}
-                                        <i class="fas fa-star text-sm {{ 'text-yellow-400' if i < business_rating else 'text-gray-300' }}"></i>
-                                    {% endfor %}
-                                </div>
-                                <span class="text-sm text-gray-600">({{ business_review_count }} reviews)</span>
-                            </div>
-                        </div>
-                        
-                        <div class="pt-3 border-t border-gray-200">
-                            <a href="{{ url_for('businesses.business_detail', business_id=job.business_id) }}" 
-                               class="btn-secondary w-full text-center block">
-                                <i class="fas fa-building mr-2"></i>View Business
-                            </a>
-                        </div>
+                <!-- Salary Card -->
+                {% if job.salary_min or job.salary_max %}
+                <div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-xl shadow-lg p-8 text-center">
+                    <p class="text-green-100 text-sm font-semibold mb-2">SALARY RANGE</p>
+                    <p class="text-4xl font-bold mb-2">{{ job.salary_range_display }}</p>
+                    <p class="text-green-100 text-sm">per month</p>
+                </div>
+                {% endif %}
+
+                <!-- Apply Button -->
+                <div>
+                    {% if current_user.is_authenticated and current_user.role == 'job_seeker' %}
+                        {% if has_applied %}
+                        <button disabled class="w-full bg-gray-400 text-white px-6 py-3 rounded-lg font-semibold cursor-not-allowed flex items-center justify-center">
+                            <i class="fas fa-check mr-2"></i>Already Applied
+                        </button>
+                        {% else %}
+                        <a href="{{ url_for('jobs.apply_job', job_id=job.id) }}" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-paper-plane mr-2"></i>Apply Now
+                        </a>
                         {% endif %}
-                    </div>
+                    {% elif current_user.is_authenticated and current_user.role == 'business_owner' and is_job_owner %}
+                        <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-edit mr-2"></i>Edit Job
+                        </a>
+                    {% elif not current_user.is_authenticated %}
+                        <a href="{{ url_for('auth.login') }}" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Sign In to Apply
+                        </a>
+                    {% endif %}
                 </div>
 
-                <!-- Job Details -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Job Details</h2>
-                    <div class="space-y-3 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Job Type:</span>
-                            <span class="font-medium">{{ job.type.replace('_', ' ').title() }}</span>
+                <!-- Job Details Card -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-2"></i>Job Details
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Employment Type</span>
+                            <span class="text-gray-900 font-semibold">{{ job.type_display }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Category:</span>
-                            <span class="font-medium">{{ job.category.title() }}</span>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Work Setup</span>
+                            <span class="text-gray-900 font-semibold">{{ job.setup_display }}</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Location:</span>
-                            <span class="font-medium">{{ job.location }}</span>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Category</span>
+                            <span class="text-gray-900 font-semibold">{{ job.category }}</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Location</span>
+                            <span class="text-gray-900 font-semibold">{{ job.location }}</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Posted</span>
+                            <span class="text-gray-900 font-semibold">{{ job.created_at[:10] }}</span>
                         </div>
                         {% if job.expires_at %}
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Deadline:</span>
-                            <span class="font-medium">{{ job.expires_at }}</span>
+                        <div class="flex justify-between items-center pb-3 border-b border-gray-200">
+                            <span class="text-gray-600 font-medium">Expires</span>
+                            <span class="text-gray-900 font-semibold">{{ job.expires_at[:10] }}</span>
                         </div>
                         {% endif %}
-                        <div class="flex justify-between">
-                            <span class="text-gray-600">Posted:</span>
-                            <span class="font-medium">{{ job.created_at }}</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-600 font-medium">Applications</span>
+                            <span class="text-gray-900 font-semibold">{{ job.applications_count }}</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Share Job -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Share This Job</h2>
-                    <div class="flex space-x-2">
-                        <button onclick="shareJob('facebook')" class="flex-1 bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-                            <i class="fab fa-facebook-f"></i>
+                <!-- Share Card -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-share-alt text-blue-600 mr-2"></i>Share
+                    </h3>
+                    <p class="text-sm text-gray-600 mb-4">Share this opportunity with others</p>
+                    <div class="space-y-2">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank"
+                           class="w-full flex items-center justify-center gap-2 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 px-4 rounded-lg font-semibold transition-colors">
+                            <i class="fab fa-facebook-f"></i>Share on Facebook
+                        </a>
+                        <a href="https://twitter.com/intent/tweet?url={{ request.url }}&text={{ job.title }}" target="_blank"
+                           class="w-full flex items-center justify-center gap-2 bg-sky-100 hover:bg-sky-200 text-sky-700 py-2 px-4 rounded-lg font-semibold transition-colors">
+                            <i class="fab fa-twitter"></i>Share on Twitter
+                        </a>
+                        <button onclick="navigator.clipboard.writeText('{{ request.url }}'); alert('Link copied to clipboard!')"
+                                class="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 py-2 px-4 rounded-lg font-semibold transition-colors">
+                            <i class="fas fa-link"></i>Copy Link
                         </button>
-                        <button onclick="shareJob('twitter')" class="flex-1 bg-blue-400 text-white p-2 rounded hover:bg-blue-500">
-                            <i class="fab fa-twitter"></i>
-                        </button>
-                        <button onclick="shareJob('linkedin')" class="flex-1 bg-blue-700 text-white p-2 rounded hover:bg-blue-800">
-                            <i class="fab fa-linkedin-in"></i>
-                        </button>
-                        <button onclick="copyLink()" class="flex-1 bg-gray-600 text-white p-2 rounded hover:bg-gray-700">
-                            <i class="fas fa-link"></i>
-                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Links Card -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-link text-blue-600 mr-2"></i>Quick Links
+                    </h3>
+                    <div class="space-y-2">
+                        <a href="{{ url_for('jobs.list_jobs') }}" class="block text-blue-600 hover:text-blue-700 font-semibold flex items-center transition-colors">
+                            <i class="fas fa-arrow-left mr-2"></i>Back to Jobs
+                        </a>
+                        {% if current_user.is_authenticated and current_user.role == 'job_seeker' %}
+                        <a href="{{ url_for('jobs.my_applications') }}" class="block text-blue-600 hover:text-blue-700 font-semibold flex items-center transition-colors">
+                            <i class="fas fa-file-alt mr-2"></i>My Applications
+                        </a>
+                        {% endif %}
+                        {% if current_user.is_authenticated and current_user.role == 'business_owner' %}
+                        <a href="{{ url_for('jobs.my_postings') }}" class="block text-blue-600 hover:text-blue-700 font-semibold flex items-center transition-colors">
+                            <i class="fas fa-briefcase mr-2"></i>My Job Postings
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-    // Resume upload handling
-    document.getElementById('resume-upload-area').addEventListener('click', () => {
-        document.getElementById('resume-file').click();
-    });
-    
-    document.getElementById('resume-file').addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            document.getElementById('resume-file-name').textContent = file.name;
-            document.getElementById('resume-preview').classList.remove('hidden');
-            document.getElementById('resume-upload-area').style.display = 'none';
-        }
-    });
-    
-    function removeResume() {
-        document.getElementById('resume-file').value = '';
-        document.getElementById('resume-preview').classList.add('hidden');
-        document.getElementById('resume-upload-area').style.display = 'block';
-    }
-    
-    function clearForm() {
-        document.getElementById('cover_letter').value = '';
-        removeResume();
-    }
-    
-    // Application form submission
-    document.getElementById('application-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const formData = new FormData(e.target);
-        const applyButton = document.getElementById('apply-button');
-        
-        // Show loading state
-        applyButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Applying...';
-        applyButton.disabled = true;
-        
-        try {
-            const response = await fetch(e.target.action, {
-                method: 'POST',
-                body: formData
-            });
-            
-            const result = await response.json();
-            
-            if (response.ok) {
-                // Show success message
-                showAlert('success', result.message);
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                // Show error message
-                showAlert('error', result.error || 'An error occurred');
-                applyButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Apply Now';
-                applyButton.disabled = false;
-            }
-        } catch (error) {
-            showAlert('error', 'Network error. Please try again.');
-            applyButton.innerHTML = '<i class="fas fa-paper-plane mr-2"></i>Apply Now';
-            applyButton.disabled = false;
-        }
-    });
-    
-    // Share functions
-    function shareJob(platform) {
-        const url = encodeURIComponent(window.location.href);
-        const title = encodeURIComponent('{{ job.title }} at {{ job.business_name }}');
-        
-        let shareUrl = '';
-        switch(platform) {
-            case 'facebook':
-                shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}`;
-                break;
-            case 'twitter':
-                shareUrl = `https://twitter.com/intent/tweet?text=${title}&url=${url}`;
-                break;
-            case 'linkedin':
-                shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${url}`;
-                break;
-        }
-        
-        window.open(shareUrl, '_blank', 'width=600,height=400');
-    }
-    
-    function copyLink() {
-        navigator.clipboard.writeText(window.location.href).then(() => {
-            showAlert('success', 'Link copied to clipboard!');
-        });
-    }
-    
-    function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
-            type === 'success' ? 'bg-green-100 border border-green-200 text-green-800' :
-            type === 'error' ? 'bg-red-100 border border-red-200 text-red-800' :
-            'bg-blue-100 border border-blue-200 text-blue-800'
-        }`;
-        alertDiv.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'} mr-2"></i>
-                <span>${message}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(alertDiv);
-        
-        setTimeout(() => {
-            alertDiv.remove();
-        }, 3000);
-    }
-</script>
 {% endblock %}

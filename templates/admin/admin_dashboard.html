@@ -3,25 +3,29 @@
 {% block title %}Admin Dashboard - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+<div class="min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-yellow-50">
     <!-- Header -->
-    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-lg">
+    <div class="bg-gradient-to-r from-red-600 via-red-700 to-red-800 shadow-xl border-b-4 border-yellow-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
             <div class="flex items-center justify-between">
                 <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <i class="fas fa-shield-alt text-3xl text-yellow-300"></i>
-                        <h1 class="text-4xl font-bold text-white">Admin Dashboard</h1>
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-lg">
+                            <i class="fas fa-shield-alt text-3xl text-red-600"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold text-white">Admin Dashboard</h1>
+                            <p class="text-red-100 text-sm mt-1">Platform Control Center</p>
+                        </div>
                     </div>
-                    <p class="text-red-100">Manage all platform content, users, and verifications</p>
                 </div>
                 <div class="flex items-center space-x-6">
-                    <span class="inline-block px-4 py-2 bg-white text-red-600 font-semibold rounded-full shadow-lg">
-                        <i class="fas fa-crown mr-2"></i>Administrator
+                    <span class="inline-block px-5 py-2 bg-white text-red-600 font-bold rounded-full shadow-lg flex items-center gap-2">
+                        <i class="fas fa-crown text-yellow-400"></i>Administrator
                     </span>
                     <div class="text-right text-white">
-                        <p class="font-semibold">{{ current_user.username }}</p>
-                        <p class="text-red-100 text-sm">Last login: {{ current_user.last_login or 'Never' }}</p>
+                        <p class="font-bold text-lg">{{ current_user.username }}</p>
+                        <p class="text-red-100 text-sm">Last login: {{ current_user.last_login.strftime('%Y-%m-%d %H:%M') if current_user.last_login else 'First login' }}</p>
                     </div>
                 </div>
             </div>
@@ -30,63 +34,351 @@
 
     <!-- Quick Stats -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
             <!-- Total Users -->
-            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
-                <div class="flex items-center">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 border-t-4 border-blue-500">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm font-semibold text-gray-600">Total Users</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.total_users or 0 }}</p>
+                        <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
+                            <i class="fas fa-arrow-up mr-1"></i>{{ stats.new_users_today or 0 }} today
+                        </p>
+                    </div>
                     <div class="p-4 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 text-white">
                         <i class="fas fa-users text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-semibold text-gray-600">Total Users</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.total_users }}</p>
-                        <p class="text-xs text-green-600 font-medium">↑ {{ stats.new_users_today }} today</p>
                     </div>
                 </div>
             </div>
             
             <!-- Pending Verifications -->
-            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
-                <div class="flex items-center">
-                    <div class="p-4 rounded-lg bg-gradient-to-br from-yellow-500 to-yellow-600 text-white">
-                        <i class="fas fa-hourglass text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 border-t-4 border-yellow-500">
+                <div class="flex items-start justify-between">
+                    <div>
                         <p class="text-sm font-semibold text-gray-600">Pending Verifications</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.pending_verifications }}</p>
-                        <p class="text-xs text-orange-600 font-medium">Requires review</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.pending_verifications or 0 }}</p>
+                        <p class="text-xs text-orange-600 font-bold mt-2 flex items-center">
+                            <i class="fas fa-exclamation-circle mr-1"></i>Requires review
+                        </p>
+                    </div>
+                    <div class="p-4 rounded-lg bg-gradient-to-br from-yellow-500 to-orange-600 text-white">
+                        <i class="fas fa-hourglass text-2xl"></i>
                     </div>
                 </div>
             </div>
             
             <!-- Active Listings -->
-            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
-                <div class="flex items-center">
-                    <div class="p-4 rounded-lg bg-gradient-to-br from-green-500 to-green-600 text-white">
-                        <i class="fas fa-chart-line text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 border-t-4 border-green-500">
+                <div class="flex items-start justify-between">
+                    <div>
                         <p class="text-sm font-semibold text-gray-600">Active Listings</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.active_listings }}</p>
-                        <p class="text-xs text-gray-500">Businesses + Jobs + Services</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.active_listings or 0 }}</p>
+                        <p class="text-xs text-gray-500 mt-2">Businesses + Jobs</p>
+                    </div>
+                    <div class="p-4 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+                        <i class="fas fa-chart-line text-2xl"></i>
                     </div>
                 </div>
             </div>
             
             <!-- Reports -->
-            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-8">
-                <div class="flex items-center">
-                    <div class="p-4 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white">
-                        <i class="fas fa-exclamation-triangle text-2xl"></i>
-                    </div>
-                    <div class="ml-4">
+            <div class="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 border-t-4 border-red-500">
+                <div class="flex items-start justify-between">
+                    <div>
                         <p class="text-sm font-semibold text-gray-600">Reports</p>
-                        <p class="text-2xl font-bold text-gray-900">{{ stats.total_reports }}</p>
-                        <p class="text-xs text-gray-500">+{{ stats.new_reports_today }} today</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.total_reports or 0 }}</p>
+                        <p class="text-xs text-gray-500 mt-2">+{{ stats.new_reports_today or 0 }} today</p>
+                    </div>
+                    <div class="p-4 rounded-lg bg-gradient-to-br from-red-500 to-red-600 text-white">
+                        <i class="fas fa-flag text-2xl"></i>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column - Management Tools -->
+            <div class="lg:col-span-2">
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+                    <div class="px-0 py-0 mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-bolt mr-2 text-red-600"></i>Management Tools
+                        </h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a href="{{ url_for('admin.users') }}" class="block p-5 border border-gray-200 rounded-lg hover:shadow-lg hover:border-blue-300 transition-all duration-200 bg-gradient-to-br from-white to-blue-50">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-users text-blue-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">User Management</h3>
+                                    <p class="text-xs text-gray-600">View and manage all users</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('admin.verification_review') }}" class="block p-5 border border-gray-200 rounded-lg hover:shadow-lg hover:border-yellow-300 transition-all duration-200 bg-gradient-to-br from-white to-yellow-50">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-yellow-100 to-amber-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-shield-alt text-yellow-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">Verification Review</h3>
+                                    <p class="text-xs text-gray-600">Review user documents</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('admin.content') }}" class="block p-5 border border-gray-200 rounded-lg hover:shadow-lg hover:border-green-300 transition-all duration-200 bg-gradient-to-br from-white to-green-50">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-green-100 to-emerald-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-edit text-green-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">Content Moderation</h3>
+                                    <p class="text-xs text-gray-600">Review and moderate content</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+                        
+                        <a href="{{ url_for('admin.analytics') }}" class="block p-5 border border-gray-200 rounded-lg hover:shadow-lg hover:border-purple-300 transition-all duration-200 bg-gradient-to-br from-white to-purple-50">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-br from-purple-100 to-pink-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-chart-bar text-purple-600 text-lg"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-900">Analytics</h3>
+                                    <p class="text-xs text-gray-600">View platform statistics</p>
+                                </div>
+                                <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-history mr-2 text-orange-600"></i>Recent Activity
+                        </h2>
+                        <a href="{{ url_for('admin.settings') }}" class="text-red-600 hover:text-red-800 text-sm font-semibold transition-colors">
+                            View All <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                    
+                    {% if recent_activity %}
+                        <div class="space-y-3">
+                            {% for activity in recent_activity %}
+                                <div class="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 {% if activity.type == 'user' %}bg-blue-100{% elif activity.type == 'business' %}bg-green-100{% elif activity.type == 'job' %}bg-purple-100{% else %}bg-orange-100{% endif %}">
+                                        <i class="fas fa-{{ 'user' if activity.type == 'user' else 'building' if activity.type == 'business' else 'briefcase' if activity.type == 'job' else 'concierge-bell' }} text-sm {% if activity.type == 'user' %}text-blue-600{% elif activity.type == 'business' %}text-green-600{% elif activity.type == 'job' %}text-purple-600{% else %}text-orange-600{% endif %}"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-semibold text-gray-900">{{ activity.description or 'Activity' }}</p>
+                                        <p class="text-xs text-gray-500 mt-1"><i class="fas fa-user mr-1"></i>{{ activity.user_name or 'System' }}</p>
+                                        <p class="text-xs text-gray-400">{{ activity.timestamp|datetime if activity.timestamp else 'Recently' }}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold flex-shrink-0 {% if activity.status == 'success' %}bg-green-100 text-green-800{% elif activity.status == 'pending' %}bg-yellow-100 text-yellow-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ activity.status.title() if activity.status else 'New' }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
+                            <p class="text-gray-500">No recent activity</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column - System Status & Tools -->
+            <div class="space-y-6">
+                <!-- System Status -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                        <i class="fas fa-heartbeat mr-2 text-green-600"></i>System Status
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <span class="text-sm font-semibold text-gray-900">Database</span>
+                            <span class="flex items-center text-green-600 font-bold">
+                                <i class="fas fa-check-circle mr-1"></i>Online
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <span class="text-sm font-semibold text-gray-900">File Storage</span>
+                            <span class="flex items-center text-green-600 font-bold">
+                                <i class="fas fa-check-circle mr-1"></i>Online
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <span class="text-sm font-semibold text-gray-900">Email Service</span>
+                            <span class="flex items-center text-green-600 font-bold">
+                                <i class="fas fa-check-circle mr-1"></i>Online
+                            </span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <span class="text-sm font-semibold text-gray-900">Cache</span>
+                            <span class="flex items-center text-green-600 font-bold">
+                                <i class="fas fa-check-circle mr-1"></i>Online
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-xs text-gray-500">
+                            <i class="fas fa-clock mr-1"></i>Last checked: Just now
+                        </p>
+                    </div>
+                </div>
+
+                <!-- User Breakdown -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                        <i class="fas fa-chart-pie mr-2 text-blue-600"></i>User Breakdown
+                    </h2>
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
+                            <span class="text-sm font-semibold text-gray-900">Job Seekers</span>
+                            <span class="font-bold text-lg text-blue-600">{{ stats.job_seekers or 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
+                            <span class="text-sm font-semibold text-gray-900">Business Owners</span>
+                            <span class="font-bold text-lg text-green-600">{{ stats.business_owners or 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
+                            <span class="text-sm font-semibold text-gray-900">Service Providers</span>
+                            <span class="font-bold text-lg text-purple-600">{{ stats.service_providers or 0 }}</span>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
+                            <span class="text-sm font-semibold text-gray-900">Verified Users</span>
+                            <span class="font-bold text-lg text-yellow-600">{{ stats.verified_users or 0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Platform Health -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                        <i class="fas fa-gauge-high mr-2 text-red-600"></i>Platform Health
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-900">Storage Used</span>
+                                <span class="text-sm font-bold text-gray-900">45%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full" style="width: 45%"></div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">450GB of 1TB used</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-900">Database Size</span>
+                                <span class="text-sm font-bold text-gray-900">125 MB</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Healthy size</p>
+                        </div>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm font-semibold text-gray-900">Uptime</span>
+                                <span class="text-sm font-bold text-green-600">99.9%</span>
+                            </div>
+                            <p class="text-xs text-gray-500">Last 30 days</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Tools -->
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                        <i class="fas fa-toolbox mr-2 text-gray-600"></i>Admin Tools
+                    </h2>
+                    
+                    <div class="space-y-2">
+                        <a href="{{ url_for('admin.settings') }}" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:shadow-md border border-gray-200 hover:border-gray-400 transition-all">
+                            <i class="fas fa-cog text-gray-600 text-lg"></i>
+                            <span class="text-sm font-semibold text-gray-900">System Settings</span>
+                            <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                        </a>
+                        <a href="{{ url_for('admin.users') }}" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:shadow-md border border-gray-200 hover:border-gray-400 transition-all">
+                            <i class="fas fa-user-tie text-gray-600 text-lg"></i>
+                            <span class="text-sm font-semibold text-gray-900">Manage Users</span>
+                            <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                        </a>
+                        <a href="{{ url_for('admin.analytics') }}" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:shadow-md border border-gray-200 hover:border-gray-400 transition-all">
+                            <i class="fas fa-chart-line text-gray-600 text-lg"></i>
+                            <span class="text-sm font-semibold text-gray-900">View Analytics</span>
+                            <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Badge styles */
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    /* Smooth transitions */
+    a, button {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .bg-white {
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Admin card hover effect */
+    .admin-card {
+        @apply block p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow hover:border-blue-300;
+    }
+</style>
+{% endblock %}
 
         <!-- Main Content Grid -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -275,15 +567,17 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Admin Tools -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Admin Tools</h2>
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-lg font-bold text-gray-900 mb-5 flex items-center">
+                        <i class="fas fa-toolbox mr-2 text-gray-600"></i>Admin Tools
+                    </h2>
                     
-                    <div class="space-y-3">
-                        <a href="{{ url_for('admin.settings') }}" class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                            <i class="fas fa-cog text-gray-600"></i>
-                            <span class="text-sm font-medium text-gray-900">System Settings</span>
+                    <div class="space-y-2">
+                        <a href="{{ url_for('admin.settings') }}" class="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg hover:shadow-md border border-gray-200 hover:border-gray-400 transition-all">
+                            <i class="fas fa-cog text-gray-600 text-lg"></i>
+                            <span class="text-sm font-semibold text-gray-900">System Settings</span>
+                            <i class="fas fa-chevron-right text-gray-400 ml-auto"></i>
                         </a>
                     </div>
                 </div>
@@ -293,25 +587,47 @@
 </div>
 
 <style>
+    /* Badge styles */
+    .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .badge-success {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+
+    .badge-warning {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-danger {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-info {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+
+    /* Smooth transitions */
+    a, button {
+        transition: all 0.2s ease-in-out;
+    }
+
+    .bg-white {
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Admin card hover effect */
     .admin-card {
         @apply block p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow hover:border-blue-300;
     }
 </style>
-
-<script>
-    // Auto-refresh dashboard data every 30 seconds
-    function refreshDashboard() {
-        // This would typically make an AJAX call to refresh stats
-        console.log('Refreshing dashboard data...');
-    }
-    
-    // Set up auto-refresh
-    setInterval(refreshDashboard, 30000);
-    
-    // Initialize tooltips and other interactive elements
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add any initialization code here
-        console.log('Admin dashboard initialized');
-    });
-</script>
 {% endblock %}

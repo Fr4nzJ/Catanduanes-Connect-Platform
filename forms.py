@@ -228,3 +228,42 @@ from wtforms.validators import DataRequired, Optional, NumberRange
 #     is_active = BooleanField('List as active', default=True)
     
 #     submit = SubmitField('Save Service')
+
+
+class VerificationForm(FlaskForm):
+    """Form for identity verification document upload"""
+    id_document = FileField('ID Document', validators=[
+        FileRequired(),
+        FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'PDF, PNG, JPG only')
+    ])
+    id_number = StringField('ID Number', validators=[
+        DataRequired(),
+        Length(min=5, max=50)
+    ])
+    id_expiry = StringField('ID Expiry Date', validators=[Optional()])
+    
+    business_permit = FileField('Business Permit', validators=[
+        FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'PDF, PNG, JPG only')
+    ])
+    
+    dti_registration = FileField('DTI Registration', validators=[
+        FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'PDF, PNG, JPG only')
+    ])
+    
+    business_address = TextAreaField('Business Address', validators=[Optional()])
+    
+    resume = FileField('Resume/CV', validators=[
+        FileAllowed(['pdf', 'doc', 'docx'], 'PDF or Word document only')
+    ])
+    
+    certifications = FileField('Certifications', validators=[
+        FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'PDF, PNG, JPG only')
+    ], render_kw={'multiple': True})
+    
+    address_proof = FileField('Address Proof', validators=[
+        FileAllowed(['pdf', 'png', 'jpg', 'jpeg'], 'PDF, PNG, JPG only')
+    ])
+    
+    terms = BooleanField('I agree to the terms and conditions', validators=[DataRequired()])
+    
+    submit = SubmitField('Submit for Verification')

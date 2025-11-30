@@ -814,7 +814,7 @@ def verify_otp():
             """, {'user_id': current_user.id})
         
         flash('OTP verified successfully! Now proceed to email verification.', 'success')
-        return redirect(url_for('verification.verify_email'))
+        return redirect(url_for('dashboard/business_owner_dashboard.html'))
     else:
         flash('Invalid or expired code.', 'error')
         return redirect(url_for('auth.verify_otp'))

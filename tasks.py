@@ -105,6 +105,19 @@ def create_notification_task(user_id=None, type='general', title='', message='',
     try:
         from database import get_neo4j_db, safe_run
         
+        # If user_id is provided, verify user exists first
+        if user_id:
+            db = get_neo4j_db()
+            with db.session() as session:
+                user_check = safe_run(session, """
+                    MATCH (u:User {id: $user_id})
+                    RETURN u.id as id
+                """, {'user_id': user_id})
+                
+                if not user_check:
+                    logging.error(f"Cannot create notification: User {user_id} not found in database")
+                    return False
+        
         db = get_neo4j_db()
         with db.session() as session:
             notification_id = str(uuid.uuid4())
