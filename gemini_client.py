@@ -318,8 +318,14 @@ def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
             }
         )
         
-        if response and hasattr(response, 'text') and response.text:
-            return response.text.strip()
+        # Safely try to access response.text
+        try:
+            if response and response.text:
+                return response.text.strip()
+        except ValueError as ve:
+            # Handle case where response is blocked by safety filters
+            logger.warning(f"Gemini response blocked by safety filters: {str(ve)}")
+            return "I apologize, but I'm unable to generate a response to that request. Please try rephrasing it."
         
         return "Unable to generate response"
         

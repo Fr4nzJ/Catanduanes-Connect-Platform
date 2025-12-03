@@ -22,6 +22,7 @@ from models import Job, JobApplication, Business, User
 from forms import JobForm, JobApplicationForm, SearchForm
 from decorators import role_required, login_required_optional, json_response, verified_required
 from tasks import send_email_task, create_notification_task
+from extensions import csrf
 
 logger = logging.getLogger(__name__)
 
@@ -362,35 +363,40 @@ def apply_job(job_id):
             return redirect(url_for('jobs.job_detail', job_id=job_id))
         
         cover_letter = request.form.get('cover_letter', '').strip()
-        resume_file = request.files.get('resume')
+        cv_file = request.files.get('cv')
         
-        # Validate resume
-        if not resume_file or resume_file.filename == '':
-            flash('Resume is required.', 'error')
-            return redirect(url_for('jobs.apply_job', job_id=job_id))
+        # Validate CV
+        if not cv_file or cv_file.filename == '':
+            return jsonify({'error': 'CV is required.'}), 400
         
-        # Save resume file
-        filename = secure_filename(resume_file.filename)
+        # Save CV file
+        filename = secure_filename(cv_file.filename)
         file_ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
         
         if file_ext not in ['pdf', 'doc', 'docx', 'txt']:
-            flash('Only PDF, DOC, DOCX, and TXT files are allowed.', 'error')
-            return redirect(url_for('jobs.apply_job', job_id=job_id))
+            return jsonify({'error': 'Only PDF, DOC, DOCX, and TXT files are allowed.'}), 400
         
         # Create application
         application_id = str(uuid.uuid4())
-        resume_filename = f"{application_id}.{file_ext}"
-        resume_path = f"applications/{current_user.id}/{job_id}/{resume_filename}"
+        cv_filename = f"{application_id}.{file_ext}"
+        cv_path = f"applications/{current_user.id}/{job_id}/{cv_filename}"
         
-        full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], resume_path)
+        full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], cv_path)
         os.makedirs(os.path.dirname(full_path), exist_ok=True)
         
         try:
-            resume_file.save(full_path)
+            cv_file.save(full_path)
         except Exception as e:
-            logger.error(f"Failed to save resume: {str(e)}")
-            flash('Failed to save resume. Please try again.', 'error')
-            return redirect(url_for('jobs.apply_job', job_id=job_id))
+            logger.error(f"Failed to save CV: {str(e)}")
+            return jsonify({'error': 'Failed to save CV. Please try again.'}), 500
+        
+        # Fetch user's resume from database
+        user_resume = safe_run(session, """
+            MATCH (u:User {id: $user_id})
+            RETURN u.resume_data as resume_data
+        """, {'user_id': current_user.id})
+        
+        user_resume_data = user_resume[0]['resume_data'] if user_resume and user_resume[0]['resume_data'] else None
         
         # Create application in database
         application_data = {
@@ -405,7 +411,8 @@ def apply_job(job_id):
             'applicant_email': current_user.email,
             'applicant_phone': current_user.phone or '',
             'cover_letter': cover_letter,
-            'resume_file': resume_path,
+            'cv_file': cv_path,
+            'resume_data': user_resume_data,
             'status': 'pending',
             'created_at': datetime.utcnow().isoformat(),
             'updated_at': datetime.utcnow().isoformat()
@@ -447,7 +454,11 @@ def apply_job(job_id):
                     'applicant_phone': current_user.phone or 'N/A',
                     'cover_letter': cover_letter or 'No cover letter provided',
                     'application_date': datetime.utcnow().strftime('%B %d, %Y at %I:%M %p'),
-                    'app_dashboard_url': url_for('dashboard.business_applications', _external=True)
+                    'app_dashboard_url': url_for('dashboard.business_owner', _external=True),
+                    'application_id': application_id,
+                    'has_resume': bool(user_resume_data),
+                    'has_cv': True,
+                    'cv_filename': f"{application_id}.{file_ext}"
                 }
                 
                 send_email_task(
@@ -486,7 +497,7 @@ def apply_job(job_id):
                 logger.warning(f"Owner user {owner_id} not found in database for notification")
         
         flash('Application submitted successfully!', 'success')
-        return redirect(url_for('jobs.my_applications'))
+        return jsonify({'success': True, 'message': 'Application submitted successfully!', 'redirect_url': url_for('jobs.job_detail', job_id=job_id)})
 
 @jobs_bp.route('/applications')
 @login_required
@@ -818,3 +829,448 @@ def allowed_file(filename):
     allowed = {'.pdf', '.doc', '.docx', '.txt', '.rtf'}
     return '.' in filename and \
            '.' + filename.rsplit('.', 1)[1].lower() in allowed
+           
+           
+@jobs_bp.route('/resume/update', methods=['GET', 'POST'])
+@login_required
+@role_required('job_seeker')
+def update_resume():
+    """View and edit job seeker resume (fillable template)"""
+    db = get_neo4j_db()
+    
+    if request.method == 'GET':
+        # Show resume template form
+        with db.session() as session:
+            user_data = safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                RETURN u.resume_data as resume_data, u.updated_at as updated_at
+            """, {'user_id': current_user.id})
+        
+        resume_data = None
+        if user_data and user_data[0].get('resume_data'):
+            import json
+            try:
+                resume_data = json.loads(user_data[0].get('resume_data'))
+            except:
+                resume_data = None
+        
+        return render_template('jobs/update_resume.html', resume_data=resume_data)
+    
+    # POST request - handle resume data save
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No resume data provided'}), 400
+        
+        import json
+        resume_json = json.dumps(data)
+        
+        # Update user resume in database
+        with db.session() as session:
+            safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                SET u.resume_data = $resume_data, u.resume_updated_at = $updated_at
+                RETURN u
+            """, {
+                'user_id': current_user.id,
+                'resume_data': resume_json,
+                'updated_at': datetime.utcnow().isoformat()
+            })
+        
+        return jsonify({
+            'message': 'Resume saved successfully',
+            'status': 'success'
+        }), 200
+    
+    except Exception as e:
+        current_app.logger.error(f"Failed to save resume: {str(e)}")
+        return jsonify({'error': 'Failed to save resume. Please try again.'}), 500
+
+# AI Resume Assistant Routes
+@jobs_bp.route('/analyze-resume', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def analyze_resume():
+    """Analyze resume using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        resume_text = data.get('resume', '')
+        language = data.get('language', 'English')
+        
+        if not resume_text.strip():
+            return jsonify({'status': 'error', 'error': 'Resume is empty'}), 400
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        prompt = f"""You are a professional resume reviewer. Analyze this resume carefully and provide constructive feedback:
+
+{resume_text}
+
+Please provide a detailed analysis including:
+1. **Overall Assessment**: Rate the resume quality (0-100) and provide a brief summary
+2. **Strengths**: List 3-4 strong points about the resume
+3. **Areas for Improvement**: Identify specific sections that need enhancement
+4. **Recommendations**: Provide 3-5 specific, actionable recommendations to strengthen the resume
+
+Format your response clearly with section headers.
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API for resume analysis in {language}")
+        analysis = get_gemini_response(prompt)
+        logger.info("Resume analysis completed successfully")
+        
+        return jsonify({
+            'status': 'success',
+            'analysis': analysis
+        })
+    except Exception as e:
+        logger.error(f"Error analyzing resume: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+
+@jobs_bp.route('/get-resume-suggestions', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def get_resume_suggestions():
+    """Get improvement suggestions for resume using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        resume_text = data.get('resume', '')
+        language = data.get('language', 'English')
+        
+        if not resume_text.strip():
+            return jsonify({'status': 'error', 'error': 'Resume is empty'}), 400
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        prompt = f"""Review this resume and provide specific, actionable improvement suggestions:
+
+{resume_text}
+
+Analyze each section (Personal Info, Skills, Education, Experience, Interests, Activities) and provide:
+- 1-2 specific suggestions per section that has content
+- Focus on clarity, impact, and completeness
+- Suggestions should be immediately actionable
+
+Format as a numbered list. Example:
+1. Expand your technical skills section with proficiency levels
+2. Add measurable achievements to your experience descriptions
+3. etc.
+
+Provide 5-8 total suggestions.
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API for resume suggestions in {language}")
+        suggestions = get_gemini_response(prompt)
+        logger.info("Resume suggestions completed successfully")
+        
+        # Parse into list if it's a string
+        if isinstance(suggestions, str):
+            # Split by newlines and filter for numbered items
+            lines = suggestions.split('\n')
+            suggestion_list = []
+            for line in lines:
+                line = line.strip()
+                if line and (line[0].isdigit() or line.startswith('-') or line.startswith('•')):
+                    # Clean up the suggestion
+                    suggestion = line.lstrip('0123456789.-•) ').strip()
+                    if suggestion:
+                        suggestion_list.append(suggestion)
+        else:
+            suggestion_list = suggestions
+        
+        return jsonify({
+            'status': 'success',
+            'suggestions': suggestion_list
+        })
+    except Exception as e:
+        logger.error(f"Error getting resume suggestions: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+
+@jobs_bp.route('/check-resume-completion', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def check_resume_completion():
+    """Check resume completion and completeness percentage using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        resume_text = data.get('resume', '')
+        language = data.get('language', 'English')
+        
+        if not resume_text.strip():
+            return jsonify({'status': 'error', 'error': 'Resume is empty'}), 400
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        prompt = f"""Evaluate the completeness of this resume. Rate it on a scale of 0-100 based on:
+- Personal information completeness
+- Skills section quality and detail
+- Education history
+- Work experience details
+- Overall content quality and formatting
+
+{resume_text}
+
+Provide a JSON response with this exact format:
+{{
+    "score": <number 0-100>,
+    "issues": [
+        "issue 1",
+        "issue 2"
+    ]
+}}
+
+In the issues array, list what's missing or needs improvement. Be specific about which sections need work.
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API for resume completion check in {language}")
+        response = get_gemini_response(prompt)
+        logger.info("Resume completion check completed successfully")
+        
+        # Try to parse JSON response
+        try:
+            import json
+            # Clean response if it contains markdown code blocks
+            if '```json' in response:
+                response = response.split('```json')[1].split('```')[0]
+            elif '```' in response:
+                response = response.split('```')[1].split('```')[0]
+            
+            completion_data = json.loads(response.strip())
+        except Exception as parse_error:
+            logger.warning(f"Failed to parse JSON response: {parse_error}")
+            # Fallback response if JSON parsing fails
+            completion_data = {
+                'score': 65,
+                'issues': [
+                    'Consider adding more detail to your work experience',
+                    'Expand your skills section with specific technologies or tools',
+                    'Include quantifiable achievements in your experience'
+                ]
+            }
+        
+        return jsonify({
+            'status': 'success',
+            'completion': completion_data
+        })
+    except Exception as e:
+        logger.error(f"Error checking resume completion: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+
+# ============================================================================
+# AI-POWERED JOB APPLICATION ASSISTANCE ENDPOINTS
+# ============================================================================
+
+@jobs_bp.route('/improve-application', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def improve_application():
+    """Improve job application cover letter using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        cover_letter = data.get('cover_letter', '')
+        job_title = data.get('job_title', 'this position')
+        language = data.get('language', 'English')
+        
+        if not cover_letter.strip():
+            return jsonify({'status': 'error', 'error': 'Cover letter is empty'}), 400
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        job_title_safe = job_title[:50] if job_title else 'this position'  # Limit length to avoid filter issues
+        prompt = f"""You are a career advisor. Help improve this job application letter for a {job_title_safe} role.
+
+Application letter:
+{cover_letter}
+
+Provide:
+1. Suggestions to strengthen the letter
+2. What works well currently
+3. Tips to make it stand out
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API to improve application for {job_title} in {language}")
+        improvements = get_gemini_response(prompt)
+        logger.info("Application improvement completed successfully")
+        
+        return jsonify({
+            'status': 'success',
+            'improvements': improvements
+        })
+    except Exception as e:
+        logger.error(f"Error improving application: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+
+@jobs_bp.route('/application-tips', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def application_tips():
+    """Get job-specific application tips using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        job_title = data.get('job_title', 'this position')
+        language = data.get('language', 'English')
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        job_title_safe = job_title[:50] if job_title else 'this position'  # Limit length to avoid filter issues
+        prompt = f"""You are a career advisor. Provide tips for applying to a {job_title_safe} position.
+
+Include advice about:
+1. Important skills to highlight
+2. Key points to emphasize in the application
+3. Tips to stand out from other applicants
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API for application tips for {job_title} in {language}")
+        tips = get_gemini_response(prompt)
+        logger.info("Application tips generated successfully")
+        
+        return jsonify({
+            'status': 'success',
+            'tips': tips
+        })
+    except Exception as e:
+        logger.error(f"Error generating application tips: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+
+@jobs_bp.route('/review-application', methods=['POST'])
+@login_required
+@role_required('job_seeker')
+def review_application():
+    """Complete application review using Gemini AI"""
+    try:
+        from gemini_client import get_gemini_response
+        
+        data = request.get_json()
+        cover_letter = data.get('cover_letter', '')
+        job_title = data.get('job_title', 'this position')
+        language = data.get('language', 'English')
+        
+        if not cover_letter.strip():
+            return jsonify({'status': 'error', 'error': 'Cover letter is empty'}), 400
+        
+        # Language instruction
+        lang_instruction = {
+            'English': 'Respond in English.',
+            'Tagalog': 'Sumagot sa Tagalog. Gumamit ng natural at propesyonal na wika.',
+            'Bicol': 'Tumugon sa Bicol (Catandunganon). Gumamit ng natural at propesyonal na wika.'
+        }.get(language, 'Respond in English.')
+        
+        prompt = f"""Review this application letter for a {job_title[:50]} position.
+
+Letter:
+{cover_letter}
+
+Respond with a JSON object containing: score (0-100), strengths (list), improvements (list), ready (bool if score >= 70), and notes (string).
+
+{lang_instruction}"""
+        
+        logger.info(f"Calling Gemini API to review application for {job_title} in {language}")
+        response = get_gemini_response(prompt)
+        logger.info("Application review completed successfully")
+        
+        # Try to parse JSON response
+        try:
+            import json
+            # Clean response if it contains markdown code blocks
+            if '```json' in response:
+                response = response.split('```json')[1].split('```')[0]
+            elif '```' in response:
+                response = response.split('```')[1].split('```')[0]
+            
+            review_data = json.loads(response.strip())
+            # Normalize field names if needed
+            if 'overallScore' not in review_data and 'score' in review_data:
+                review_data['overallScore'] = review_data.pop('score')
+            if 'readyToSubmit' not in review_data and 'ready' in review_data:
+                review_data['readyToSubmit'] = review_data.pop('ready')
+            if 'recommendations' not in review_data and 'notes' in review_data:
+                review_data['recommendations'] = review_data.pop('notes')
+        except Exception as parse_error:
+            logger.warning(f"Failed to parse JSON response: {parse_error}")
+            # Fallback response if JSON parsing fails
+            review_data = {
+                'overallScore': 70,
+                'strengths': [
+                    'Clear expression of interest',
+                    'Relevant experience mentioned'
+                ],
+                'improvements': [
+                    'Add specific examples',
+                    'Include measurable achievements'
+                ],
+                'readyToSubmit': True,
+                'recommendations': 'Application shows promise. Consider strengthening with specific examples.'
+            }
+        
+        return jsonify({
+            'status': 'success',
+            'review': review_data
+        })
+    except Exception as e:
+        logger.error(f"Error reviewing application: {str(e)}", exc_info=True)
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500

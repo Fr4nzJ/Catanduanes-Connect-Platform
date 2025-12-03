@@ -671,7 +671,7 @@
             </div>
 
             <form id="resume-form">
-                <!-- Personal Information -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="section-title">Personal Information</div>
                 
                 <!-- Profile Picture -->
@@ -1027,13 +1027,18 @@
         resumeData.email = document.getElementById('email').value;
         resumeData.phone = document.getElementById('phone').value;
 
+        // Get CSRF token from hidden input or meta tag
+        const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || 
+                         document.querySelector('meta[name="csrf-token"]')?.content || '';
+
         // Send to server via API
         fetch('{{ url_for("jobs.update_resume") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify(resumeData)
+            body: JSON.stringify({ ...resumeData, csrf_token: csrfToken })
         })
         .then(response => response.json())
         .then(data => {
@@ -1205,7 +1210,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+            body: JSON.stringify({ csrf_token: csrfToken, resume: resumeText, language: aiLanguage })
         })
         .then(response => response.json())
         .then(data => {
@@ -1254,7 +1259,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+            body: JSON.stringify({ csrf_token: csrfToken, resume: resumeText, language: aiLanguage })
         })
         .then(response => response.json())
         .then(data => {
@@ -1303,7 +1308,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRFToken': csrfToken
             },
-            body: JSON.stringify({ resume: resumeText, language: aiLanguage })
+            body: JSON.stringify({ csrf_token: csrfToken, resume: resumeText, language: aiLanguage })
         })
         .then(response => response.json())
         .then(data => {

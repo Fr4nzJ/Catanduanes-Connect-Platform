@@ -375,7 +375,8 @@ class JobApplication:
         self.applicant_email = kwargs.get('applicant_email')
         self.applicant_phone = kwargs.get('applicant_phone')
         self.cover_letter = kwargs.get('cover_letter')
-        self.resume_file = kwargs.get('resume_file')
+        self.cv_file = kwargs.get('cv_file')
+        self.resume_data = kwargs.get('resume_data')
         self.status = kwargs.get('status', 'pending')  # pending, accepted, rejected, withdrawn
         self.created_at = kwargs.get('created_at', datetime.utcnow().isoformat())
         self.updated_at = kwargs.get('updated_at', datetime.utcnow().isoformat())
@@ -407,7 +408,8 @@ class JobApplication:
             'applicant_email': self.applicant_email,
             'applicant_phone': self.applicant_phone,
             'cover_letter': self.cover_letter,
-            'resume_file': self.resume_file,
+            'cv_file': self.cv_file,
+            'resume_data': self.resume_data,
             'status': self.status,
             'created_at': self.created_at,
             'updated_at': self.updated_at,

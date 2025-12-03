@@ -101,7 +101,7 @@ def job_seeker():
         """, {'user_id': current_user.id})
         
         # Get recommended jobs
-        recommended_jobs = safe_run(session, """
+        recommended_jobs_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:APPLIED_TO]->(:JobApplication)-[:FOR_JOB]->(appliedJob:Job)
             WITH u, collect(DISTINCT appliedJob.id) AS appliedIds
@@ -109,10 +109,25 @@ def job_seeker():
             MATCH (newJob:Job)-[:POSTED_BY]->(b:Business)
             WHERE newJob.is_active = true
             AND NOT newJob.id IN appliedIds
-            RETURN newJob, b.name AS business_name
+            RETURN newJob, b.name AS business_name, b.rating AS business_rating
             ORDER BY newJob.created_at DESC
             LIMIT 5
         """, {'user_id': current_user.id})
+        
+        # Format recommended jobs for template
+        recommended_jobs = []
+        for record in recommended_jobs_raw:
+            job_data = record.get('newJob')
+            if job_data:
+                recommended_jobs.append({
+                    'id': job_data.get('id'),
+                    'title': job_data.get('title'),
+                    'description': job_data.get('description', ''),
+                    'location': job_data.get('location', ''),
+                    'created_at': job_data.get('created_at', ''),
+                    'business_name': record.get('business_name', ''),
+                    'business_rating': record.get('business_rating', 0) or 0
+                })
         
         verification_info = verification[0] if verification else {}
         verification_status = verification_info.get('status', 'pending')
