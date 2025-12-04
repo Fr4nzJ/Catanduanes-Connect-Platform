@@ -176,6 +176,10 @@
                             <i class="fas fa-paper-plane mr-2"></i>Apply Now
                         </a>
                         {% endif %}
+                        <!-- Chat with Business Owner Button -->
+                        <a href="{{ url_for('chat.user_chat_view', recipient_id=job.business_owner_id) }}" class="w-full mt-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-6 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-comments mr-2"></i>Chat with Business Owner
+                        </a>
                     {% elif current_user.is_authenticated and current_user.role == 'business_owner' and is_job_owner %}
                         <a href="{{ url_for('jobs.edit_job', job_id=job.id) }}" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-4 rounded-lg font-semibold inline-flex items-center justify-center transition-all duration-300 transform hover:scale-105 shadow-lg">
                             <i class="fas fa-edit mr-2"></i>Edit Job

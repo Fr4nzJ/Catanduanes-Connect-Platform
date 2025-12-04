@@ -3,34 +3,274 @@
 {% block title %}User Chat{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <div class="max-w-2xl mx-auto bg-white rounded-lg shadow-md p-6">
-        <h1 class="text-2xl font-bold mb-4">User Chat</h1>
-        <p class="mb-4 text-gray-600">Message business owners or service clients directly.</p>
-        <div id="user-chat-messages" class="h-96 overflow-y-auto mb-4 p-4 border rounded bg-gray-50"></div>
-        <form id="user-chat-form" class="flex gap-2">
-            <input type="text" id="user-chat-input" class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-400" placeholder="Type your message..." required>
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">Send</button>
-        </form>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-8 px-4">
+    <div class="max-w-4xl mx-auto">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="javascript:history.back()" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold transition-colors">
+                <i class="fas fa-chevron-left mr-2"></i>Back
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Conversations List (Left Sidebar) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
+                        <h2 class="text-xl font-bold flex items-center">
+                            <i class="fas fa-comments mr-2"></i>Messages
+                        </h2>
+                    </div>
+                    <div id="conversations-list" class="divide-y max-h-96 overflow-y-auto">
+                        <!-- Conversations will be loaded here -->
+                        <div class="p-4 text-gray-500 text-center text-sm">
+                            <i class="fas fa-inbox text-gray-300 text-2xl mb-2 block"></i>
+                            No conversations yet
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Area (Main) -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden flex flex-col h-96 lg:h-auto">
+                    <!-- Chat Header -->
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4 flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if recipient %}
+                            <div>
+                                <h2 class="text-xl font-bold">{{ recipient.username }}</h2>
+                                <p class="text-blue-100 text-sm">
+                                    {% if recipient.role == 'business_owner' %}
+                                        <i class="fas fa-store mr-1"></i>Business Owner
+                                    {% elif recipient.role == 'job_seeker' %}
+                                        <i class="fas fa-briefcase mr-1"></i>Job Seeker
+                                    {% else %}
+                                        {{ recipient.role }}
+                                    {% endif %}
+                                </p>
+                            </div>
+                            {% elif recipient_id %}
+                            <div>
+                                <h2 class="text-xl font-bold" id="recipient-name-header">Loading...</h2>
+                                <p class="text-blue-100 text-sm" id="recipient-role-header"></p>
+                            </div>
+                            {% else %}
+                            <h2 class="text-xl font-bold">
+                                <i class="fas fa-comments mr-2"></i>Select a conversation
+                            </h2>
+                            {% endif %}
+                        </div>
+                        <button onclick="loadConversations()" class="text-white hover:bg-white hover:bg-opacity-20 px-3 py-2 rounded transition-colors">
+                            <i class="fas fa-sync"></i>
+                        </button>
+                    </div>
+
+                    <!-- Messages Area -->
+                    <div id="messages-container" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                        {% if recipient or recipient_id %}
+                        <!-- Messages will be loaded here -->
+                        {% else %}
+                        <div class="flex items-center justify-center h-full">
+                            <p class="text-gray-500 text-center">
+                                <i class="fas fa-comments text-gray-300 text-4xl mb-2 block"></i>
+                                Select a conversation to start messaging
+                            </p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Message Input -->
+                    {% if recipient or recipient_id %}
+                    <div class="border-t p-4 bg-white">
+                        <form id="message-form" class="flex gap-2" onsubmit="sendMessage(event)">
+                            <input 
+                                type="text" 
+                                id="message-input" 
+                                class="flex-1 px-4 py-2 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
+                                placeholder="Type your message..." 
+                                required
+                            >
+                            <button 
+                                type="submit" 
+                                class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200 flex items-center"
+                            >
+                                <i class="fas fa-paper-plane mr-2"></i>Send
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 <script>
-document.getElementById('user-chat-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const input = document.getElementById('user-chat-input');
-    const message = input.value.trim();
-    if (!message) return;
-    addUserChatMessage(message, 'user');
-    input.value = '';
-    // TODO: Send message to backend for user-to-user chat
-});
-function addUserChatMessage(text, sender) {
-    const chatMessages = document.getElementById('user-chat-messages');
-    const bubble = document.createElement('div');
-    bubble.className = 'mb-4 flex ' + (sender === 'user' ? 'justify-end' : 'justify-start');
-    bubble.innerHTML = `<div class="${sender === 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-900'} p-3 rounded-lg inline-block">${text}</div>`;
-    chatMessages.appendChild(bubble);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-}
+    const recipientId = '{{ recipient_id if recipient_id else (recipient.id if recipient else "") }}';
+    const recipientName = '{{ recipient.username if recipient else "User" }}';
+    const recipientRole = '{{ recipient.role if recipient else "" }}';
+
+    // Load conversations on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        loadConversations();
+        if (recipientId) {
+            loadRecipientInfo();
+            loadMessages();
+            // Auto-refresh messages every 2 seconds
+            setInterval(loadMessages, 2000);
+        }
+    });
+
+    async function loadRecipientInfo() {
+        if (!recipientId || recipientName !== 'Loading...') return;
+        try {
+            const response = await fetch(`/api/users/${recipientId}`, {
+                headers: {'Accept': 'application/json'}
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.user) {
+                    document.getElementById('recipient-name-header').textContent = data.user.username;
+                    const roleText = data.user.role === 'business_owner' ? 'Business Owner' : 
+                                   data.user.role === 'job_seeker' ? 'Job Seeker' : data.user.role;
+                    const roleIcon = data.user.role === 'business_owner' ? 'fa-store' : 'fa-briefcase';
+                    document.getElementById('recipient-role-header').innerHTML = `<i class="fas ${roleIcon} mr-1"></i>${roleText}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error loading recipient info:', error);
+        }
+    }
+
+    async function loadConversations() {
+        try {
+            const response = await fetch('{{ url_for("chat.get_conversations_list") }}');
+            const data = await response.json();
+            const conversationsList = document.getElementById('conversations-list');
+            
+            if (data.conversations.length === 0) {
+                conversationsList.innerHTML = `
+                    <div class="p-4 text-gray-500 text-center text-sm">
+                        <i class="fas fa-inbox text-gray-300 text-2xl mb-2 block"></i>
+                        No conversations yet
+                    </div>
+                `;
+                return;
+            }
+            
+            conversationsList.innerHTML = data.conversations.map(conv => `
+                <a href="{{ url_for('chat.user_chat_view') }}?recipient_id=${conv.user.id}"
+                   class="block p-4 hover:bg-gray-100 transition-colors border-l-4 ${conv.user.id === recipientId ? 'border-blue-600 bg-blue-50' : 'border-transparent'}">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="font-semibold text-gray-900">${conv.user.username}</h3>
+                            <p class="text-sm text-gray-500">${new Date(conv.last_message).toLocaleDateString()}</p>
+                        </div>
+                        ${conv.unread_count > 0 ? `<span class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">${conv.unread_count}</span>` : ''}
+                    </div>
+                </a>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading conversations:', error);
+        }
+    }
+
+    async function loadMessages() {
+        if (!recipientId) return;
+
+        try {
+            const response = await fetch(`{{ url_for('chat.get_conversation', recipient_id='__RECIPIENT_ID__') }}`.replace('__RECIPIENT_ID__', recipientId));
+            const data = await response.json();
+            const container = document.getElementById('messages-container');
+            
+            if (data.messages.length === 0) {
+                container.innerHTML = `
+                    <div class="flex items-center justify-center h-full">
+                        <p class="text-gray-500 text-center">
+                            <i class="fas fa-comments text-gray-300 text-4xl mb-2 block"></i>
+                            No messages yet. Start the conversation!
+                        </p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.messages.map(msg => `
+                <div class="flex ${msg.sender_id === '{{ current_user.id }}' ? 'justify-end' : 'justify-start'}">
+                    <div class="${msg.sender_id === '{{ current_user.id }}' ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-900'} px-4 py-2 rounded-lg max-w-xs break-words">
+                        <p>${msg.text}</p>
+                        <p class="text-xs ${msg.sender_id === '{{ current_user.id }}' ? 'text-blue-100' : 'text-gray-600'} mt-1">
+                            ${new Date(msg.timestamp).toLocaleTimeString()}
+                        </p>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        }
+    }
+
+    async function sendMessage(e) {
+        e.preventDefault();
+        
+        const input = document.getElementById('message-input');
+        const message = input.value.trim();
+        
+        if (!message || !recipientId) {
+            console.error('Missing message or recipientId');
+            return;
+        }
+
+        try {
+            // Get CSRF token from meta tag (not input field)
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const endpoint = '{{ url_for("chat.send_user_message") }}';
+            
+            console.log('Sending message to:', recipientId);
+            console.log('CSRF Token present:', !!csrfToken);
+            console.log('CSRF Token value:', csrfToken ? csrfToken.substring(0, 20) + '...' : 'NOT FOUND');
+            console.log('Endpoint URL:', endpoint);
+            
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                },
+                body: JSON.stringify({
+                    recipient_id: recipientId,
+                    message: message
+                })
+            });
+
+            console.log('Response status:', response.status);
+            
+            // Get response text first to check if it's HTML or JSON
+            const responseText = await response.text();
+            console.log('Response text (first 200 chars):', responseText.substring(0, 200));
+            
+            try {
+                const data = JSON.parse(responseText);
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    input.value = '';
+                    loadMessages();
+                } else {
+                    alert('Error sending message: ' + (data.error || 'Unknown error'));
+                }
+            } catch (parseError) {
+                console.error('Failed to parse JSON. Response was HTML (likely error page)');
+                alert('Error: API endpoint not found. Check console for details.');
+            }
+        } catch (error) {
+            console.error('Error sending message:', error);
+            alert('Error sending message: ' + error.message);
+        }
+    }
 </script>
 {% endblock %}

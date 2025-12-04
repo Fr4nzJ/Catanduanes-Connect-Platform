@@ -185,6 +185,7 @@ class Job:
         self.longitude = kwargs.get('longitude')
         self.business_id = kwargs.get('business_id')
         self.business_name = kwargs.get('business_name')
+        self.business_owner_id = kwargs.get('business_owner_id')
         self.business_rating = kwargs.get('business_rating', 0.0)
         self.requirements = kwargs.get('requirements', [])
         self.benefits = kwargs.get('benefits', [])

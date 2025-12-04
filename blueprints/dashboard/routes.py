@@ -5,7 +5,7 @@ from flask import render_template, redirect, url_for, current_app
 from flask_login import login_required, current_user
 
 from . import dashboard_bp
-from database import get_neo4j_db, safe_run
+from database import get_neo4j_db, safe_run, _node_to_dict
 from decorators import role_required
 
 @dashboard_bp.route('/')
@@ -27,18 +27,31 @@ def business_owner():
     """Business owner dashboard"""
     db = get_neo4j_db()
     with db.session() as session:
-        # Get business statistics
-        stats = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+        # Get business statistics for businesses owned by this user
+        stats_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})
+            OPTIONAL MATCH (u)-[:OWNS]->(b:Business)
             OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
             OPTIONAL MATCH (b)-[:POSTED_BY]->(j:Job)
             OPTIONAL MATCH (j)<-[:APPLIED_TO]-(a:JobApplication)
-            RETURN count(DISTINCT b) as business_count,
-                   count(DISTINCT j) as job_count,
-                   count(DISTINCT a) as application_count,
-                   avg(r.rating) as avg_rating,
-                   count(DISTINCT r) as review_count
+            RETURN coalesce(count(DISTINCT b), 0) as business_count,
+                   coalesce(count(DISTINCT j), 0) as job_count,
+                   coalesce(count(DISTINCT a), 0) as application_count,
+                   coalesce(avg(r.rating), 0) as avg_rating,
+                   coalesce(count(DISTINCT r), 0) as review_count
         """, {'user_id': current_user.id})
+        
+        # Convert stats result to dictionary
+        stats = {}
+        if stats_result:
+            result = stats_result[0]
+            stats = {
+                'business_count': result.get('business_count', 0) if isinstance(result, dict) else getattr(result, 'business_count', 0),
+                'job_count': result.get('job_count', 0) if isinstance(result, dict) else getattr(result, 'job_count', 0),
+                'application_count': result.get('application_count', 0) if isinstance(result, dict) else getattr(result, 'application_count', 0),
+                'avg_rating': result.get('avg_rating', 0) if isinstance(result, dict) else getattr(result, 'avg_rating', 0),
+                'review_count': result.get('review_count', 0) if isinstance(result, dict) else getattr(result, 'review_count', 0)
+            }
         
         # Get recent job applications
         applications = safe_run(session, """
@@ -47,6 +60,29 @@ def business_owner():
             RETURN a, j.title as job_title, applicant.username as applicant_name
             ORDER BY a.created_at DESC LIMIT 5
         """, {'user_id': current_user.id})
+        
+        # Get user's businesses
+        businesses_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            OPTIONAL MATCH (b)-[:POSTED_BY]->(j:Job) WHERE j.is_active = true
+            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
+            RETURN b,
+                   count(DISTINCT j) as jobs_count,
+                   count(DISTINCT r) as reviews_count,
+                   avg(r.rating) as rating
+            ORDER BY b.created_at DESC
+        """, {'user_id': current_user.id})
+        
+        # Format businesses for template
+        businesses = []
+        for record in businesses_result:
+            business_node = record.get('b')
+            if business_node:
+                business_dict = dict(business_node) if hasattr(business_node, 'items') else _node_to_dict(business_node)
+                business_dict['jobs_count'] = record.get('jobs_count', 0)
+                business_dict['reviews_count'] = record.get('reviews_count', 0)
+                business_dict['rating'] = record.get('rating', 0)
+                businesses.append(business_dict)
         
         # Get verification status
         verification = safe_run(session, """
@@ -59,9 +95,10 @@ def business_owner():
                    v.reviewer_notes as notes
         """, {'user_id': current_user.id})
     
-    return render_template('dashboard/business_owner_dashboard.html',
-        stats=stats[0] if stats else {},
+    return render_template('business/business_owner_dashboard.html',
+        stats=stats,
         applications=applications,
+        businesses=businesses,
         verification=verification[0] if verification else {}
     )
 

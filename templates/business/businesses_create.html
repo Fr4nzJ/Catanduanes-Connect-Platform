@@ -3,210 +3,395 @@
 {% block title %}Register Business - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+<style>
+    /* AI Assistant Styles */
+    #aiCircle {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        z-index: 40;
+        transition: all 0.3s ease;
+    }
+    
+    #aiCircle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    #aiCircle i {
+        color: white;
+        font-size: 28px;
+    }
+    
+    #aiCircle.thinking {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .ai-bubble {
+        position: fixed;
+        bottom: 110px;
+        right: 30px;
+        width: 350px;
+        max-height: 500px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .ai-bubble-title {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+    
+    .ai-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .ai-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+    }
+    
+    .ai-bubble-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.6;
+    }
+    
+    .language-btn {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+        color: #666;
+    }
+    
+    .language-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .language-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .ai-action-btn {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+        color: #333;
+        margin-top: 8px;
+        text-align: left;
+    }
+    
+    .ai-action-btn:hover {
+        background: #f5f5f5;
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .ai-action-btn.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .ai-action-btn.primary:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f90 100%);
+    }
+
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <!-- Header with Gradient Background -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="text-center">
-                <h1 class="text-3xl font-bold text-gray-900">Register Your Business</h1>
-                <p class="mt-2 text-gray-600">List your business on Catanduanes Connect</p>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
+                    <i class="fas fa-store text-3xl text-white"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-white mb-3">Register Your Business</h1>
+                <p class="text-blue-100 text-lg">Join thousands of businesses on Catanduanes Connect and reach more customers</p>
             </div>
         </div>
     </div>
 
     <!-- Form Container -->
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-lg shadow-sm p-8">
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <form method="POST" enctype="multipart/form-data" class="space-y-8 p-8">
                 {{ form.hidden_tag() }}
                 <!-- Exact location picked on map -->
                 <input type="hidden" id="lat" name="latitude">
                 <input type="hidden" id="lng" name="longitude">
                 
-                <!-- Business Information -->
+                <!-- Business Information Section -->
                 <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Business Information</h2>
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold mr-3">
+                            1
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">Business Information</h2>
+                    </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Business Name *
+                            <label for="name" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-building text-blue-600 mr-2"></i>Business Name <span class="text-red-500">*</span>
                             </label>
-                            {{ form.name(class="form-input", placeholder="Enter your business name") }}
+                            {{ form.name(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="Enter your business name") }}
                             {% if form.name.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.name.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.name.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                                Business Category *
+                            <label for="category" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-tag text-blue-600 mr-2"></i>Business Category <span class="text-red-500">*</span>
                             </label>
-                            {{ form.category(class="form-select") }}
+                            {{ form.category(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") }}
                             {% if form.category.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.category.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.category.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                     
                     <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                            Business Description *
+                        <label for="description" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-align-left text-blue-600 mr-2"></i>Business Description <span class="text-red-500">*</span>
                         </label>
-                        {{ form.description(class="form-textarea h-32", placeholder="Describe your business, services offered, and what makes you unique...") }}
+                        {{ form.description(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-32 resize-none", placeholder="Describe your business, services offered, and what makes you unique...") }}
                         {% if form.description.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.description.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.description.errors[0] }}</p>
                         {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Minimum 10 characters, maximum 1000 characters</p>
+                        <p class="mt-2 text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Minimum 10 characters, maximum 1000 characters</p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="address" class="block text-sm font-medium text-gray-700 mb-2">
-                                Business Address *
+                            <label for="address" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Business Address <span class="text-red-500">*</span>
                             </label>
-                            {{ form.address(class="form-input", placeholder="Complete business address") }}
+                            {{ form.address(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="Complete business address") }}
                             {% if form.address.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.address.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.address.errors[0] }}</p>
                             {% endif %}
-                        </div>
-                        <!-- Business Address -->
-                        <div>
-                        <button type="button"
-                                onclick="openLocationPicker('business')"
-                                class="mt-2 btn-secondary text-sm">
-                            <i class="fas fa-map-marker-alt mr-2"></i>Pin exact location on map
-                        </button>
                         </div>
                         
                         <div>
-                            <label for="phone" class="block text-sm font-medium text-gray-700 mb-2">
-                                Contact Number *
+                            <label class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-crosshairs text-blue-600 mr-2"></i>Exact Location
                             </label>
-                            {{ form.phone(class="form-input", placeholder="(0923) 456-7890") }}
+                            <button type="button"
+                                    onclick="openLocationPicker('business')"
+                                    class="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold">
+                                <i class="fas fa-map-marker-alt mr-2"></i>Pin exact location on map
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label for="phone" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-phone text-blue-600 mr-2"></i>Contact Number <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.phone(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="(0923) 456-7890") }}
                             {% if form.phone.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.phone.errors[0] }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
-                                Business Email *
-                            </label>
-                            {{ form.email(class="form-input", placeholder="business@example.com") }}
-                            {% if form.email.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.email.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.phone.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="website" class="block text-sm font-medium text-gray-700 mb-2">
-                                Website (Optional)
+                            <label for="email" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-envelope text-blue-600 mr-2"></i>Business Email <span class="text-red-500">*</span>
                             </label>
-                            {{ form.website(class="form-input", placeholder="https://www.yourbusiness.com") }}
+                            {{ form.email(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="business@example.com") }}
+                            {% if form.email.errors %}
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.email.errors[0] }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div>
+                            <label for="website" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-globe text-blue-600 mr-2"></i>Website (Optional)
+                            </label>
+                            {{ form.website(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="https://www.yourbusiness.com") }}
                             {% if form.website.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.website.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.website.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
-                <!-- Verification Documents -->
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Verification Documents</h2>
+                <!-- Verification Documents Section -->
+                <div class="space-y-6 border-t-2 border-gray-200 pt-8">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold mr-3">
+                            2
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">Verification Documents</h2>
+                    </div>
                     
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6">
                         <div class="flex items-start">
-                            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                            <i class="fas fa-shield-alt text-blue-600 text-2xl mt-1 mr-4"></i>
                             <div>
-                                <h3 class="text-sm font-medium text-blue-800">Verification Required</h3>
-                                <p class="text-sm text-blue-700 mt-1">
-                                    All businesses must be verified before being listed. Please upload your current business permit or license.
+                                <h3 class="text-lg font-semibold text-blue-900 mb-2">Verification Required</h3>
+                                <p class="text-blue-800">
+                                    All businesses must be verified before being listed. Please upload a clear copy of your current business permit or license.
                                 </p>
                             </div>
                         </div>
                     </div>
                     
                     <div>
-                        <label for="permit_number" class="block text-sm font-medium text-gray-700 mb-2">
-                            Business Permit Number *
+                        <label for="permit_number" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-hashtag text-blue-600 mr-2"></i>Business Permit Number <span class="text-red-500">*</span>
                         </label>
-                        {{ form.permit_number(class="form-input", placeholder="Business permit or license number") }}
+                        {{ form.permit_number(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="Business permit or license number") }}
                         {% if form.permit_number.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.permit_number.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.permit_number.errors[0] }}</p>
                         {% endif %}
                     </div>
                     
                     <div>
-                        <label for="permit_file" class="block text-sm font-medium text-gray-700 mb-2">
-                            Business Permit/License Document *
+                        <label for="permit_file" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-file-upload text-blue-600 mr-2"></i>Business Permit/License Document <span class="text-red-500">*</span>
                         </label>
-                        <div class="file-upload-area" id="file-upload-area">
-                            <div class="text-center">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                                <p class="text-gray-600 mb-2">Click to upload or drag and drop</p>
-                                <p class="text-sm text-gray-500">PDF, JPG, JPEG, or PNG files only</p>
+                        <div class="file-upload-area border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all duration-300" id="file-upload-area">
+                            <div class="mb-4">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4 inline-block"></i>
                             </div>
+                            <p class="text-gray-700 font-medium mb-2">Click to upload or drag and drop</p>
+                            <p class="text-sm text-gray-500">PDF, JPG, JPEG, or PNG files only</p>
                             {{ form.permit_file(class="hidden", id="permit-file-input") }}
                         </div>
                         <div id="file-preview" class="mt-4 hidden">
-                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                            <div class="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-lg">
                                 <div class="flex items-center">
-                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
-                                    <span id="file-name" class="text-sm text-gray-700"></span>
+                                    <i class="fas fa-file-pdf text-red-500 text-2xl mr-3"></i>
+                                    <div>
+                                        <p id="file-name" class="text-sm font-semibold text-gray-700"></p>
+                                        <p class="text-xs text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i>Ready to upload</p>
+                                    </div>
                                 </div>
-                                <button type="button" onclick="removeFile()" class="text-red-500 hover:text-red-700">
-                                    <i class="fas fa-times"></i>
+                                <button type="button" onclick="removeFile()" class="text-red-500 hover:text-red-700 text-xl">
+                                    <i class="fas fa-times-circle"></i>
                                 </button>
                             </div>
                         </div>
                         {% if form.permit_file.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.permit_file.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.permit_file.errors[0] }}</p>
                         {% endif %}
                     </div>
                 </div>
                 
                 <!-- Terms and Conditions -->
-                <div class="space-y-4">
-                    <div class="bg-gray-50 p-4 rounded-lg">
+                <div class="space-y-4 border-t-2 border-gray-200 pt-8">
+                    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 p-6 rounded-lg">
                         <div class="flex items-start">
-                            <input type="checkbox" id="terms" name="terms" class="mt-1 mr-3" required>
-                            <label for="terms" class="text-sm text-gray-700">
-                                I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms of Service</a> 
-                                and <a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>. 
+                            <input type="checkbox" id="terms" name="terms" class="mt-1 mr-3 w-5 h-5 text-blue-600 rounded cursor-pointer" required>
+                            <label for="terms" class="text-sm text-gray-800 cursor-pointer flex-1">
+                                I agree to the <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold">Terms of Service</a> 
+                                and <a href="#" class="text-blue-600 hover:text-blue-800 font-semibold">Privacy Policy</a>. 
                                 I confirm that all information provided is accurate and that I am authorized to register this business.
                             </label>
                         </div>
                     </div>
                 </div>
                 
-                <!-- Submit Button -->
-                <div class="flex justify-end space-x-4 pt-6 border-t">
-                    <a href="{{ url_for('businesses.list_businesses') }}" class="btn-secondary">
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-4 pt-6 border-t-2 border-gray-200">
+                    <a href="{{ url_for('businesses.list_businesses') }}" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-semibold flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>Cancel
                     </a>
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold flex items-center">
                         <i class="fas fa-building mr-2"></i>Register Business
                     </button>
                 </div>
-                <!-- =====  LOCATION-PICKER MODAL  ===== -->
+                
+                <!-- Location Picker Modal -->
                 <div id="location-modal" 
                     class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-                <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl p-4">
-                    <div class="flex justify-between items-center mb-2">
-                    <h3 class="text-lg font-semibold text-gray-900">Drop the pin on your exact location</h3>
-                    <button type="button" onclick="closeLocationPicker()" class="text-gray-400 hover:text-gray-600">
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-2xl p-6 mx-4">
+                    <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-gray-900"><i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Drop the pin on your exact location</h3>
+                    <button type="button" onclick="closeLocationPicker()" class="text-gray-400 hover:text-gray-600 text-2xl">
                         <i class="fas fa-times"></i>
                     </button>
                     </div>
-                    <div id="picker-map" class="w-full h-80 rounded border"></div>
-                    <div class="mt-3 flex justify-end space-x-2">
-                    <button type="button" onclick="centerOnMe()" class="btn-secondary text-sm">
-                        <i class="fas fa-location-arrow mr-1"></i>Center on me
+                    <div id="picker-map" class="w-full h-96 rounded-lg border-2 border-gray-200 mb-4"></div>
+                    <div class="flex justify-end space-x-3">
+                    <button type="button" onclick="centerOnMe()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all font-semibold flex items-center">
+                        <i class="fas fa-location-arrow mr-2"></i>Center on me
                     </button>
-                    <button type="button" onclick="closeLocationPicker()" class="btn-primary text-sm">
+                    <button type="button" onclick="closeLocationPicker()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all font-semibold">
                         Confirm location
                     </button>
                     </div>
@@ -215,9 +400,245 @@
             </form>
         </div>
     </div>
+
+    <!-- AI Assistant Circle -->
+    <div id="aiCircle">
+        <i class="fas fa-magic"></i>
+    </div>
+
+    <!-- AI Assistant Container -->
+    <div id="aiAssistantContainer"></div>
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('on-create-business-page');
+        initializeAIAssistant();
+    });
+
+    window.addEventListener('unload', () => {
+        document.body.classList.remove('on-create-business-page');
+    });
+
+    let aiLanguage = 'English';
+
+    function getCSRFToken() {
+        return document.querySelector('input[name="csrf_token"]').value;
+    }
+
+    function initializeAIAssistant() {
+        const aiCircle = document.getElementById('aiCircle');
+        aiCircle.addEventListener('click', showAIMenu);
+    }
+
+    function showAIMenu() {
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) {
+            existingBubble.remove();
+            return;
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✨ Business Registration Assistant</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0 0 12px 0;">How can I help with your business registration?</p>
+                
+                <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <button class="language-btn ${aiLanguage === 'English' ? 'active' : ''}" onclick="setAILanguage('English')">EN</button>
+                    <button class="language-btn ${aiLanguage === 'Tagalog' ? 'active' : ''}" onclick="setAILanguage('Tagalog')">TL</button>
+                    <button class="language-btn ${aiLanguage === 'Bicol' ? 'active' : ''}" onclick="setAILanguage('Bicol')">BL</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="ai-action-btn primary" onclick="improveBizDescription()">
+                        <i class="fas fa-pen"></i> Improve Business Description
+                    </button>
+                    <button class="ai-action-btn" onclick="getRegistrationTips()">
+                        <i class="fas fa-lightbulb"></i> Registration Tips
+                    </button>
+                    <button class="ai-action-btn" onclick="reviewBusinessInfo()">
+                        <i class="fas fa-check-circle"></i> Review Business Info
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').appendChild(bubble);
+    }
+
+    function setAILanguage(lang) {
+        aiLanguage = lang;
+        document.querySelectorAll('.language-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+
+    function improveBizDescription() {
+        const aiCircle = document.getElementById('aiCircle');
+        const description = document.getElementById('description').value.trim();
+        const category = document.getElementById('category').value;
+
+        if (!description) {
+            showAIError('Please write a business description first.');
+            return;
+        }
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✏️ Improving Description</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Analyzing and improving your business description...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.improve_business_description") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ description, category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.improvements, 'improvements');
+            } else {
+                showAIError('Unable to improve description. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function getRegistrationTips() {
+        const aiCircle = document.getElementById('aiCircle');
+        const category = document.getElementById('category').value;
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>💡 Getting Tips</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Generating registration tips for your ${category || 'business'}...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.registration_tips") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.tips, 'tips');
+            } else {
+                showAIError('Unable to generate tips. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function reviewBusinessInfo() {
+        const aiCircle = document.getElementById('aiCircle');
+        const name = document.getElementById('name').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const category = document.getElementById('category').value;
+
+        if (!name || !description) {
+            showAIError('Please fill in business name and description.');
+            return;
+        }
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>📋 Reviewing Information</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Reviewing your business information...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.review_business_info") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ name, description, category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.review, 'review');
+            } else {
+                showAIError('Unable to review. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function displayAIResponse(content, type) {
+        const bubble = document.querySelector('.ai-bubble');
+        let html = `
+            <div class="ai-bubble-title">
+                <span>✨ AI Suggestion</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <div style="margin-bottom: 12px; color: #333; line-height: 1.6;">
+                    ${typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                </div>
+            </div>
+        `;
+        bubble.innerHTML = html;
+    }
+
+    function showAIError(message) {
+        const bubble = document.querySelector('.ai-bubble');
+        if (bubble) {
+            bubble.innerHTML = `
+                <div class="ai-bubble-title">
+                    <span>⚠️ Error</span>
+                    <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+                </div>
+                <div class="ai-bubble-content">
+                    <p style="margin: 0; color: #d32f2f;">${message}</p>
+                </div>
+            `;
+        }
+    }
+
     // File upload handling
     document.getElementById('file-upload-area').addEventListener('click', () => {
         document.getElementById('permit-file-input').click();
@@ -280,44 +701,41 @@
             fileUploadArea.style.display = 'none';
         }
     }
-</script>
-<script>
-/* =========  LOCATION-PICKER LOGIC  ========= */
-let pickerMap, pickerMarker;
 
-function openLocationPicker(type){
-  document.getElementById('location-modal').classList.remove('hidden');
+    // Location picker logic
+    let pickerMap, pickerMarker;
 
-  // create map centered on Catanduanes default
-  pickerMap = L.map('picker-map').setView([13.8000, 124.2000], 11);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-     attribution: '© OpenStreetMap'
-  }).addTo(pickerMap);
+    function openLocationPicker(type){
+      document.getElementById('location-modal').classList.remove('hidden');
 
-  // draggable marker
-  pickerMarker = L.marker([13.8000, 124.2000], {draggable:true}).addTo(pickerMap);
-  pickerMarker.on('dragend', function(e){
-     const latlng = e.target.getLatLng();
-     document.getElementById('lat').value = latlng.lat.toFixed(6);
-     document.getElementById('lng').value = latlng.lng.toFixed(6);
-  });
-}
+      pickerMap = L.map('picker-map').setView([13.8000, 124.2000], 11);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+         attribution: '© OpenStreetMap'
+      }).addTo(pickerMap);
 
-function closeLocationPicker(){
-  pickerMap.remove();
-  document.getElementById('location-modal').classList.add('hidden');
-}
+      pickerMarker = L.marker([13.8000, 124.2000], {draggable:true}).addTo(pickerMap);
+      pickerMarker.on('dragend', function(e){
+         const latlng = e.target.getLatLng();
+         document.getElementById('lat').value = latlng.lat.toFixed(6);
+         document.getElementById('lng').value = latlng.lng.toFixed(6);
+      });
+    }
 
-function centerOnMe(){
-  navigator.geolocation.getCurrentPosition(pos=>{
-     const lat = pos.coords.latitude, lng = pos.coords.longitude;
-     pickerMap.setView([lat, lng], 16);
-     pickerMarker.setLatLng([lat, lng]);
-     document.getElementById('lat').value = lat.toFixed(6);
-     document.getElementById('lng').value = lng.toFixed(6);
-  }, err=>{
-     alert('Unable to get your location');
-  });
-}
+    function closeLocationPicker(){
+      pickerMap.remove();
+      document.getElementById('location-modal').classList.add('hidden');
+    }
+
+    function centerOnMe(){
+      navigator.geolocation.getCurrentPosition(pos=>{
+         const lat = pos.coords.latitude, lng = pos.coords.longitude;
+         pickerMap.setView([lat, lng], 16);
+         pickerMarker.setLatLng([lat, lng]);
+         document.getElementById('lat').value = lat.toFixed(6);
+         document.getElementById('lng').value = lng.toFixed(6);
+      }, err=>{
+         alert('Unable to get your location');
+      });
+    }
 </script>
 {% endblock %}

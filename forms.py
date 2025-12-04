@@ -85,6 +85,7 @@ class BusinessForm(FlaskForm):
 
 class JobForm(FlaskForm):
     """Job posting form"""
+    business_id = SelectField('Business', validators=[DataRequired()], coerce=str)
     title = StringField('Job Title', validators=[DataRequired(), Length(min=3, max=100)])
     description = TextAreaField('Job Description', validators=[DataRequired(), Length(min=20, max=2000)])
     category = SelectField('Category', choices=[
@@ -106,9 +107,18 @@ class JobForm(FlaskForm):
     ], validators=[DataRequired()])
     salary_min = DecimalField('Minimum Salary', validators=[Optional(), NumberRange(min=0)])
     salary_max = DecimalField('Maximum Salary', validators=[Optional(), NumberRange(min=0)])
+    currency = SelectField('Currency', choices=[
+        ('PHP', 'Philippine Peso (PHP)'),
+        ('USD', 'US Dollar (USD)'),
+        ('EUR', 'Euro (EUR)')
+    ], default='PHP', validators=[DataRequired()])
     location = StringField('Job Location', validators=[DataRequired(), Length(min=3, max=100)])
     requirements = TextAreaField('Requirements', validators=[Optional(), Length(max=1000)])
     benefits = TextAreaField('Benefits', validators=[Optional(), Length(max=1000)])
+    requirements_file = FileField('Requirements Document', validators=[
+        Optional(),
+        FileAllowed(['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png'], 'Only PDF, DOC, DOCX, and image files are allowed')
+    ])
     expires_at = StringField('Application Deadline', validators=[Optional()])
 
 # class ServiceForm(FlaskForm):

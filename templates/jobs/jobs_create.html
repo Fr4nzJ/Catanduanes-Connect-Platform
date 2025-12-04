@@ -3,223 +3,407 @@
 {% block title %}Post New Job - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50">
-    <!-- Header -->
-    <div class="bg-white shadow-sm">
-        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div class="flex items-center space-x-4">
-                <a href="{{ url_for('jobs.list_jobs') }}" class="text-blue-600 hover:text-blue-800">
-                    <i class="fas fa-arrow-left text-lg"></i>
-                </a>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Post New Job</h1>
-                    <p class="mt-2 text-gray-600">Create a new job opening for your business</p>
+
+<style>
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    /* AI Assistant Styles */
+    #aiCircle {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        z-index: 40;
+        transition: all 0.3s ease;
+    }
+    
+    #aiCircle:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+    
+    #aiCircle i {
+        color: white;
+        font-size: 28px;
+    }
+    
+    #aiCircle.thinking {
+        animation: pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+    
+    .ai-bubble {
+        position: fixed;
+        bottom: 110px;
+        right: 30px;
+        width: 350px;
+        max-height: 500px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16);
+        z-index: 40;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+    
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .ai-bubble-title {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+    
+    .ai-close-btn {
+        background: none;
+        border: none;
+        color: white;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .ai-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+    }
+    
+    .ai-bubble-content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 15px;
+        font-size: 14px;
+        color: #333;
+        line-height: 1.6;
+    }
+    
+    .language-btn {
+        padding: 6px 12px;
+        border: 1px solid #ddd;
+        background: white;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 600;
+        transition: all 0.2s;
+        color: #666;
+    }
+    
+    .language-btn:hover {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .language-btn.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .ai-action-btn {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e0e0e0;
+        background: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        transition: all 0.2s;
+        color: #333;
+        margin-top: 8px;
+        text-align: left;
+    }
+    
+    .ai-action-btn:hover {
+        background: #f5f5f5;
+        border-color: #667eea;
+        color: #667eea;
+    }
+    
+    .ai-action-btn.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .ai-action-btn.primary:hover {
+        background: linear-gradient(135deg, #5568d3 0%, #6a3f90 100%);
+    }
+</style>
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50">
+    <!-- Header with Gradient Background -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-white bg-opacity-20 rounded-full mb-4">
+                    <i class="fas fa-briefcase text-3xl text-white"></i>
                 </div>
+                <h1 class="text-4xl font-bold text-white mb-3">Post a New Job</h1>
+                <p class="text-blue-100 text-lg">Find the perfect candidate for your business</p>
             </div>
         </div>
     </div>
 
     <!-- Form Container -->
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="bg-white rounded-lg shadow-sm p-8">
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden">
+            <form method="POST" enctype="multipart/form-data" class="space-y-8 p-8">
                 {{ form.hidden_tag() }}
                 
                 <!-- Job Information -->
                 <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Job Information</h2>
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold mr-3">
+                            1
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">Job Information</h2>
+                    </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="title" class="block text-sm font-medium text-gray-700 mb-2">
-                                Job Title *
+                            <label for="title" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-briefcase text-blue-600 mr-2"></i>Job Title <span class="text-red-500">*</span>
                             </label>
-                            {{ form.title(class="form-input", placeholder="e.g., Software Engineer, Sales Associate") }}
+                            {{ form.title(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="e.g., Software Engineer, Sales Associate") }}
                             {% if form.title.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.title.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.title.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="business_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Business *
+                            <label for="business_id" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-store text-blue-600 mr-2"></i>Business <span class="text-red-500">*</span>
                             </label>
-                            {{ form.business_id(class="form-select") }}
+                            {{ form.business_id(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") }}
                             {% if form.business_id.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.business_id.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.business_id.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="category" class="block text-sm font-medium text-gray-700 mb-2">
-                                Job Category *
+                            <label for="category" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-tag text-blue-600 mr-2"></i>Job Category <span class="text-red-500">*</span>
                             </label>
-                            {{ form.category(class="form-select") }}
+                            {{ form.category(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") }}
                             {% if form.category.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.category.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.category.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="type" class="block text-sm font-medium text-gray-700 mb-2">
-                                Job Type *
+                            <label for="type" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-clock text-blue-600 mr-2"></i>Job Type <span class="text-red-500">*</span>
                             </label>
-                            {{ form.type(class="form-select") }}
+                            {{ form.type(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") }}
                             {% if form.type.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.type.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.type.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                     
                     <div>
-                        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
-                            Job Description *
+                        <label for="description" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-align-left text-blue-600 mr-2"></i>Job Description <span class="text-red-500">*</span>
                         </label>
-                        {{ form.description(class="form-textarea h-32", 
+                        {{ form.description(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-32 resize-none",
                                placeholder="Describe the job responsibilities, work environment, and what makes this position exciting...") }}
                         {% if form.description.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.description.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.description.errors[0] }}</p>
                         {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Minimum 20 characters, maximum 2000 characters</p>
+                        <p class="mt-2 text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Minimum 20 characters, maximum 2000 characters</p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <label for="salary_min" class="block text-sm font-medium text-gray-700 mb-2">
-                                Minimum Salary (Optional)
+                            <label for="salary_min" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-money-bill-wave text-blue-600 mr-2"></i>Minimum Salary (Optional)
                             </label>
-                            {{ form.salary_min(class="form-input", placeholder="50000") }}
+                            {{ form.salary_min(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="50000") }}
                             {% if form.salary_min.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.salary_min.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.salary_min.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="salary_max" class="block text-sm font-medium text-gray-700 mb-2">
-                                Maximum Salary (Optional)
+                            <label for="salary_max" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-money-bill-wave text-blue-600 mr-2"></i>Maximum Salary (Optional)
                             </label>
-                            {{ form.salary_max(class="form-input", placeholder="80000") }}
+                            {{ form.salary_max(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="80000") }}
                             {% if form.salary_max.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.salary_max.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.salary_max.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="currency" class="block text-sm font-medium text-gray-700 mb-2">
-                                Currency
+                            <label for="currency" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-globe text-blue-600 mr-2"></i>Currency
                             </label>
-                            {{ form.currency(class="form-select") }}
+                            {{ form.currency(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all") }}
                             {% if form.currency.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.currency.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.currency.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label for="location" class="block text-sm font-medium text-gray-700 mb-2">
-                                Job Location *
+                            <label for="location" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-map-marker-alt text-blue-600 mr-2"></i>Job Location <span class="text-red-500">*</span>
                             </label>
-                            {{ form.location(class="form-input", placeholder="e.g., Catanduanes, Remote") }}
+                            {{ form.location(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", placeholder="e.g., Catanduanes, Remote") }}
                             {% if form.location.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.location.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.location.errors[0] }}</p>
                             {% endif %}
                         </div>
                         
                         <div>
-                            <label for="expires_at" class="block text-sm font-medium text-gray-700 mb-2">
-                                Application Deadline (Optional)
+                            <label for="expires_at" class="block text-sm font-semibold text-gray-800 mb-3">
+                                <i class="fas fa-calendar-alt text-blue-600 mr-2"></i>Application Deadline (Optional)
                             </label>
-                            {{ form.expires_at(class="form-input", type="date") }}
+                            {{ form.expires_at(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all", type="date") }}
                             {% if form.expires_at.errors %}
-                                <p class="mt-1 text-sm text-red-600">{{ form.expires_at.errors[0] }}</p>
+                                <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.expires_at.errors[0] }}</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
                 <!-- Requirements & Benefits -->
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Requirements & Benefits</h2>
-                    
-                    <div>
-                        <label for="requirements" class="block text-sm font-medium text-gray-700 mb-2">
-                            Requirements (Optional)
-                        </label>
-                        {{ form.requirements(class="form-textarea h-24", 
-                               placeholder="List the required qualifications, skills, and experience...") }}
-                        {% if form.requirements.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.requirements.errors[0] }}</p>
-                        {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Maximum 1000 characters</p>
+                <div class="space-y-6 border-t-2 border-gray-200 pt-8">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold mr-3">
+                            2
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">Requirements & Benefits</h2>
                     </div>
                     
                     <div>
-                        <label for="benefits" class="block text-sm font-medium text-gray-700 mb-2">
-                            Benefits (Optional)
+                        <label for="requirements" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-list-check text-blue-600 mr-2"></i>Requirements (Optional)
                         </label>
-                        {{ form.benefits(class="form-textarea h-24", 
+                        {{ form.requirements(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-24 resize-none", 
+                               placeholder="List the required qualifications, skills, and experience...") }}
+                        {% if form.requirements.errors %}
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.requirements.errors[0] }}</p>
+                        {% endif %}
+                        <p class="mt-2 text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Maximum 1000 characters</p>
+                    </div>
+                    
+                    <div>
+                        <label for="benefits" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-star text-blue-600 mr-2"></i>Benefits (Optional)
+                        </label>
+                        {{ form.benefits(class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all h-24 resize-none", 
                                placeholder="Describe the benefits and perks offered with this position...") }}
                         {% if form.benefits.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.benefits.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.benefits.errors[0] }}</p>
                         {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Maximum 1000 characters</p>
+                        <p class="mt-2 text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Maximum 1000 characters</p>
                     </div>
                 </div>
                 
                 <!-- Requirements Document -->
-                <div class="space-y-6">
-                    <h2 class="text-xl font-semibold text-gray-900 border-b pb-2">Additional Documents</h2>
+                <div class="space-y-6 border-t-2 border-gray-200 pt-8">
+                    <div class="flex items-center mb-6">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold mr-3">
+                            3
+                        </div>
+                        <h2 class="text-2xl font-bold text-gray-900">Additional Documents</h2>
+                    </div>
                     
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6">
                         <div class="flex items-start">
-                            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                            <i class="fas fa-info-circle text-blue-600 text-2xl mt-1 mr-4"></i>
                             <div>
-                                <h3 class="text-sm font-medium text-blue-800">Optional Document</h3>
-                                <p class="text-sm text-blue-700 mt-1">
-                                    You can upload additional documents like detailed job specifications, company brochure, etc.
+                                <h3 class="text-lg font-semibold text-blue-900 mb-2">Optional Document</h3>
+                                <p class="text-blue-800">
+                                    You can upload additional documents like detailed job specifications, company brochure, or job requirements document.
                                 </p>
                             </div>
                         </div>
                     </div>
                     
                     <div>
-                        <label for="requirements_file" class="block text-sm font-medium text-gray-700 mb-2">
-                            Requirements Document (Optional)
+                        <label for="requirements_file" class="block text-sm font-semibold text-gray-800 mb-3">
+                            <i class="fas fa-file-upload text-blue-600 mr-2"></i>Requirements Document (Optional)
                         </label>
-                        <div class="file-upload-area" id="file-upload-area">
-                            <div class="text-center">
-                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
-                                <p class="text-gray-600 mb-2">Click to upload or drag and drop</p>
-                                <p class="text-sm text-gray-500">PDF, DOC, DOCX, or image files</p>
+                        <div class="file-upload-area border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all duration-300" id="file-upload-area">
+                            <div class="mb-4">
+                                <i class="fas fa-cloud-upload-alt text-5xl text-gray-400 mb-4 inline-block"></i>
                             </div>
+                            <p class="text-gray-700 font-medium mb-2">Click to upload or drag and drop</p>
+                            <p class="text-sm text-gray-500">PDF, DOC, DOCX, JPG, JPEG, or PNG files only</p>
                             {{ form.requirements_file(class="hidden", id="requirements-file-input") }}
                         </div>
                         <div id="file-preview" class="mt-4 hidden">
-                            <div class="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
+                            <div class="flex items-center justify-between bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 p-4 rounded-lg">
                                 <div class="flex items-center">
-                                    <i class="fas fa-file-pdf text-red-500 mr-3"></i>
-                                    <span id="file-name" class="text-sm text-gray-700"></span>
+                                    <i class="fas fa-file-pdf text-red-500 text-2xl mr-3"></i>
+                                    <div>
+                                        <p id="file-name" class="text-sm font-semibold text-gray-700"></p>
+                                        <p class="text-xs text-green-600 mt-1"><i class="fas fa-check-circle mr-1"></i>Ready to upload</p>
+                                    </div>
                                 </div>
-                                <button type="button" onclick="removeFile()" class="text-red-500 hover:text-red-700">
-                                    <i class="fas fa-times"></i>
+                                <button type="button" onclick="removeFile()" class="text-red-500 hover:text-red-700 text-xl">
+                                    <i class="fas fa-times-circle"></i>
                                 </button>
                             </div>
                         </div>
                         {% if form.requirements_file.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.requirements_file.errors[0] }}</p>
+                            <p class="mt-2 text-sm text-red-600"><i class="fas fa-exclamation-circle mr-1"></i>{{ form.requirements_file.errors[0] }}</p>
                         {% endif %}
                     </div>
                 </div>
                 
                 <!-- Submit Button -->
-                <div class="flex justify-end space-x-4 pt-6 border-t">
-                    <a href="{{ url_for('jobs.list_jobs') }}" class="btn-secondary">
+                <div class="flex justify-end space-x-4 pt-6 border-t-2 border-gray-200">
+                    <a href="{{ url_for('jobs.list_jobs') }}" class="px-6 py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-all duration-200 font-semibold flex items-center">
                         <i class="fas fa-arrow-left mr-2"></i>Cancel
                     </a>
-                    <button type="submit" class="btn-primary">
+                    <button type="submit" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold flex items-center">
                         <i class="fas fa-briefcase mr-2"></i>Post Job
                     </button>
                 </div>
@@ -227,6 +411,14 @@
         </div>
     </div>
 </div>
+
+<!-- AI Assistant Circle -->
+<div id="aiCircle">
+    <i class="fas fa-magic"></i>
+</div>
+
+<!-- AI Assistant Container -->
+<div id="aiAssistantContainer"></div>
 
 <script>
     // File upload handling
@@ -289,6 +481,236 @@
             document.getElementById('file-name').textContent = file.name;
             document.getElementById('file-preview').classList.remove('hidden');
             fileUploadArea.style.display = 'none';
+        }
+    }
+
+    // ===== AI Assistant Code =====
+    document.addEventListener('DOMContentLoaded', () => {
+        document.body.classList.add('on-job-creation-page');
+        initializeAIAssistant();
+    });
+
+    window.addEventListener('unload', () => {
+        document.body.classList.remove('on-job-creation-page');
+    });
+
+    let aiLanguage = 'English';
+
+    function getCSRFToken() {
+        return document.querySelector('input[name="csrf_token"]').value;
+    }
+
+    function initializeAIAssistant() {
+        const aiCircle = document.getElementById('aiCircle');
+        aiCircle.addEventListener('click', showAIMenu);
+    }
+
+    function showAIMenu() {
+        const existingBubble = document.querySelector('.ai-bubble');
+        if (existingBubble) {
+            existingBubble.remove();
+            return;
+        }
+
+        const bubble = document.createElement('div');
+        bubble.className = 'ai-bubble';
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✨ Job Posting Assistant</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0 0 12px 0;">How can I help with your job posting?</p>
+                
+                <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <button class="language-btn ${aiLanguage === 'English' ? 'active' : ''}" onclick="setAILanguage('English')">EN</button>
+                    <button class="language-btn ${aiLanguage === 'Tagalog' ? 'active' : ''}" onclick="setAILanguage('Tagalog')">TL</button>
+                    <button class="language-btn ${aiLanguage === 'Bicol' ? 'active' : ''}" onclick="setAILanguage('Bicol')">BL</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <button class="ai-action-btn primary" onclick="improveJobDescription()">
+                        <i class="fas fa-pen"></i> Improve Job Description
+                    </button>
+                    <button class="ai-action-btn" onclick="getJobPostingTips()">
+                        <i class="fas fa-lightbulb"></i> Posting Tips
+                    </button>
+                    <button class="ai-action-btn" onclick="reviewJobPosting()">
+                        <i class="fas fa-check-circle"></i> Review Job Post
+                    </button>
+                </div>
+            </div>
+        `;
+        document.getElementById('aiAssistantContainer').appendChild(bubble);
+    }
+
+    function setAILanguage(lang) {
+        aiLanguage = lang;
+        document.querySelectorAll('.language-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+    }
+
+    function improveJobDescription() {
+        const aiCircle = document.getElementById('aiCircle');
+        const description = document.getElementById('description').value.trim();
+        const title = document.getElementById('title').value.trim();
+        const category = document.getElementById('category').value;
+
+        if (!description || !title) {
+            showAIError('Please fill in job title and description first.');
+            return;
+        }
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>✏️ Improving Description</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Analyzing and improving your job description...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.improve_business_description") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ description, category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.improvements, 'improvements');
+            } else {
+                showAIError('Unable to improve description. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function getJobPostingTips() {
+        const aiCircle = document.getElementById('aiCircle');
+        const category = document.getElementById('category').value;
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>💡 Getting Tips</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Generating job posting tips for your ${category || 'position'}...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.registration_tips") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.tips, 'tips');
+            } else {
+                showAIError('Unable to generate tips. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function reviewJobPosting() {
+        const aiCircle = document.getElementById('aiCircle');
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        const category = document.getElementById('category').value;
+
+        if (!title || !description) {
+            showAIError('Please fill in job title and description.');
+            return;
+        }
+
+        aiCircle.classList.add('thinking');
+        const bubble = document.querySelector('.ai-bubble');
+        bubble.innerHTML = `
+            <div class="ai-bubble-title">
+                <span>📋 Reviewing Job Post</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <p style="margin: 0; color: #999;">Reviewing your job posting...</p>
+            </div>
+        `;
+
+        fetch('{{ url_for("gemini.review_business_info") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRFToken()
+            },
+            body: JSON.stringify({ name: title, description, category, language: aiLanguage })
+        })
+        .then(response => response.json())
+        .then(data => {
+            aiCircle.classList.remove('thinking');
+            if (data.status === 'success') {
+                displayAIResponse(data.review, 'review');
+            } else {
+                showAIError('Unable to review. Please try again.');
+            }
+        })
+        .catch(error => {
+            aiCircle.classList.remove('thinking');
+            showAIError('Error: ' + error.message);
+        });
+    }
+
+    function displayAIResponse(content, type) {
+        const bubble = document.querySelector('.ai-bubble');
+        let html = `
+            <div class="ai-bubble-title">
+                <span>✨ AI Suggestion</span>
+                <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+            </div>
+            <div class="ai-bubble-content">
+                <div style="margin-bottom: 12px; color: #333; line-height: 1.6;">
+                    ${typeof content === 'string' ? content : JSON.stringify(content, null, 2)}
+                </div>
+            </div>
+        `;
+        bubble.innerHTML = html;
+    }
+
+    function showAIError(message) {
+        const bubble = document.querySelector('.ai-bubble');
+        if (bubble) {
+            bubble.innerHTML = `
+                <div class="ai-bubble-title">
+                    <span>⚠️ Error</span>
+                    <button class="ai-close-btn" onclick="this.closest('.ai-bubble').remove()">✕</button>
+                </div>
+                <div class="ai-bubble-content">
+                    <p style="margin: 0; color: #d32f2f;">${message}</p>
+                </div>
+            `;
         }
     }
 </script>

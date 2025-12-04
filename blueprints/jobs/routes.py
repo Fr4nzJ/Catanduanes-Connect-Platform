@@ -250,10 +250,10 @@ def job_detail(job_id):
     with db.session() as session:
         # Get job and business details
         result = safe_run(session, """
-            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)<-[:OWNS]-(u:User)
             OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
-            WITH j, b, avg(r.rating) as avg_rating, count(r) as review_count
-            RETURN j, b, avg_rating, review_count
+            WITH j, b, u, avg(r.rating) as avg_rating, count(r) as review_count
+            RETURN j, b, u.id as business_owner_id, avg_rating, review_count
         """, {'job_id': job_id})
         
         if not result:
@@ -264,6 +264,7 @@ def job_detail(job_id):
         job_data = _node_to_dict(record['j'])
         job_data['business_id'] = record['b']['id']
         job_data['business_name'] = record['b']['name']
+        job_data['business_owner_id'] = record['business_owner_id']
         job_data['business_rating'] = record['avg_rating'] or 0.0
         job_data['business_review_count'] = record['review_count'] or 0
         
@@ -297,13 +298,20 @@ def job_detail(job_id):
             job_data = _node_to_dict(rec['other'])
             job_data['business_name'] = business.name
             job_data['business_id'] = business.id
+            job_data['business_owner_id'] = record['business_owner_id']
             similar_jobs.append(Job(**job_data))
+        
+        # Check if current user is the job owner
+        is_job_owner = False
+        if current_user.is_authenticated and current_user.role == 'business_owner':
+            is_job_owner = current_user.id == record['business_owner_id']
     
     return render_template('jobs/job_detail.html',
         job=job,
         business=business,
         has_applied=has_applied,
-        similar_jobs=similar_jobs
+        similar_jobs=similar_jobs,
+        is_job_owner=is_job_owner
     )
 
 # ============================================================================
@@ -573,10 +581,9 @@ def create_job():
                 'description': form.description.data,
                 'category': form.category.data,
                 'type': form.type.data,
-                'setup': form.setup.data if hasattr(form, 'setup') else 'on_site',
                 'salary_min': float(form.salary_min.data) if form.salary_min.data else None,
                 'salary_max': float(form.salary_max.data) if form.salary_max.data else None,
-                'currency': 'PHP',
+                'currency': form.currency.data,
                 'location': biz_result[0]['address'] if biz_result else form.location.data,
                 'latitude': float(biz_result[0]['lat']) if biz_result and biz_result[0]['lat'] else None,
                 'longitude': float(biz_result[0]['lng']) if biz_result and biz_result[0]['lng'] else None,
@@ -604,7 +611,7 @@ def create_job():
         flash('Job posted successfully!', 'success')
         return redirect(url_for('jobs.job_detail', job_id=job_id))
     
-    return render_template('jobs/create_job.html', form=form)
+    return render_template('jobs/jobs_create.html', form=form)
 
 @jobs_bp.route('/<job_id>/edit', methods=['GET', 'POST'])
 @login_required

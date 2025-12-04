@@ -3,8 +3,241 @@
 {% block title %}Job Listings - Catanduanes Connect{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+
+<style>
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    /* AI Bubble Styles */
+    .ai-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 40;
+    }
+
+    .ai-bubble-button {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .ai-bubble-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-popup {
+        position: fixed;
+        bottom: 9rem;
+        right: 1.5rem;
+        width: 420px;
+        max-height: 600px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        z-index: 41;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+
+    .ai-popup.show {
+        display: flex;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-popup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ai-popup-body {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .ai-commands {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .ai-command-btn {
+        background: #f0f4ff;
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 13px;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .ai-command-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateX(4px);
+    }
+
+    .ai-popup-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .recommended-section {
+        display: none;
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        border-left: 4px solid #667eea;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .recommended-section.show {
+        display: block;
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .recommended-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+
+    .recommended-header h2 {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .on-jobs-list-page .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+</style>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8 on-jobs-list-page">
     <div class="max-w-7xl mx-auto">
+        <!-- AI Bubble -->
+        <div class="ai-bubble">
+            <button class="ai-bubble-button" id="ai-bubble-btn" title="AI Job Recommendations">
+                <span style="font-size: 28px;">✨</span>
+            </button>
+            <div class="ai-popup" id="ai-popup">
+                <div class="ai-popup-header">
+                    <div class="flex items-center gap-2">
+                        <span style="font-size: 20px;">🤖</span>
+                        <span class="font-bold">Job AI Assistant</span>
+                    </div>
+                    <button class="ai-popup-close" id="ai-popup-close">
+                        <span style="font-size: 24px;">✕</span>
+                    </button>
+                </div>
+                <div class="ai-popup-body">
+                    <p class="text-gray-700 font-semibold mb-4">How can I help you find better jobs?</p>
+                    <div class="ai-commands">
+                        <button class="ai-command-btn" onclick="getRecommendationsByResume()">
+                            <span style="font-size: 16px; margin-right: 8px;">📄</span>
+                            Match jobs to my resume
+                        </button>
+                        <button class="ai-command-btn" onclick="getRecommendationsBySkills()">
+                            <span style="font-size: 16px; margin-right: 8px;">⚙️</span>
+                            Find jobs by my skills
+                        </button>
+                        <button class="ai-command-btn" onclick="getRecommendationsByExperience()">
+                            <span style="font-size: 16px; margin-right: 8px;">📈</span>
+                            Jobs for my experience level
+                        </button>
+                        <button class="ai-command-btn" onclick="getRecommendationsByRole()">
+                            <span style="font-size: 16px; margin-right: 8px;">💼</span>
+                            Career-focused recommendations
+                        </button>
+                        <button class="ai-command-btn" onclick="getRecommendationsBySalaryPreference()">
+                            <span style="font-size: 16px; margin-right: 8px;">💰</span>
+                            Find high-paying positions
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Jobs Section -->
+        <div class="recommended-section" id="recommended-section">
+            <div class="recommended-header">
+                <h2>Recommended for you</h2>
+                <span class="ai-badge">
+                    <span style="margin-right: 6px;">🧠</span>AI Powered
+                </span>
+                <button id="close-recommendations" class="ml-auto text-gray-500 hover:text-gray-700 text-2xl" title="Close">
+                    ✕
+                </button>
+            </div>
+            <div id="recommended-jobs" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Recommended jobs will be loaded here -->
+            </div>
+        </div>
         <!-- Header Section -->
         <div class="mb-12">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
@@ -396,5 +629,231 @@
             document.getElementById('map-container').classList.add('hidden');
         }
     });
+
+    // AI Bubble functionality
+    const aiBubbleBtn = document.getElementById('ai-bubble-btn');
+    const aiPopup = document.getElementById('ai-popup');
+    const aiPopupClose = document.getElementById('ai-popup-close');
+
+    aiBubbleBtn.addEventListener('click', () => {
+        aiPopup.classList.toggle('show');
+    });
+
+    aiPopupClose.addEventListener('click', () => {
+        aiPopup.classList.remove('show');
+    });
+
+    // Close popup when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ai-bubble')) {
+            aiPopup.classList.remove('show');
+        }
+    });
+
+    // Close recommendations section
+    document.getElementById('close-recommendations').addEventListener('click', () => {
+        document.getElementById('recommended-section').classList.remove('show');
+    });
+
+    // Store original jobs data
+    const allJobsData = {{ jobs_data | tojson }};
+
+    async function getRecommendationsByResume() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        try {
+            const response = await fetch('/gemini/recommend-jobs-by-resume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get recommendations');
+            
+            const data = await response.json();
+            displayRecommendations(data.recommended_jobs || []);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recommendations. Please ensure your resume is uploaded.');
+        }
+    }
+
+    async function getRecommendationsBySkills() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        try {
+            const response = await fetch('/gemini/recommend-jobs-by-skills', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get recommendations');
+            
+            const data = await response.json();
+            displayRecommendations(data.recommended_jobs || []);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recommendations. Please complete your profile.');
+        }
+    }
+
+    async function getRecommendationsByExperience() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        try {
+            const response = await fetch('/gemini/recommend-jobs-by-experience', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get recommendations');
+            
+            const data = await response.json();
+            displayRecommendations(data.recommended_jobs || []);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recommendations. Please complete your profile.');
+        }
+    }
+
+    async function getRecommendationsByRole() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        try {
+            const response = await fetch('/gemini/recommend-jobs-by-role', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get recommendations');
+            
+            const data = await response.json();
+            displayRecommendations(data.recommended_jobs || []);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recommendations. Please complete your profile.');
+        }
+    }
+
+    async function getRecommendationsBySalaryPreference() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        
+        try {
+            const response = await fetch('/gemini/recommend-jobs-by-salary', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get recommendations');
+            
+            const data = await response.json();
+            displayRecommendations(data.recommended_jobs || []);
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recommendations. Please complete your profile.');
+        }
+    }
+
+    function displayRecommendations(recommendedJobIds) {
+        const recommendedSection = document.getElementById('recommended-section');
+        const recommendedJobsContainer = document.getElementById('recommended-jobs');
+
+        if (!recommendedJobIds || recommendedJobIds.length === 0) {
+            recommendedJobsContainer.innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <p class="text-gray-600"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>No recommendations found.</p>
+                </div>
+            `;
+            recommendedSection.classList.add('show');
+            return;
+        }
+
+        // Filter jobs based on recommended IDs
+        const recommendedJobs = allJobsData.filter(job => recommendedJobIds.includes(job.id));
+
+        // Create job cards
+        const jobsHTML = recommendedJobs.map(job => `
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105 border-2 border-blue-200">
+                <!-- Job Header -->
+                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 px-6 py-5 relative">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-white truncate">${job.title}</h3>
+                            <p class="text-blue-100 text-sm mt-2">${job.business_name}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Job Body -->
+                <div class="p-6">
+                    <!-- Job Type and Salary -->
+                    <div class="mb-5 pb-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-xs font-bold">
+                                ${job.type_display}
+                            </span>
+                            <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-bold">
+                                ${job.setup_display}
+                            </span>
+                            ${job.salary_range_display ? `
+                                <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+                                    ${job.salary_range_display}
+                                </span>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                        ${job.description || 'No description provided'}
+                    </p>
+
+                    <!-- Job Info -->
+                    <div class="space-y-2 mb-5 text-sm">
+                        ${job.location ? `
+                            <div class="flex items-start text-gray-600 hover:text-blue-600 transition-colors">
+                                <i class="fas fa-map-marker-alt mr-3 mt-0.5 text-blue-500 flex-shrink-0"></i>
+                                <span class="line-clamp-2 text-xs">${job.location}</span>
+                            </div>
+                        ` : ''}
+                        ${job.category ? `
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-tag mr-3 text-blue-500 flex-shrink-0"></i>
+                                <span class="text-xs">${job.category}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <!-- Action Button -->
+                    <div class="pt-4 border-t border-gray-200">
+                        <a href="/jobs/${job.id}" 
+                           class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 text-center shadow-md">
+                            <i class="fas fa-eye mr-2"></i>View Job Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        recommendedJobsContainer.innerHTML = jobsHTML;
+        recommendedSection.classList.add('show');
+        
+        // Scroll to recommendations
+        document.getElementById('recommended-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
 </script>
 {% endblock %}

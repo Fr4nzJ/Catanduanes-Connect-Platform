@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 def login():
     """User login"""
     if current_user.is_authenticated:
+        if current_user.has_role('business_owner'):
+            return redirect(url_for('businesses.dashboard'))
         return redirect(url_for('dashboard.index'))
     
     form = LoginForm()
@@ -115,6 +117,8 @@ def login():
                 # Redirect based on role
                 if user.role == 'admin':
                     return redirect(url_for('admin.index'))
+                elif user.role == 'business_owner':
+                    return redirect(url_for('businesses.dashboard'))
                 return redirect(url_for('dashboard.index'))
             else:
                 flash('Login failed. Please try again.', 'error')
@@ -503,6 +507,8 @@ def google_callback():
     if current_user.is_authenticated:
         if getattr(current_user, 'role', None) == 'admin':
             return redirect(url_for('dashboard.index'))
+        if getattr(current_user, 'role', None) == 'business_owner':
+            return redirect(url_for('businesses.dashboard'))
         return redirect(url_for('dashboard.index'))
 
     # Check state integrity
@@ -702,14 +708,16 @@ def google_callback():
     
 @auth_bp.route('/complete-registration', methods=['GET', 'POST'])
 def complete_registration():
-    """Complete registration for Google users who don’t have a local account yet."""
+    """Complete registration for Google users who don't have a local account yet."""
     google_user = session.get('google_user')
     if not google_user:
         flash('No Google account data found. Please sign in again.', 'danger')
         return redirect(url_for('auth.login'))
 
-    # If user is already logged in, just go to dashboard
+    # If user is already logged in, redirect based on role
     if current_user.is_authenticated:
+        if current_user.has_role('business_owner'):
+            return redirect(url_for('businesses.dashboard'))
         return redirect(url_for('dashboard.index'))
 
 
@@ -771,6 +779,8 @@ def complete_registration():
         # Clean up session and redirect
         flask_session.pop('google_state', None)
         flash('Registration completed! Welcome!', 'success')
+        if role == 'business_owner':
+            return redirect(url_for('businesses.dashboard'))
         return redirect(url_for('dashboard.index'))
 
     # Render registration form prefilled with Google info (GET or after POST fallthrough)
@@ -814,7 +824,9 @@ def verify_otp():
             """, {'user_id': current_user.id})
         
         flash('OTP verified successfully! Now proceed to email verification.', 'success')
-        return redirect(url_for('dashboard/business_owner_dashboard.html'))
+        if current_user.has_role('business_owner'):
+            return redirect(url_for('businesses.dashboard'))
+        return redirect(url_for('dashboard.job_seeker'))
     else:
         flash('Invalid or expired code.', 'error')
         return redirect(url_for('auth.verify_otp'))
