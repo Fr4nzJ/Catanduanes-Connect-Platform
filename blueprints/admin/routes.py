@@ -79,6 +79,7 @@ import bcrypt
 logger = logging.getLogger(__name__)
 
 from . import admin_bp
+from .management_routes import get_realtime_stats
 
 
 def admin_required(f):
@@ -88,38 +89,13 @@ def admin_required(f):
 @admin_bp.route('/')
 @login_required
 def index():
-    """Admin dashboard"""
-    # Log request details
-    logger.info(f"Admin index access - User: {current_user.email}, ID: {current_user.id}, Role: {current_user.role}")
+    """Admin dashboard - redirects to new dashboard route"""
+    # Get real-time stats using the new function
+    stats = get_realtime_stats()
     
-    # Force re-check admin status from database
+    # Get recent activity
     db = get_neo4j_db()
     with db.session() as session:
-        result = safe_run(session, """
-            MATCH (u:User {id: $user_id}) 
-            RETURN u.role as role
-        """, {"user_id": current_user.id})
-        
-        if not result or result[0]['role'] != 'admin':
-            logger.warning(f"Non-admin access attempt - User {current_user.id} ({current_user.email})")
-            flash('You do not have permission to access this page.', 'error')
-            return redirect(url_for('home'))
-    
-    logger.info(f"Admin access granted to {current_user.email}")
-    
-    # Get platform statistics
-    with db.session() as session:
-        stats = safe_run(session, """
-            MATCH (u:User) WITH count(u) as total_users
-            MATCH (b:Business) WITH total_users, count(b) as total_businesses
-            MATCH (j:Job) WITH total_users, total_businesses, count(j) as total_jobs
-            MATCH (s:Service) WITH total_users, total_businesses, total_jobs, count(s) as total_services
-            MATCH (r:Review) WITH total_users, total_businesses, total_jobs, total_services, count(r) as total_reviews
-            MATCH (v:Verification {status: 'pending'}) 
-            RETURN total_users, total_businesses, total_jobs, total_services, total_reviews, count(v) as pending_verifications
-        """)
-
-        # Get recent activity
         activity = safe_run(session, """
             MATCH (u:User)
             WHERE u.created_at IS NOT NULL
@@ -132,49 +108,13 @@ def index():
             ORDER BY timestamp DESC LIMIT 10
         """)
 
-        # Get user growth data for chart
-        user_growth = safe_run(session, """
-            MATCH (u:User)
-            WHERE u.created_at IS NOT NULL
-            WITH datetime(u.created_at) as join_date, count(u) as new_users
-            RETURN join_date, new_users
-            ORDER BY join_date ASC
-            LIMIT 30
-        """)
-
-        # Get content distribution data for chart
-        content_stats = safe_run(session, """
-            MATCH (b:Business) WITH count(b) as businesses
-            MATCH (j:Job) WITH businesses, count(j) as jobs
-            MATCH (s:Service) WITH businesses, jobs, count(s) as services
-            MATCH (r:Review) WITH businesses, jobs, services, count(r) as reviews
-            RETURN businesses, jobs, services, reviews
-        """)
-
-        # Get system health metrics
-        health_metrics = safe_run(session, """
-            MATCH (u:User) WITH count(u) as total_users
-            MATCH (u:User {is_verified: true}) WITH total_users, count(u) as verified_users
-            MATCH (b:Business) WITH total_users, verified_users, count(b) as total_businesses
-            MATCH (b:Business)-[:POSTED_BY]->(j:Job) WITH total_users, verified_users, total_businesses, count(j) as total_jobs
-            MATCH (s:Service) WITH total_users, verified_users, total_businesses, total_jobs, count(s) as total_services
-            RETURN total_users, verified_users, total_businesses, total_jobs, total_services
-        """)
-
         return render_template('admin/admin_dashboard.html',
-                                stats=stats[0] if stats else None,
+                                stats=stats,
                                 activity=activity,
-                                user_growth=user_growth,
-                                content_stats=content_stats[0] if content_stats else None,
-                                health_metrics=health_metrics[0] if health_metrics else None,
+                                recent_activity=[],
                                 system_status={
                                     'last_check': datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S'),
                                     'status': 'operational'
-                                },
-                                storage_usage={               # <-- add this
-                                    'percentage': 0,
-                                    'used': 0,
-                                    'total': 0
                                 })
 
 @admin_bp.route('/content')

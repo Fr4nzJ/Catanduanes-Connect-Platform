@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Users Management - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 shadow-xl py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-bold text-white flex items-center space-x-3 mb-2">
+                <i class="fas fa-users"></i>
+                <span>User Management</span>
+            </h1>
+            <p class="text-red-100">Manage all platform users, verify, suspend, ban, or delete accounts</p>
+        </div>
+    </div>
+
+    <!-- Search & Filter Section -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-filter text-blue-600 mr-3"></i>Search & Filter
+            </h2>
+            
+            <form method="GET" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Search</label>
+                        <input type="text" name="search" value="{{ search }}" 
+                               placeholder="Username, email, or name..."
+                               class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Role</label>
+                        <select name="role" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="">All Roles</option>
+                            <option value="job_seeker" {% if role_filter == 'job_seeker' %}selected{% endif %}>Job Seeker</option>
+                            <option value="business_owner" {% if role_filter == 'business_owner' %}selected{% endif %}>Business Owner</option>
+                            <option value="admin" {% if role_filter == 'admin' %}selected{% endif %}>Admin</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="">All Status</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                            <option value="verified" {% if status_filter == 'verified' %}selected{% endif %}>Verified</option>
+                            <option value="banned" {% if status_filter == 'banned' %}selected{% endif %}>Banned</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Sort By</label>
+                        <select name="sort" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="created_at" {% if sort_by == 'created_at' %}selected{% endif %}>Created Date</option>
+                            <option value="username" {% if sort_by == 'username' %}selected{% endif %}>Username</option>
+                            <option value="email" {% if sort_by == 'email' %}selected{% endif %}>Email</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Order</label>
+                        <select name="order" class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>Newest</option>
+                            <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>Oldest</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 md:flex-none bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-lg font-semibold transition-all transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                    <a href="{{ url_for('admin_mgmt.users_management') }}" class="flex-1 md:flex-none bg-gray-300 hover:bg-gray-400 text-gray-900 px-8 py-3 rounded-lg font-semibold transition-all">
+                        <i class="fas fa-redo mr-2"></i>Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Table Header -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-8 py-6 border-b-2 border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900">All Users ({{ total_users }})</h3>
+            </div>
+            
+            {% if users %}
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">User</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">Email</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">Role</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">Status</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">Verified</th>
+                            <th class="px-8 py-4 text-left text-sm font-bold text-gray-700">Joined</th>
+                            <th class="px-8 py-4 text-center text-sm font-bold text-gray-700">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="border-b border-gray-100 hover:bg-blue-50 transition-colors">
+                            <td class="px-8 py-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold">
+                                        {{ user.username[0].upper() }}
+                                    </div>
+                                    <span class="font-semibold text-gray-900">{{ user.username }}</span>
+                                </div>
+                            </td>
+                            <td class="px-8 py-4">
+                                <p class="text-gray-600 text-sm">{{ user.email }}</p>
+                            </td>
+                            <td class="px-8 py-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                    {% if user.role == 'admin' %}bg-red-100 text-red-800
+                                    {% elif user.role == 'business_owner' %}bg-purple-100 text-purple-800
+                                    {% else %}bg-blue-100 text-blue-800
+                                    {% endif %}">
+                                    {{ user.role|replace('_', ' ')|title }}
+                                </span>
+                            </td>
+                            <td class="px-8 py-4">
+                                {% if user.is_banned %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">
+                                    🚫 Banned
+                                </span>
+                                {% elif user.is_active %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                    ✓ Active
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">
+                                    ⏸ Suspended
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-8 py-4">
+                                {% if user.is_verified %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                                    ✓ Yes
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">
+                                    ✗ No
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-8 py-4 text-gray-600 text-sm">
+                                {{ user.created_at[:10] if user.created_at else 'N/A' }}
+                            </td>
+                            <td class="px-8 py-4">
+                                <div class="flex justify-center gap-2">
+                                    <a href="{{ url_for('admin_mgmt.edit_user', user_id=user.id) }}" 
+                                       class="text-blue-600 hover:text-blue-800 font-semibold text-sm px-3 py-1 rounded hover:bg-blue-100 transition-colors">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    
+                                    {% if user.is_banned %}
+                                    <form method="POST" action="{{ url_for('admin_mgmt.unban_user', user_id=user.id) }}" class="inline"
+                                          onsubmit="return confirm('Unban this user?');">
+                                        <button type="submit" class="text-green-600 hover:text-green-800 font-semibold text-sm px-3 py-1 rounded hover:bg-green-100 transition-colors">
+                                            <i class="fas fa-shield-alt"></i> Unban
+                                        </button>
+                                    </form>
+                                    {% elif user.is_active %}
+                                    <form method="POST" action="{{ url_for('admin_mgmt.suspend_user', user_id=user.id) }}" class="inline"
+                                          onsubmit="return confirm('Suspend this user?');">
+                                        <button type="submit" class="text-yellow-600 hover:text-yellow-800 font-semibold text-sm px-3 py-1 rounded hover:bg-yellow-100 transition-colors">
+                                            <i class="fas fa-pause"></i> Suspend
+                                        </button>
+                                    </form>
+                                    {% else %}
+                                    <form method="POST" action="{{ url_for('admin_mgmt.unsuspend_user', user_id=user.id) }}" class="inline"
+                                          onsubmit="return confirm('Unsuspend this user?');">
+                                        <button type="submit" class="text-green-600 hover:text-green-800 font-semibold text-sm px-3 py-1 rounded hover:bg-green-100 transition-colors">
+                                            <i class="fas fa-play"></i> Unsuspend
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    <button onclick="showBanModal('{{ user.id }}')" class="text-red-600 hover:text-red-800 font-semibold text-sm px-3 py-1 rounded hover:bg-red-100 transition-colors">
+                                        <i class="fas fa-ban"></i> Ban
+                                    </button>
+                                    
+                                    <form method="POST" action="{{ url_for('admin_mgmt.delete_user', user_id=user.id) }}" class="inline"
+                                          onsubmit="return confirm('Permanently delete this user? This cannot be undone!');">
+                                        <button type="submit" class="text-red-800 hover:text-red-900 font-semibold text-sm px-3 py-1 rounded hover:bg-red-100 transition-colors">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="px-8 py-6 border-t border-gray-200 flex items-center justify-between">
+                <div class="text-sm text-gray-600">
+                    Showing page {{ current_page }} of {{ total_pages }} ({{ total_users }} users total)
+                </div>
+                <div class="flex gap-2">
+                    {% if current_page > 1 %}
+                    <a href="{{ url_for('admin_mgmt.users_management', page=1, search=search, role=role_filter, status=status_filter, sort=sort_by, order=sort_order) }}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">First</a>
+                    <a href="{{ url_for('admin_mgmt.users_management', page=current_page-1, search=search, role=role_filter, status=status_filter, sort=sort_by, order=sort_order) }}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">← Previous</a>
+                    {% endif %}
+                    
+                    {% if current_page < total_pages %}
+                    <a href="{{ url_for('admin_mgmt.users_management', page=current_page+1, search=search, role=role_filter, status=status_filter, sort=sort_by, order=sort_order) }}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Next →</a>
+                    <a href="{{ url_for('admin_mgmt.users_management', page=total_pages, search=search, role=role_filter, status=status_filter, sort=sort_by, order=sort_order) }}" 
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Last</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="px-8 py-12 text-center">
+                <i class="fas fa-inbox text-gray-300 text-5xl mb-4 inline-block"></i>
+                <p class="text-gray-500 text-lg">No users found</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Ban Modal -->
+<div id="banModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Ban User</h2>
+        <form id="banForm" method="POST">
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Reason (optional)</label>
+                <textarea name="reason" rows="3" placeholder="Why are you banning this user?" 
+                          class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500"></textarea>
+            </div>
+            <div class="flex gap-3">
+                <button type="button" onclick="closeBanModal()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-900 rounded-lg font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
+                <button type="submit" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">Ban User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showBanModal(userId) {
+    const modal = document.getElementById('banModal');
+    const form = document.getElementById('banForm');
+    form.action = `/admin/user/${userId}/ban`;
+    modal.classList.remove('hidden');
+}
+
+function closeBanModal() {
+    document.getElementById('banModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('banModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeBanModal();
+});
+</script>
+{% endblock %}

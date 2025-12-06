@@ -145,6 +145,7 @@ def create_app(config_name='default'):
     
     # Import blueprints
     from blueprints.admin import admin_bp
+    from blueprints.admin.management_routes import admin_mgmt
     from blueprints.auth import auth_bp
     from blueprints.businesses.routes import businesses_bp
     from blueprints.jobs.routes import jobs_bp
@@ -158,6 +159,7 @@ def create_app(config_name='default'):
     
     # Register blueprints
     app.register_blueprint(admin_bp)  # URL prefix is already set in the blueprint
+    app.register_blueprint(admin_mgmt)  # Admin management routes
     app.register_blueprint(auth_bp, url_prefix="/auth")
     app.register_blueprint(businesses_bp, url_prefix="/businesses")
     app.register_blueprint(jobs_bp, url_prefix="/jobs")

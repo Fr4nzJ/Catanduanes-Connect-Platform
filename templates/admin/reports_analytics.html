@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - Admin{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-orange-50 to-red-100">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-orange-600 to-red-600 shadow-xl py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-4xl font-bold text-white flex items-center space-x-3 mb-2">
+                <i class="fas fa-chart-line"></i>
+                <span>Reports & Analytics</span>
+            </h1>
+            <p class="text-orange-100">View platform statistics, user behavior, and detailed reports</p>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-6">Platform Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Total Users -->
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-blue-500">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-semibold">Total Users</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_users }}</p>
+                        <p class="text-xs text-blue-600 font-semibold mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ user_growth }}% this month
+                        </p>
+                    </div>
+                    <i class="fas fa-users text-blue-500 text-4xl opacity-20"></i>
+                </div>
+            </div>
+            
+            <!-- Active Users -->
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-green-500">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-semibold">Active Users (30 days)</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ active_users_30d }}</p>
+                        <p class="text-xs text-green-600 font-semibold mt-2">
+                            <i class="fas fa-user-check"></i> {{ active_percentage }}% engagement
+                        </p>
+                    </div>
+                    <i class="fas fa-user-check text-green-500 text-4xl opacity-20"></i>
+                </div>
+            </div>
+            
+            <!-- Total Businesses -->
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-purple-500">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-semibold">Total Businesses</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_businesses }}</p>
+                        <p class="text-xs text-purple-600 font-semibold mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ business_growth }}% this month
+                        </p>
+                    </div>
+                    <i class="fas fa-store text-purple-500 text-4xl opacity-20"></i>
+                </div>
+            </div>
+            
+            <!-- Total Jobs -->
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-orange-500">
+                <div class="flex items-start justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 font-semibold">Total Jobs</p>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_jobs }}</p>
+                        <p class="text-xs text-orange-600 font-semibold mt-2">
+                            <i class="fas fa-arrow-up"></i> {{ job_growth }}% this month
+                        </p>
+                    </div>
+                    <i class="fas fa-briefcase text-orange-500 text-4xl opacity-20"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Reports -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- User Statistics -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-chart-pie text-blue-600 mr-3"></i>User Statistics
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Job Seekers</p>
+                            <p class="text-sm text-gray-500">{{ job_seekers }} users</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-blue-600 text-lg">{{ job_seekers_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-blue-600" style="width: {{ job_seekers_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Business Owners</p>
+                            <p class="text-sm text-gray-500">{{ business_owners }} users</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-purple-600 text-lg">{{ business_owners_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-purple-600" style="width: {{ business_owners_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Verified Users</p>
+                            <p class="text-sm text-gray-500">{{ verified_users }} users</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-green-600 text-lg">{{ verified_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-green-600" style="width: {{ verified_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-700">Banned Users</p>
+                            <p class="text-sm text-gray-500">{{ banned_users }} users</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-red-600 text-lg">{{ banned_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-red-600" style="width: {{ banned_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Business Statistics -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-chart-bar text-purple-600 mr-3"></i>Business Status
+                </h3>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Approved</p>
+                            <p class="text-sm text-gray-500">{{ approved_businesses }} businesses</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-green-600 text-lg">{{ approved_business_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-green-600" style="width: {{ approved_business_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Pending Review</p>
+                            <p class="text-sm text-gray-500">{{ pending_businesses }} businesses</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-yellow-600 text-lg">{{ pending_business_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-yellow-600" style="width: {{ pending_business_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between pb-4 border-b border-gray-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Rejected</p>
+                            <p class="text-sm text-gray-500">{{ rejected_businesses }} businesses</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-red-600 text-lg">{{ rejected_business_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-red-600" style="width: {{ rejected_business_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-semibold text-gray-700">Featured</p>
+                            <p class="text-sm text-gray-500">{{ featured_businesses }} businesses</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-bold text-yellow-500 text-lg">{{ featured_business_percentage }}%</p>
+                            <div class="w-32 h-2 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                                <div class="h-full bg-yellow-500" style="width: {{ featured_business_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Categories -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Top Job Categories -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-fire text-orange-600 mr-3"></i>Top Job Categories
+                </h3>
+                <div class="space-y-3">
+                    {% for category, count in top_job_categories %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-700 font-semibold">{{ category|title }}</span>
+                        <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full font-bold text-sm">{{ count }} jobs</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Top Business Categories -->
+            <div class="bg-white rounded-xl shadow-lg p-8">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-fire text-pink-600 mr-3"></i>Top Business Categories
+                </h3>
+                <div class="space-y-3">
+                    {% for category, count in top_business_categories %}
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-700 font-semibold">{{ category|title }}</span>
+                        <span class="bg-pink-100 text-pink-800 px-3 py-1 rounded-full font-bold text-sm">{{ count }} businesses</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-history text-indigo-600 mr-3"></i>Recent Activity (Last 7 Days)
+            </h3>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Date</th>
+                            <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Event</th>
+                            <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Type</th>
+                            <th class="px-6 py-3 text-left text-sm font-bold text-gray-700">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for event in recent_activity %}
+                        <tr class="border-b border-gray-100 hover:bg-gray-50">
+                            <td class="px-6 py-3 text-sm text-gray-600">{{ event.date }}</td>
+                            <td class="px-6 py-3">
+                                <span class="font-semibold text-gray-900">{{ event.event_name }}</span>
+                            </td>
+                            <td class="px-6 py-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold
+                                    {% if event.type == 'user' %}bg-blue-100 text-blue-800
+                                    {% elif event.type == 'business' %}bg-purple-100 text-purple-800
+                                    {% elif event.type == 'job' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800
+                                    {% endif %}">
+                                    {{ event.type|title }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3 text-sm text-gray-600">{{ event.details }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Reports -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <div class="bg-white rounded-xl shadow-lg p-8">
+            <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-download text-green-600 mr-3"></i>Export Reports
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <a href="{{ url_for('admin_mgmt.export_users_report') }}" class="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-6 py-3 rounded-lg font-semibold transition-all text-center">
+                    <i class="fas fa-download mr-2"></i>Users Report (CSV)
+                </a>
+                <a href="{{ url_for('admin_mgmt.export_businesses_report') }}" class="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-lg font-semibold transition-all text-center">
+                    <i class="fas fa-download mr-2"></i>Businesses Report (CSV)
+                </a>
+                <a href="{{ url_for('admin_mgmt.export_jobs_report') }}" class="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-6 py-3 rounded-lg font-semibold transition-all text-center">
+                    <i class="fas fa-download mr-2"></i>Jobs Report (CSV)
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
