@@ -263,3 +263,11 @@ def create_app(config_name='default'):
                 print(f"Created admin account: {admin_email} (change password after first login)")
     
     return app
+
+
+# Create Flask app instance
+app = create_app(os.getenv('FLASK_ENV', 'development'))
+
+# Run the development server if this file is run directly
+if __name__ == '__main__':
+    app.run(debug=True, host='127.0.0.1', port=int(os.getenv('PORT', 5000)))

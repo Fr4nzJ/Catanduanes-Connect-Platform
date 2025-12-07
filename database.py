@@ -7,6 +7,25 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
+class AttrDict(dict):
+    """Dict subclass that supports attribute access (dot notation)"""
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(f"'AttrDict' object has no attribute '{name}'")
+    
+    def __setattr__(self, name, value):
+        self[name] = value
+    
+    def __delattr__(self, name):
+        try:
+            del self[name]
+        except KeyError:
+            raise AttributeError(f"'AttrDict' object has no attribute '{name}'")
+
+
 class Neo4jConnection:
     """Neo4j connection manager with session pooling and auto-reconnect"""
     
@@ -129,21 +148,39 @@ def get_neo4j_db() -> Neo4jConnection:
     return g.neo4j_db
 
 def _record_to_dict(record) -> Optional[Dict[str, Any]]:
-    """Convert Neo4j record to dictionary"""
+    """Convert Neo4j record to dictionary, recursively converting nodes"""
     if not record:
         return None
-    return dict(record)
+    result = AttrDict()
+    for key, value in record.items():
+        if hasattr(value, 'labels'):  # It's a Neo4j Node
+            result[key] = _node_to_dict(value)
+        elif isinstance(value, dict):
+            result[key] = value
+        else:
+            result[key] = value
+    return result
 
 def _node_to_dict(node) -> Optional[Dict[str, Any]]:
-    """Convert Neo4j node to dictionary"""
+    """Convert Neo4j node to dictionary with attribute access support"""
     if not node:
         return None
-    result = dict(node)
+    result = AttrDict(node)
     # IMPORTANT: Use the 'id' property from the node data, NOT node.id (which is Neo4j's internal ID)
     # Only set node.id if the 'id' property doesn't already exist in the node data
     if 'id' not in result:
         result['id'] = node.id
     result['labels'] = list(node.labels)
+    
+    # Handle missing username field - use email or first_name as fallback
+    if 'username' not in result:
+        if 'email' in result:
+            result['username'] = result['email'].split('@')[0]
+        elif 'first_name' in result:
+            result['username'] = result['first_name']
+        else:
+            result['username'] = f"user_{result.get('id', 'unknown')}"
+    
     return result
 
 def safe_run(session, query: str, params: Dict[str, Any] = None) -> List[Dict[str, Any]]:

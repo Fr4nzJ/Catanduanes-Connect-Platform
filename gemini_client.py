@@ -1,7 +1,11 @@
 import os
 import logging
+import re
 from typing import List, Dict, Optional
 import google.generativeai as genai
+
+# Import get_neo4j_db from your database module
+from database import get_neo4j_db  # Replace 'database' with the actual module name if different
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -42,7 +46,7 @@ class GeminiChat:
             
             # Initialize the Gemini client with basic configuration
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
             
             # Test the connection with a simple prompt
             try:
@@ -51,9 +55,9 @@ class GeminiChat:
                     logger.info("Successfully initialized and tested Gemini client")
                 else:
                     raise ValueError("Failed to get test response from Gemini model")
-            except Exception as e:
-                logger.error(f"Failed to test Gemini connection: {str(e)}")
-                raise ValueError(f"Failed to test Gemini connection: {str(e)}")
+            except Exception as test_error:
+                logger.warning(f"Failed to test Gemini connection: {str(test_error)}")
+                logger.info("Gemini client initialized but test failed - some features may be unavailable")
             
         except Exception as e:
             logger.error(f"Failed to initialize Gemini client: {str(e)}")

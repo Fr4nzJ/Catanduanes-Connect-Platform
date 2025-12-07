@@ -9,17 +9,22 @@ from gemini_client import GeminiChat
 logger = logging.getLogger(__name__)
 
 # Initialize Gemini chat client
+chatbot = None
 try:
     logger.info("Initializing Gemini chat client...")
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        logger.error("GEMINI_API_KEY environment variable not set")
-        raise ValueError("GEMINI_API_KEY environment variable not set")
-
-    chatbot = GeminiChat(api_key=api_key)
-    logger.info("Successfully initialized Gemini chat client")
+    if api_key:
+        try:
+            chatbot = GeminiChat(api_key=api_key)
+            logger.info("Successfully initialized Gemini chat client")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Gemini chat client: {str(e)}")
+            chatbot = None
+    else:
+        logger.warning("GEMINI_API_KEY environment variable not set - Gemini chat will be unavailable")
+        chatbot = None
 except Exception as e:
-    logger.error(f"Failed to initialize Gemini chat client: {str(e)}", exc_info=True)
+    logger.error(f"Unexpected error initializing Gemini chat client: {str(e)}", exc_info=True)
     chatbot = None
 
 # Error constants

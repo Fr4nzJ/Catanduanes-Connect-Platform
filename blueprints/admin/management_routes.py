@@ -24,10 +24,10 @@ def get_realtime_stats():
     db = get_neo4j_db()
     
     stats = {
-        'users': {},
-        'jobs': {},
-        'businesses': {},
-        'verifications': {}
+        'users': {'total': 0, 'verified': 0, 'business_owners': 0, 'new_today': 0},
+        'jobs': {'total': 0, 'featured': 0, 'active': 0, 'new_today': 0},
+        'businesses': {'total': 0, 'featured': 0, 'active': 0, 'new_today': 0},
+        'verifications': {'total': 0, 'approved': 0, 'pending': 0, 'rejected': 0}
     }
     
     try:
@@ -38,8 +38,6 @@ def get_realtime_stats():
                 RETURN 
                     count(*) as total,
                     sum(case when u.is_verified = true then 1 else 0 end) as verified,
-                    sum(case when u.is_banned = true then 1 else 0 end) as banned,
-                    sum(case when u.is_suspended = true then 1 else 0 end) as suspended,
                     sum(case when u.role = 'business_owner' then 1 else 0 end) as business_owners,
                     sum(case when u.created_at > datetime() - duration('P1D') then 1 else 0 end) as new_today
             """)
@@ -48,8 +46,6 @@ def get_realtime_stats():
                 stats['users'] = {
                     'total': user_data.get('total') or 0,
                     'verified': user_data.get('verified') or 0,
-                    'banned': user_data.get('banned') or 0,
-                    'suspended': user_data.get('suspended') or 0,
                     'business_owners': user_data.get('business_owners') or 0,
                     'new_today': user_data.get('new_today') or 0
                 }
@@ -59,16 +55,14 @@ def get_realtime_stats():
                 MATCH (j:Job)
                 RETURN 
                     count(*) as total,
-                    sum(case when j.is_approved = true then 1 else 0 end) as approved,
                     sum(case when j.is_featured = true then 1 else 0 end) as featured,
-                    sum(case when j.is_expired = false then 1 else 0 end) as active,
+                    sum(case when j.is_active = true then 1 else 0 end) as active,
                     sum(case when j.created_at > datetime() - duration('P1D') then 1 else 0 end) as new_today
             """)
             if job_result:
                 job_data = job_result[0]
                 stats['jobs'] = {
                     'total': job_data.get('total') or 0,
-                    'approved': job_data.get('approved') or 0,
                     'featured': job_data.get('featured') or 0,
                     'active': job_data.get('active') or 0,
                     'new_today': job_data.get('new_today') or 0
@@ -79,7 +73,6 @@ def get_realtime_stats():
                 MATCH (b:Business)
                 RETURN 
                     count(*) as total,
-                    sum(case when b.is_approved = true then 1 else 0 end) as approved,
                     sum(case when b.is_featured = true then 1 else 0 end) as featured,
                     sum(case when b.is_active = true then 1 else 0 end) as active,
                     sum(case when b.created_at > datetime() - duration('P1D') then 1 else 0 end) as new_today
@@ -88,7 +81,6 @@ def get_realtime_stats():
                 business_data = business_result[0]
                 stats['businesses'] = {
                     'total': business_data.get('total') or 0,
-                    'approved': business_data.get('approved') or 0,
                     'featured': business_data.get('featured') or 0,
                     'active': business_data.get('active') or 0,
                     'new_today': business_data.get('new_today') or 0
@@ -99,9 +91,9 @@ def get_realtime_stats():
                 MATCH (v:Verification)
                 RETURN 
                     count(*) as total,
-                    sum(case when v.status = 'approved' then 1 else 0 end) as approved,
-                    sum(case when v.status = 'pending' then 1 else 0 end) as pending,
-                    sum(case when v.status = 'rejected' then 1 else 0 end) as rejected
+                    sum(case when v.verification_status = 'approved' then 1 else 0 end) as approved,
+                    sum(case when v.verification_status = 'pending' then 1 else 0 end) as pending,
+                    sum(case when v.verification_status = 'rejected' then 1 else 0 end) as rejected
             """)
             if verification_result:
                 verification_data = verification_result[0]
@@ -174,11 +166,14 @@ def users_management():
                 query += " AND u.is_active = false"
             elif status_filter == 'verified':
                 query += " AND u.is_verified = true"
-            elif status_filter == 'banned':
-                query += " AND u.is_banned = true"
         
-        # Count total
-        count_query = query.replace('MATCH (u:User)', f"MATCH (u:User) RETURN COUNT(u) as total")
+        # Count total - build separate count query with WHERE clause before RETURN
+        count_parts = query.split(' WHERE ', 1)
+        if len(count_parts) > 1:
+            count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(u) as total"
+        else:
+            count_query = query + " RETURN COUNT(u) as total"
+        
         total_result = safe_run(session, count_query, params)
         total_users = total_result[0]['total'] if total_result else 0
         
@@ -188,7 +183,7 @@ def users_management():
         query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
         
         result = safe_run(session, query, params)
-        users = [_node_to_dict(record['u']) for record in (result or [])]
+        users = [record['u'] for record in (result or [])]
     
     # Calculate pagination
     total_pages = (total_users + per_page - 1) // per_page
@@ -219,7 +214,7 @@ def edit_user(user_id):
             flash('User not found', 'error')
             return redirect(url_for('admin_mgmt.users_management'))
         
-        user = _node_to_dict(result[0]['u'])
+        user = result[0]['u']
         
         if request.method == 'POST':
             # Update user
@@ -378,8 +373,13 @@ def jobs_management():
             elif status_filter == 'approved':
                 query += " AND j.is_approved = true"
         
-        # Count
-        count_query = query.replace('MATCH (j:Job)', f"MATCH (j:Job) RETURN COUNT(j) as total")
+        # Count - build separate count query with WHERE clause before RETURN
+        count_parts = query.split(' WHERE ', 1)
+        if len(count_parts) > 1:
+            count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(j) as total"
+        else:
+            count_query = query + " RETURN COUNT(j) as total"
+        
         total_result = safe_run(session, count_query, params)
         total_jobs = total_result[0]['total'] if total_result else 0
         
@@ -389,20 +389,26 @@ def jobs_management():
         query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
         
         result = safe_run(session, query, params)
-        jobs = [_node_to_dict(record['j']) for record in (result or [])]
+        jobs = [record['j'] for record in (result or [])]
         
         # Get categories for filter
-        cat_result = safe_run(session, "MATCH (j:Job) RETURN DISTINCT j.category as category WHERE j.category IS NOT NULL")
+        cat_result = safe_run(session, "MATCH (j:Job) WHERE j.category IS NOT NULL RETURN DISTINCT j.category as category")
         categories = [rec['category'] for rec in (cat_result or [])]
+        
+        # Get stats - must be inside the session context
+        active_result = safe_run(session, "MATCH (j:Job) WHERE j.is_active = true RETURN COUNT(j) as count")
+        pending_result = safe_run(session, "MATCH (j:Job) WHERE j.is_approved = false RETURN COUNT(j) as count")
+        featured_result = safe_run(session, "MATCH (j:Job) WHERE j.is_featured = true RETURN COUNT(j) as count")
+        expired_result = safe_run(session, "MATCH (j:Job) WHERE j.deadline < datetime() RETURN COUNT(j) as count")
     
     total_pages = (total_jobs + per_page - 1) // per_page
     
     stats = {
         'total_jobs': total_jobs,
-        'active_jobs': safe_run(session, "MATCH (j:Job) WHERE j.is_active = true RETURN COUNT(j) as count")[0]['count'] if session else 0,
-        'pending_jobs': safe_run(session, "MATCH (j:Job) WHERE j.is_approved = false RETURN COUNT(j) as count")[0]['count'] if session else 0,
-        'featured_jobs': safe_run(session, "MATCH (j:Job) WHERE j.is_featured = true RETURN COUNT(j) as count")[0]['count'] if session else 0,
-        'expired_jobs': safe_run(session, "MATCH (j:Job) WHERE j.deadline < datetime() RETURN COUNT(j) as count")[0]['count'] if session else 0,
+        'active_jobs': active_result[0]['count'] if active_result else 0,
+        'pending_jobs': pending_result[0]['count'] if pending_result else 0,
+        'featured_jobs': featured_result[0]['count'] if featured_result else 0,
+        'expired_jobs': expired_result[0]['count'] if expired_result else 0,
     }
     
     return render_template('admin/jobs_management.html',
@@ -608,8 +614,13 @@ def business_management():
         if featured_filter:
             query += f" AND b.is_featured = {featured_filter == 'yes'}"
         
-        # Count
-        count_query = query.replace('MATCH (b:Business)', f"MATCH (b:Business) RETURN COUNT(b) as total")
+        # Count - build separate count query with WHERE clause before RETURN
+        count_parts = query.split(' WHERE ', 1)
+        if len(count_parts) > 1:
+            count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(b) as total"
+        else:
+            count_query = query + " RETURN COUNT(b) as total"
+        
         total_result = safe_run(session, count_query, params)
         total_businesses = total_result[0]['total'] if total_result else 0
         
@@ -619,19 +630,24 @@ def business_management():
         query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
         
         result = safe_run(session, query, params)
-        businesses = [_node_to_dict(record['b']) for record in (result or [])]
+        businesses = [record['b'] for record in (result or [])]
         
         # Get categories for filter
-        cat_result = safe_run(session, "MATCH (b:Business) RETURN DISTINCT b.category as category WHERE b.category IS NOT NULL")
+        cat_result = safe_run(session, "MATCH (b:Business) WHERE b.category IS NOT NULL RETURN DISTINCT b.category as category")
         categories = [rec['category'] for rec in (cat_result or [])]
+        
+        # Get stats - must be inside the session context
+        approved_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = true RETURN COUNT(b) as count")
+        pending_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = false AND b.is_rejected = false RETURN COUNT(b) as count")
+        featured_result = safe_run(session, "MATCH (b:Business) WHERE b.is_featured = true RETURN COUNT(b) as count")
     
     total_pages = (total_businesses + per_page - 1) // per_page
     
     stats = {
         'total_businesses': total_businesses,
-        'approved_count': safe_run(session, "MATCH (b:Business) WHERE b.is_approved = true RETURN COUNT(b) as count")[0]['count'] if session else 0,
-        'pending_count': safe_run(session, "MATCH (b:Business) WHERE b.is_approved = false AND b.is_rejected = false RETURN COUNT(b) as count")[0]['count'] if session else 0,
-        'featured_count': safe_run(session, "MATCH (b:Business) WHERE b.is_featured = true RETURN COUNT(b) as count")[0]['count'] if session else 0,
+        'approved_count': approved_result[0]['count'] if approved_result else 0,
+        'pending_count': pending_result[0]['count'] if pending_result else 0,
+        'featured_count': featured_result[0]['count'] if featured_result else 0,
     }
     
     return render_template('admin/businesses_management.html',
@@ -812,7 +828,7 @@ def verifications():
     with db.session() as session:
         query = """
             MATCH (u:User)-[:SUBMITTED]->(v:Verification)
-            WHERE v.status = $status
+            WHERE v.verification_status = $status
             RETURN v, u
         """
         params = {'status': status_filter}
@@ -821,8 +837,15 @@ def verifications():
             query += " AND u.role = $user_type"
             params['user_type'] = user_type_filter
         
-        # Count
-        count_query = query.replace('RETURN v, u', 'RETURN COUNT(v) as total')
+        # Count - properly structured with WHERE before RETURN
+        count_query = """
+            MATCH (u:User)-[:SUBMITTED]->(v:Verification)
+            WHERE v.verification_status = $status
+        """
+        if user_type_filter:
+            count_query += " AND u.role = $user_type"
+        count_query += " RETURN COUNT(v) as total"
+        
         total_result = safe_run(session, count_query, params)
         total = total_result[0]['total'] if total_result else 0
         
@@ -833,8 +856,8 @@ def verifications():
         verifications = []
         if result:
             for record in result:
-                ver_data = _node_to_dict(record['v'])
-                user_data = _node_to_dict(record['u'])
+                ver_data = record['v']
+                user_data = record['u']
                 verifications.append({
                     'verification': ver_data,
                     'user': user_data
