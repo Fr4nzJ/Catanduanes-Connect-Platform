@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}My Applicants - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">My Applicants</h1>
+            <p class="text-gray-600">Manage applications to your job postings</p>
+        </div>
+
+        {% if applicants %}
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gradient-to-r from-blue-500 to-indigo-600">
+                        <tr>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-white">Applicant</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-white">Job Position</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-white">Business</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-white">Applied Date</th>
+                            <th class="px-6 py-4 text-left text-sm font-bold text-white">Status</th>
+                            <th class="px-6 py-4 text-center text-sm font-bold text-white">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for applicant in applicants %}
+                        <tr class="hover:bg-blue-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="font-semibold text-gray-900">{{ applicant.applicant_name }}</div>
+                                <div class="text-xs text-gray-500">{{ applicant.applicant_email }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-900">{{ applicant.job_title }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-gray-900">{{ applicant.business_name }}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-600">
+                                    {% if applicant.created_at %}
+                                    {{ applicant.created_at[:10] }}
+                                    {% else %}
+                                    N/A
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% if applicant.status == 'accepted' %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    ✓ Accepted
+                                </span>
+                                {% elif applicant.status == 'rejected' %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    ✗ Rejected
+                                </span>
+                                {% else %}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    ⏳ Pending
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <a href="{{ url_for('jobs.view_applicant_profile', application_id=applicant.id) }}" 
+                                   class="text-blue-600 hover:text-blue-800 font-semibold text-sm px-3 py-1 rounded hover:bg-blue-100 transition-colors">
+                                    <i class="fas fa-eye"></i> View Profile
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+            <i class="fas fa-inbox text-gray-400 text-5xl mb-4"></i>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">No Applicants Yet</h2>
+            <p class="text-gray-600 mb-6">You haven't received any applications for your job postings yet.</p>
+            <a href="{{ url_for('jobs.my_postings') }}" class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-briefcase mr-2"></i>View My Job Postings
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

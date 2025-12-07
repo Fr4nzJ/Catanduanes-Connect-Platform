@@ -32,7 +32,7 @@ def business_owner():
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:OWNS]->(b:Business)
             OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
-            OPTIONAL MATCH (b)-[:POSTED_BY]->(j:Job)
+            OPTIONAL MATCH (b)<-[:POSTED_BY]-(j:Job)
             OPTIONAL MATCH (j)<-[:APPLIED_TO]-(a:JobApplication)
             RETURN coalesce(count(DISTINCT b), 0) as business_count,
                    coalesce(count(DISTINCT j), 0) as job_count,
@@ -55,7 +55,7 @@ def business_owner():
         
         # Get recent job applications
         applications = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)-[:POSTED_BY]->(j:Job)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
             MATCH (j)<-[:FOR_JOB]-(a:JobApplication)<-[:APPLIED_TO]-(applicant:User)
             RETURN a, j.title as job_title, applicant.username as applicant_name
             ORDER BY a.created_at DESC LIMIT 5

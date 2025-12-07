@@ -326,3 +326,36 @@ def get_analytics():
         }
     
     return jsonify(analytics)
+
+# ===== Contextual Chat Routes (with topic/context) =====
+
+@chat_bp.route('/contextual')
+@login_required
+def contextual_chat_view():
+    """Chat interface with a specific context/topic"""
+    recipient_id = request.args.get('recipient_id')
+    context_type = request.args.get('context_type')  # e.g., 'application', 'job_inquiry'
+    context_id = request.args.get('context_id')  # e.g., application ID, job ID
+    context_title = request.args.get('context_title', '')  # e.g., job title or application date
+    
+    recipient = None
+    
+    if recipient_id:
+        db = get_neo4j_db()
+        with db.session() as session:
+            recipient_data = safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                RETURN u
+            """, {'user_id': recipient_id})
+            
+            if recipient_data:
+                recipient = _node_to_dict(recipient_data[0]['u'])
+            else:
+                logger.warning(f"Recipient not found: {recipient_id}")
+    
+    return render_template('chat/contextual_chat.html', 
+                         recipient=recipient, 
+                         recipient_id=recipient_id,
+                         context_type=context_type,
+                         context_id=context_id,
+                         context_title=context_title)

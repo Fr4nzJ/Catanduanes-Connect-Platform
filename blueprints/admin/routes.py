@@ -638,7 +638,7 @@ def toggle_user_status(user_id):
         """, {'user_id': user_id})
         
         if user_check_result:
-            create_notification_task.delay(
+            create_notification_task(
                 user_id=user_id,
                 type='account_status',
                 title=f'Account {action.title()}',
@@ -774,7 +774,7 @@ def verify_business(business_id):
             """, {'user_id': owner['id']})
             
             if owner_check_result:
-                create_notification_task.delay(
+                create_notification_task(
                     user_id=owner['id'],
                     type='business_verified',
                     title='Business Verified',

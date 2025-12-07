@@ -211,11 +211,6 @@ def create_app(config_name='default'):
     def about():
         return render_template("about.html")
     
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true" and \
-       os.environ.get("FLASK_ENV") == "development":
-        app.logger.info("Running inside reloader parent – skipping Neo4j init")
-        return app        # <-- factory returns early
-    
     @app.context_processor
     def inject_utils():
         return dict(min=min, max=max)
@@ -270,4 +265,4 @@ app = create_app(os.getenv('FLASK_ENV', 'development'))
 
 # Run the development server if this file is run directly
 if __name__ == '__main__':
-    app.run(debug=True, host='127.0.0.1', port=int(os.getenv('PORT', 5000)))
+    app.run(debug=False, use_reloader=False, host='127.0.0.1', port=int(os.getenv('PORT', 5000)))

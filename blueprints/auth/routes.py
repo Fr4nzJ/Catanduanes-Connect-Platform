@@ -455,6 +455,9 @@ def google_login():
         return redirect(url_for('dashboard.index'))
 
     try:
+        # Make session permanent for OAuth flow
+        flask_session.permanent = True
+        
         # Clear any existing OAuth state
         flask_session.pop('google_state', None)
 
@@ -486,8 +489,9 @@ def google_login():
         )
 
         # Store state in session
-        session['google_state'] = state
-        current_app.logger.info("Generated new OAuth state and stored in session")
+        flask_session['google_state'] = state
+        current_app.logger.info(f"Generated new OAuth state: {state[:30]}... and stored in session")
+        current_app.logger.info(f"Session data after storing state: {bool(flask_session.get('google_state'))}")
 
         base_auth_url = authorization_url.split('?')[0]
         current_app.logger.info(f"Redirecting to Google OAuth: {base_auth_url}")
@@ -512,12 +516,14 @@ def google_callback():
         return redirect(url_for('dashboard.index'))
 
     # Check state integrity
-    stored_state = session.get("google_state")
+    stored_state = flask_session.get("google_state")
     received_state = request.args.get("state")
 
     current_app.logger.info(
         f"OAuth state check: stored_exists={bool(stored_state)}, "
-        f"received_exists={bool(received_state)}"
+        f"received_exists={bool(received_state)}, "
+        f"stored={stored_state[:20] if stored_state else 'None'}..., "
+        f"received={received_state[:20] if received_state else 'None'}..."
     )
 
     if not stored_state:
@@ -531,7 +537,7 @@ def google_callback():
         return redirect(url_for("auth.login"))
 
     if stored_state != received_state:
-        current_app.logger.error("State mismatch in OAuth callback")
+        current_app.logger.error(f"State mismatch in OAuth callback: stored={stored_state} vs received={received_state}")
         flash("Invalid state parameter. Please try signing in again.", "danger")
         return redirect(url_for("auth.login"))
 
@@ -560,7 +566,7 @@ def google_callback():
 
         # Initialize OAuth flow
         flow = get_google_auth_flow_from_config(client_id, client_secret, redirect_uri)
-        flow.state = session.get('google_state')
+        flow.state = flask_session.get('google_state')
 
         # Handle HTTPS proxies (for reverse-proxy setups)
         authorization_response = request.url
@@ -687,8 +693,8 @@ def google_callback():
             flash('Successfully logged in with Google!', 'success')
             return redirect(url_for('dashboard.index'))
 
-        # If user doesn’t exist, save info to session and ask for registration
-        session['google_user'] = {
+        # If user doesn't exist, save info to session and ask for registration
+        flask_session['google_user'] = {
             'email': email,
             'given_name': given_name,
             'family_name': family_name,
@@ -709,7 +715,7 @@ def google_callback():
 @auth_bp.route('/complete-registration', methods=['GET', 'POST'])
 def complete_registration():
     """Complete registration for Google users who don't have a local account yet."""
-    google_user = session.get('google_user')
+    google_user = flask_session.get('google_user')
     if not google_user:
         flash('No Google account data found. Please sign in again.', 'danger')
         return redirect(url_for('auth.login'))
@@ -778,6 +784,7 @@ def complete_registration():
 
         # Clean up session and redirect
         flask_session.pop('google_state', None)
+        flask_session.pop('google_user', None)
         flash('Registration completed! Welcome!', 'success')
         if role == 'business_owner':
             return redirect(url_for('businesses.dashboard'))

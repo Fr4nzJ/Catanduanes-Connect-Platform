@@ -69,7 +69,7 @@ def list_jobs():
         # Build base query
         query = """
             MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-            WHERE j.is_active = true
+            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
         """
         params = {
             'skip': skip,
@@ -127,7 +127,7 @@ def list_jobs():
         # Get total count
         count_query = """
             MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-            WHERE j.is_active = true
+            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
         """
         count_params = {}
         
@@ -159,7 +159,7 @@ def list_jobs():
         # Get category counts
         categories_result = safe_run(session, """
             MATCH (j:Job)
-            WHERE j.is_active = true
+            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
             RETURN j.category as category, count(j) as count
             ORDER BY count DESC
         """, {})
@@ -339,6 +339,12 @@ def apply_job(job_id):
                 return redirect(url_for('jobs.list_jobs'))
             
             job_data = _node_to_dict(job_result[0]['j'])
+            
+            # Check if job is filled
+            if job_data.get('status') == 'filled':
+                flash('This job has already been filled.', 'warning')
+                return redirect(url_for('jobs.job_detail', job_id=job_id))
+            
             job_data['business_name'] = job_result[0]['business_name']
             job = Job(**job_data)
         
@@ -347,18 +353,22 @@ def apply_job(job_id):
     # POST request - handle application submission
     db = get_neo4j_db()
     with db.session() as session:
-        # Check if job exists and is active
+        # Check if job exists and is active, and get business owner info
         job_result = safe_run(session, """
-            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)<-[:OWNS]-(u:User)
             WHERE j.is_active = true
-            RETURN j, b.id as business_id, b.email as business_email, u as owner
-            MATCH (b)<-[:OWNS]-(u:User)
             RETURN j, b.id as business_id, b.name as business_name, b.email as business_email, u.email as owner_email, u.id as owner_id
         """, {'job_id': job_id})
         
         if not job_result:
             flash('Job not found or no longer active.', 'error')
             return redirect(url_for('jobs.list_jobs'))
+        
+        # Check if job is filled
+        job_data = _node_to_dict(job_result[0]['j'])
+        if job_data.get('status') == 'filled':
+            flash('This job has already been filled.', 'error')
+            return redirect(url_for('jobs.job_detail', job_id=job_id))
         
         # Check if already applied
         existing_result = safe_run(session, """
@@ -489,7 +499,7 @@ def apply_job(job_id):
             """, {'user_id': owner_id})
             
             if owner_check_result:
-                create_notification_task.delay(
+                create_notification_task(
                     user_id=owner_id,
                     type='job_application',
                     title='New Job Application',
@@ -590,6 +600,8 @@ def create_job():
                 'requirements': form.requirements.data.split('\n') if form.requirements.data else [],
                 'benefits': form.benefits.data.split('\n') if form.benefits.data else [],
                 'is_active': True,
+                'status': 'pending',
+                'is_approved': False,
                 'applications_count': 0,
                 'views_count': 0,
                 'created_at': datetime.utcnow().isoformat(),
@@ -624,7 +636,7 @@ def edit_job(job_id):
     with db.session() as session:
         # Check ownership
         ownership_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)-[:POSTED_BY]->(:Job {id: $job_id})
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(:Job {id: $job_id})
             RETURN count(*) as count
         """, {'user_id': current_user.id, 'job_id': job_id})
         
@@ -687,7 +699,10 @@ def edit_job(job_id):
         bens = job_node.get('benefits', [])
         form.benefits.data = '\n'.join(bens) if bens else ''
     
-    return render_template('jobs/edit_job.html', form=form, job_id=job_id)
+    # Convert job node to Job object for template
+    job = Job(**_node_to_dict(job_node))
+    
+    return render_template('jobs/jobs_edit.html', form=form, job=job, job_id=job_id)
 
 @jobs_bp.route('/<job_id>/close', methods=['POST'])
 @login_required
@@ -725,7 +740,7 @@ def my_postings():
     db = get_neo4j_db()
     with db.session() as session:
         postings_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)-[:POSTED_BY]->(j:Job)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
             RETURN j, b.name as business_name
             ORDER BY j.created_at DESC
         """, {'user_id': current_user.id})
@@ -738,6 +753,318 @@ def my_postings():
             postings.append(job)
     
     return render_template('jobs/my_postings.html', postings=postings)
+
+# ============================================================================
+# APPLICANTS MANAGEMENT (BUSINESS OWNER) ROUTES
+# ============================================================================
+
+@jobs_bp.route('/my-applicants')
+@login_required
+@role_required('business_owner')
+def my_applicants():
+    """View all applicants to business owner's job postings"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Get all applications for jobs posted by user's businesses
+        applicants_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication)-[:FOR_JOB]->(j)
+            RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name
+            ORDER BY a.created_at DESC
+        """, {'user_id': current_user.id})
+        
+        applicants = []
+        for record in applicants_result:
+            app_data = _node_to_dict(record['a'])
+            applicant_data = _node_to_dict(record['applicant'])
+            
+            app_data['job_id'] = record['job_id']
+            app_data['job_title'] = record['job_title']
+            app_data['business_name'] = record['business_name']
+            app_data['applicant_name'] = applicant_data.get('username', 'Unknown')
+            app_data['applicant_id'] = applicant_data.get('id')
+            app_data['applicant_email'] = applicant_data.get('email')
+            
+            applicants.append(app_data)
+    
+    return render_template('jobs/my_applicants.html', applicants=applicants)
+
+@jobs_bp.route('/<job_id>/applicants')
+@login_required
+@role_required('business_owner')
+def job_applicants(job_id):
+    """View applicants for a specific job posting"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Verify user owns the job
+        owner_check = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job {id: $job_id})
+            RETURN j.id as id
+        """, {'user_id': current_user.id, 'job_id': job_id})
+        
+        if not owner_check:
+            flash('You do not have permission to view applicants for this job.', 'error')
+            return redirect(url_for('jobs.my_postings'))
+        
+        # Get job details
+        job_result = safe_run(session, """
+            MATCH (j:Job {id: $job_id})
+            RETURN j
+        """, {'job_id': job_id})
+        
+        job = _node_to_dict(job_result[0]['j']) if job_result else None
+        
+        # Get all applicants for this job
+        applicants_result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication)-[:FOR_JOB]->(j:Job {id: $job_id})
+            RETURN a, applicant
+            ORDER BY a.created_at DESC
+        """, {'job_id': job_id})
+        
+        applicants = []
+        for record in applicants_result:
+            app_data = _node_to_dict(record['a'])
+            applicant_data = _node_to_dict(record['applicant'])
+            
+            app_data['applicant_id'] = applicant_data.get('id')
+            app_data['applicant_name'] = applicant_data.get('username', 'Unknown')
+            app_data['applicant_email'] = applicant_data.get('email')
+            app_data['profile_picture'] = applicant_data.get('profile_picture')
+            
+            applicants.append(app_data)
+    
+    return render_template('jobs/job_applicants.html', job=job, applicants=applicants)
+
+@jobs_bp.route('/applicant/<application_id>')
+@login_required
+@role_required('business_owner')
+def view_applicant_profile(application_id):
+    """View detailed profile and application of an applicant"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Get application and applicant details
+        app_result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name
+        """, {'app_id': application_id, 'owner_id': current_user.id})
+        
+        if not app_result:
+            flash('Application not found or you do not have permission to view it.', 'error')
+            return redirect(url_for('jobs.my_applicants'))
+        
+        app_data = _node_to_dict(app_result[0]['a'])
+        applicant_data = _node_to_dict(app_result[0]['applicant'])
+        
+        # Format application data
+        app_data['job_id'] = app_result[0]['job_id']
+        app_data['job_title'] = app_result[0]['job_title']
+        app_data['business_name'] = app_result[0]['business_name']
+        
+        # Parse resume_data if it's a string (JSON)
+        resume_data = applicant_data.get('resume_data')
+        if resume_data and isinstance(resume_data, str):
+            try:
+                import json
+                resume_data = json.loads(resume_data)
+            except (json.JSONDecodeError, TypeError):
+                resume_data = None
+        
+        # Format applicant profile
+        applicant = {
+            'id': applicant_data.get('id'),
+            'username': applicant_data.get('username', 'Unknown'),
+            'email': applicant_data.get('email'),
+            'profile_picture': applicant_data.get('profile_picture'),
+            'phone': applicant_data.get('phone'),
+            'location': applicant_data.get('location'),
+            'bio': applicant_data.get('bio'),
+            'created_at': applicant_data.get('created_at'),
+            'resume_data': resume_data
+        }
+    
+    return render_template('jobs/applicant_profile.html', application=app_data, applicant=applicant)
+
+@jobs_bp.route('/applicant/<application_id>/download-cv')
+@login_required
+@role_required('business_owner')
+def download_cv(application_id):
+    """Download CV file from application"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Get application and verify ownership
+        app_result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            RETURN a.cv_file as cv_file
+        """, {'app_id': application_id, 'owner_id': current_user.id})
+        
+        if not app_result or not app_result[0]['cv_file']:
+            flash('CV file not found.', 'error')
+            return redirect(url_for('jobs.my_applicants'))
+        
+        cv_file_path = app_result[0]['cv_file']
+        
+        # Construct full file path
+        full_path = os.path.join(current_app.config['UPLOAD_FOLDER'], cv_file_path)
+        
+        # Check if file exists
+        if not os.path.exists(full_path):
+            flash('CV file not found on server.', 'error')
+            return redirect(url_for('jobs.my_applicants'))
+        
+        # Get file extension for proper download
+        _, file_extension = os.path.splitext(cv_file_path)
+        filename = f"applicant_cv_{application_id}{file_extension}"
+        
+        # Use send_file to download
+        from flask import send_file
+        try:
+            return send_file(full_path, as_attachment=True, download_name=filename)
+        except Exception as e:
+            logger.error(f"Error downloading CV: {e}")
+            flash('Error downloading CV. Please try again.', 'error')
+            return redirect(url_for('jobs.my_applicants'))
+
+@jobs_bp.route('/applicant/<application_id>/accept', methods=['POST'])
+@login_required
+@role_required('business_owner')
+def accept_applicant(application_id):
+    """Accept a job application"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Verify ownership and update status
+        result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            SET a.status = 'accepted', a.reviewed_at = datetime()
+            SET j.status = 'filled', j.filled_at = datetime()
+            RETURN applicant.email as applicant_email, applicant.username as applicant_name, 
+                   j.title as job_title, j.id as job_id, a.id as application_id
+        """, {'app_id': application_id, 'owner_id': current_user.id})
+        
+        if not result:
+            return jsonify({'success': False, 'error': 'Application not found or unauthorized'}), 403
+        
+        applicant_email = result[0]['applicant_email']
+        applicant_name = result[0]['applicant_name']
+        job_title = result[0]['job_title']
+        job_id = result[0]['job_id']
+        
+        # Send email notification
+        try:
+            send_email_task(
+                to=applicant_email,
+                subject=f'Your Application for {job_title} - Accepted',
+                template='email/application_accepted.html',
+                context={
+                    'applicant_name': applicant_name,
+                    'job_title': job_title,
+                    'company_name': current_user.username
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to send acceptance email: {e}")
+        
+        flash('Application accepted! Applicant has been notified.', 'success')
+        return redirect(url_for('jobs.view_applicant_profile', application_id=application_id))
+
+@jobs_bp.route('/applicant/<application_id>/reject', methods=['POST'])
+@login_required
+@role_required('business_owner')
+def reject_applicant(application_id):
+    """Reject a job application"""
+    
+    reason = request.form.get('reason', 'No reason provided')
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Verify ownership and update status
+        result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            SET a.status = 'rejected', a.rejection_reason = $reason, a.reviewed_at = datetime()
+            RETURN applicant.email as applicant_email, applicant.username as applicant_name, 
+                   j.title as job_title
+        """, {'app_id': application_id, 'owner_id': current_user.id, 'reason': reason})
+        
+        if not result:
+            return jsonify({'success': False, 'error': 'Application not found or unauthorized'}), 403
+        
+        applicant_email = result[0]['applicant_email']
+        applicant_name = result[0]['applicant_name']
+        job_title = result[0]['job_title']
+        
+        # Send email notification
+        try:
+            send_email_task(
+                to=applicant_email,
+                subject=f'Your Application for {job_title} - Not Selected',
+                template='email/application_rejected.html',
+                context={
+                    'applicant_name': applicant_name,
+                    'job_title': job_title,
+                    'reason': reason
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to send rejection email: {e}")
+        
+        flash('Application rejected! Applicant has been notified.', 'success')
+        return redirect(url_for('jobs.view_applicant_profile', application_id=application_id))
+
+@jobs_bp.route('/applicant/<application_id>/message', methods=['POST'])
+@login_required
+@role_required('business_owner')
+def message_applicant(application_id):
+    """Send message to applicant"""
+    
+    message = request.form.get('message', '').strip()
+    
+    if not message:
+        return jsonify({'success': False, 'error': 'Message cannot be empty'}), 400
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Verify ownership and get applicant info
+        result = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            RETURN applicant.email as applicant_email, applicant.username as applicant_name,
+                   owner.username as owner_name, j.title as job_title, a.id as application_id
+        """, {'app_id': application_id, 'owner_id': current_user.id})
+        
+        if not result:
+            return jsonify({'success': False, 'error': 'Application not found or unauthorized'}), 403
+        
+        applicant_email = result[0]['applicant_email']
+        applicant_name = result[0]['applicant_name']
+        owner_name = result[0]['owner_name']
+        job_title = result[0]['job_title']
+        
+        # Send email notification
+        try:
+            send_email_task.delay(
+                to=applicant_email,
+                subject=f'Message from {owner_name} regarding {job_title}',
+                template='email/applicant_message.html',
+                context={
+                    'applicant_name': applicant_name,
+                    'owner_name': owner_name,
+                    'job_title': job_title,
+                    'message': message
+                }
+            )
+        except Exception as e:
+            logger.error(f"Failed to send message email: {e}")
+        
+        flash('Message sent to applicant!', 'success')
+        return jsonify({'success': True}), 200
 
 # ============================================================================
 # API ROUTES

@@ -426,7 +426,7 @@ def review_verification(verification_id):
                 'user_id': user_info['user_id'],
                 'link': url_for('verification.status', _external=True)
             }
-            create_notification_task.delay(**notification_data)
+            create_notification_task(**notification_data)
             
             # Send email
             email_data = {

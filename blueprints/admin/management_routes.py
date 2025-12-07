@@ -346,125 +346,93 @@ def jobs_management():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    with db.session() as session:
-        # Build query
-        query = "MATCH (j:Job) WHERE 1=1"
-        params = {}
-        
-        if search:
-            query += " AND (j.title CONTAINS $search OR j.description CONTAINS $search)"
-            params['search'] = search
-        
-        if category_filter:
-            query += " AND j.category = $category"
-            params['category'] = category_filter
-        
-        if employment_type_filter:
-            query += " AND j.employment_type = $employment_type"
-            params['employment_type'] = employment_type_filter
-        
-        if status_filter:
-            if status_filter == 'active':
-                query += " AND j.is_active = true AND (j.deadline IS NULL OR j.deadline > datetime())"
-            elif status_filter == 'expired':
-                query += " AND (j.is_active = false OR (j.deadline IS NOT NULL AND j.deadline <= datetime()))"
-            elif status_filter == 'pending':
-                query += " AND j.is_approved = false"
-            elif status_filter == 'approved':
-                query += " AND j.is_approved = true"
-        
-        # Count - build separate count query with WHERE clause before RETURN
-        count_parts = query.split(' WHERE ', 1)
-        if len(count_parts) > 1:
-            count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(j) as total"
-        else:
-            count_query = query + " RETURN COUNT(j) as total"
-        
-        total_result = safe_run(session, count_query, params)
-        total_jobs = total_result[0]['total'] if total_result else 0
-        
-        # Sort and paginate
-        sort_field = f"j.{sort_by}"
-        query += f" RETURN j ORDER BY {sort_field} {sort_order.upper()}"
-        query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
-        
-        result = safe_run(session, query, params)
-        jobs = [record['j'] for record in (result or [])]
-        
-        # Get categories for filter
-        cat_result = safe_run(session, "MATCH (j:Job) WHERE j.category IS NOT NULL RETURN DISTINCT j.category as category")
-        categories = [rec['category'] for rec in (cat_result or [])]
-        
-        # Get stats - must be inside the session context
-        active_result = safe_run(session, "MATCH (j:Job) WHERE j.is_active = true RETURN COUNT(j) as count")
-        pending_result = safe_run(session, "MATCH (j:Job) WHERE j.is_approved = false RETURN COUNT(j) as count")
-        featured_result = safe_run(session, "MATCH (j:Job) WHERE j.is_featured = true RETURN COUNT(j) as count")
-        expired_result = safe_run(session, "MATCH (j:Job) WHERE j.deadline < datetime() RETURN COUNT(j) as count")
-    
-    total_pages = (total_jobs + per_page - 1) // per_page
-    
-    stats = {
-        'total_jobs': total_jobs,
-        'active_jobs': active_result[0]['count'] if active_result else 0,
-        'pending_jobs': pending_result[0]['count'] if pending_result else 0,
-        'featured_jobs': featured_result[0]['count'] if featured_result else 0,
-        'expired_jobs': expired_result[0]['count'] if expired_result else 0,
-    }
-    
-    return render_template('admin/jobs_management.html',
-                         jobs=jobs,
-                         total_jobs=total_jobs,
-                         active_jobs=stats['active_jobs'],
-                         pending_jobs=stats['pending_jobs'],
-                         featured_jobs=stats['featured_jobs'],
-                         expired_jobs=stats['expired_jobs'],
-                         categories=categories,
-                         current_page=page,
-                         total_pages=total_pages,
-                         search=search,
-                         category_filter=category_filter,
-                         employment_type_filter=employment_type_filter,
-                         status_filter=status_filter,
-                         sort_by=sort_by,
-                         sort_order=sort_order,
-                         stats=get_realtime_stats())
-
-
-@admin_mgmt.route('/job/<job_id>/edit', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def edit_job(job_id):
-    """Edit job details"""
-    db = get_neo4j_db()
-    
-    with db.session() as session:
-        result = safe_run(session, "MATCH (j:Job {id: $job_id}) RETURN j", {'job_id': job_id})
-        if not result:
-            flash('Job not found', 'error')
-            return redirect(url_for('admin_mgmt.jobs_management'))
-        
-        job = _node_to_dict(result[0]['j'])
-        
-        if request.method == 'POST':
-            updates = {}
-            for field in ['title', 'description', 'location', 'salary_min', 'salary_max', 'category', 'type', 'setup']:
-                if field in request.form:
-                    updates[field] = request.form.get(field)
+    try:
+        with db.session() as session:
+            # Build query
+            query = "MATCH (j:Job) WHERE 1=1"
+            params = {}
             
-            update_query = "MATCH (j:Job {id: $job_id}) SET"
-            params = {'job_id': job_id}
+            if search:
+                query += " AND (j.title CONTAINS $search OR j.description CONTAINS $search)"
+                params['search'] = search
             
-            for field, value in updates.items():
-                update_query += f" j.{field} = ${field},"
-                params[field] = value
+            if category_filter:
+                query += " AND j.category = $category"
+                params['category'] = category_filter
             
-            update_query = update_query.rstrip(',')
-            safe_run(session, update_query, params)
+            if employment_type_filter:
+                query += " AND j.employment_type = $employment_type"
+                params['employment_type'] = employment_type_filter
             
-            flash('Job updated successfully', 'success')
-            return redirect(url_for('admin_mgmt.jobs_management'))
-    
-    return render_template('admin/edit_job.html', job=job)
+            if status_filter:
+                if status_filter == 'active':
+                    query += " AND j.is_active = true AND (j.deadline IS NULL OR j.deadline > datetime())"
+                elif status_filter == 'expired':
+                    query += " AND (j.is_active = false OR (j.deadline IS NOT NULL AND j.deadline <= datetime()))"
+                elif status_filter == 'pending':
+                    query += " AND j.is_approved = false"
+                elif status_filter == 'approved':
+                    query += " AND j.is_approved = true"
+            
+            # Count - build separate count query with WHERE clause before RETURN
+            count_parts = query.split(' WHERE ', 1)
+            if len(count_parts) > 1:
+                count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(j) as total"
+            else:
+                count_query = query + " RETURN COUNT(j) as total"
+            
+            total_result = safe_run(session, count_query, params)
+            total_jobs = total_result[0]['total'] if total_result else 0
+            
+            # Sort and paginate
+            sort_field = f"j.{sort_by}"
+            query += f" RETURN j ORDER BY {sort_field} {sort_order.upper()}"
+            query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
+            
+            result = safe_run(session, query, params)
+            jobs = [record['j'] for record in (result or [])]
+            
+            # Get categories for filter
+            cat_result = safe_run(session, "MATCH (j:Job) WHERE j.category IS NOT NULL RETURN DISTINCT j.category as category")
+            categories = [rec['category'] for rec in (cat_result or [])]
+            
+            # Get stats - must be inside the session context
+            active_result = safe_run(session, "MATCH (j:Job) WHERE j.is_active = true RETURN COUNT(j) as count")
+            pending_result = safe_run(session, "MATCH (j:Job) WHERE j.is_approved = false RETURN COUNT(j) as count")
+            featured_result = safe_run(session, "MATCH (j:Job) WHERE j.is_featured = true RETURN COUNT(j) as count")
+            expired_result = safe_run(session, "MATCH (j:Job) WHERE j.deadline < datetime() RETURN COUNT(j) as count")
+        
+        total_pages = (total_jobs + per_page - 1) // per_page
+        
+        stats = {
+            'total_jobs': total_jobs,
+            'active_jobs': active_result[0]['count'] if active_result else 0,
+            'pending_jobs': pending_result[0]['count'] if pending_result else 0,
+            'featured_jobs': featured_result[0]['count'] if featured_result else 0,
+            'expired_jobs': expired_result[0]['count'] if expired_result else 0,
+        }
+        
+        return render_template('admin/jobs_management.html',
+                                 jobs=jobs,
+                                 total_jobs=total_jobs,
+                                 active_jobs=stats['active_jobs'],
+                                 pending_jobs=stats['pending_jobs'],
+                                 featured_jobs=stats['featured_jobs'],
+                                 expired_jobs=stats['expired_jobs'],
+                                 categories=categories,
+                                 current_page=page,
+                                 total_pages=total_pages,
+                                 search=search,
+                                 category_filter=category_filter,
+                                 employment_type_filter=employment_type_filter,
+                                 status_filter=status_filter,
+                                 sort_by=sort_by,
+                                 sort_order=sort_order,
+                                 stats=get_realtime_stats())
+    except Exception as e:
+        logger.error(f"Error in jobs_management: {e}")
+        flash('Error loading jobs management page', 'error')
+        return redirect(url_for('admin_mgmt.dashboard'))
 
 
 @admin_mgmt.route('/job/<job_id>/delete', methods=['POST'])
@@ -492,10 +460,41 @@ def approve_job(job_id):
     db = get_neo4j_db()
     
     with db.session() as session:
+        result = safe_run(session, "MATCH (j:Job {id: $job_id}) RETURN j", {'job_id': job_id})
+        if not result:
+            flash('Job not found', 'error')
+            return redirect(url_for('admin_mgmt.jobs_management'))
+        
+        job = _node_to_dict(result[0]['j'])
+        
         safe_run(session, """
             MATCH (j:Job {id: $job_id})
-            SET j.is_approved = true, j.approved_at = datetime(), j.approved_by = $admin_id
+            SET j.status = 'active', j.is_approved = true, j.approved_at = datetime(), j.approved_by = $admin_id
         """, {'job_id': job_id, 'admin_id': current_user.id})
+        
+        # Get job owner email
+        owner_result = safe_run(session, """
+            MATCH (u:User)-[:OWNS]->(b:Business)-[:POSTED]->(j:Job {id: $job_id})
+            RETURN u.email as email
+        """, {'job_id': job_id})
+        
+        if owner_result:
+            owner_email = owner_result[0].get('email')
+            if owner_email:
+                try:
+                    from tasks import send_email_task
+                    send_email_task.delay(
+                        subject="Job Approved - " + job.get('title', 'Your Job'),
+                        body=f"""Your job posting "{job.get('title')}" has been approved and is now active on the platform.
+
+You can now start receiving applications from interested candidates.
+
+Best regards,
+Catanduanes Connect Team""",
+                        to_email=owner_email
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send email notification: {e}")
     
     flash('Job approved successfully', 'success')
     return redirect(url_for('admin_mgmt.jobs_management'))
@@ -510,10 +509,43 @@ def reject_job(job_id):
     reason = request.form.get('reason', '')
     
     with db.session() as session:
+        result = safe_run(session, "MATCH (j:Job {id: $job_id}) RETURN j", {'job_id': job_id})
+        if not result:
+            flash('Job not found', 'error')
+            return redirect(url_for('admin_mgmt.jobs_management'))
+        
+        job = _node_to_dict(result[0]['j'])
+        
         safe_run(session, """
             MATCH (j:Job {id: $job_id})
-            SET j.is_approved = false, j.rejected_at = datetime(), j.rejection_reason = $reason, j.rejected_by = $admin_id
+            SET j.status = 'rejected', j.is_approved = false, j.rejected_at = datetime(), j.rejection_reason = $reason, j.rejected_by = $admin_id
         """, {'job_id': job_id, 'reason': reason, 'admin_id': current_user.id})
+        
+        # Get job owner email
+        owner_result = safe_run(session, """
+            MATCH (u:User)-[:OWNS]->(b:Business)-[:POSTED]->(j:Job {id: $job_id})
+            RETURN u.email as email
+        """, {'job_id': job_id})
+        
+        if owner_result:
+            owner_email = owner_result[0].get('email')
+            if owner_email:
+                try:
+                    from tasks import send_email_task
+                    send_email_task.delay(
+                        subject="Job Rejected - " + job.get('title', 'Your Job'),
+                        body=f"""Your job posting "{job.get('title')}" has been rejected.
+
+Reason: {reason}
+
+Please review the feedback and make necessary adjustments before resubmitting.
+
+Best regards,
+Catanduanes Connect Team""",
+                        to_email=owner_email
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send email notification: {e}")
     
     flash('Job rejected successfully', 'success')
     return redirect(url_for('admin_mgmt.jobs_management'))
@@ -568,7 +600,7 @@ def view_job(job_id):
         
         job = _node_to_dict(result[0]['j'])
     
-    return render_template('admin/view_job.html', job=job)
+    return render_template('jobs/job_detail.html', job=job)
 
 
 # ============================================================================
@@ -591,83 +623,86 @@ def business_management():
     page = request.args.get('page', 1, type=int)
     per_page = 20
     
-    with db.session() as session:
-        query = "MATCH (b:Business) WHERE 1=1"
-        params = {}
+    try:
+        with db.session() as session:
+            query = "MATCH (b:Business) WHERE 1=1"
+            params = {}
+            
+            if search:
+                query += " AND (b.name CONTAINS $search OR b.description CONTAINS $search)"
+                params['search'] = search
+            
+            if category_filter:
+                query += " AND b.category = $category"
+                params['category'] = category_filter
+            
+            if status_filter:
+                if status_filter == 'approved':
+                    query += " AND b.is_approved = true"
+                elif status_filter == 'pending':
+                    query += " AND b.is_approved = false AND b.is_rejected = false"
+                elif status_filter == 'rejected':
+                    query += " AND b.is_rejected = true"
+            
+            if featured_filter:
+                query += f" AND b.is_featured = {featured_filter == 'yes'}"
+            
+            # Count - build separate count query with WHERE clause before RETURN
+            count_parts = query.split(' WHERE ', 1)
+            if len(count_parts) > 1:
+                count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(b) as total"
+            else:
+                count_query = query + " RETURN COUNT(b) as total"
+            
+            total_result = safe_run(session, count_query, params)
+            total_businesses = total_result[0]['total'] if total_result else 0
+            
+            # Sort and paginate
+            sort_field = f"b.{sort_by}"
+            query += f" RETURN b ORDER BY {sort_field} {sort_order.upper()}"
+            query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
+            
+            result = safe_run(session, query, params)
+            businesses = [record['b'] for record in (result or [])]
+            
+            # Get categories for filter
+            cat_result = safe_run(session, "MATCH (b:Business) WHERE b.category IS NOT NULL RETURN DISTINCT b.category as category")
+            categories = [rec['category'] for rec in (cat_result or [])]
+            
+            # Get stats - must be inside the session context
+            approved_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = true RETURN COUNT(b) as count")
+            pending_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = false AND b.is_rejected = false RETURN COUNT(b) as count")
+            featured_result = safe_run(session, "MATCH (b:Business) WHERE b.is_featured = true RETURN COUNT(b) as count")
         
-        if search:
-            query += " AND (b.name CONTAINS $search OR b.description CONTAINS $search)"
-            params['search'] = search
+        total_pages = (total_businesses + per_page - 1) // per_page
         
-        if category_filter:
-            query += " AND b.category = $category"
-            params['category'] = category_filter
+        stats = {
+            'total_businesses': total_businesses,
+            'approved_count': approved_result[0]['count'] if approved_result else 0,
+            'pending_count': pending_result[0]['count'] if pending_result else 0,
+            'featured_count': featured_result[0]['count'] if featured_result else 0,
+        }
         
-        if status_filter:
-            if status_filter == 'approved':
-                query += " AND b.is_approved = true"
-            elif status_filter == 'pending':
-                query += " AND b.is_approved = false AND b.is_rejected = false"
-            elif status_filter == 'rejected':
-                query += " AND b.is_rejected = true"
-        
-        if featured_filter:
-            query += f" AND b.is_featured = {featured_filter == 'yes'}"
-        
-        # Count - build separate count query with WHERE clause before RETURN
-        count_parts = query.split(' WHERE ', 1)
-        if len(count_parts) > 1:
-            count_query = f"{count_parts[0]} WHERE {count_parts[1]} RETURN COUNT(b) as total"
-        else:
-            count_query = query + " RETURN COUNT(b) as total"
-        
-        total_result = safe_run(session, count_query, params)
-        total_businesses = total_result[0]['total'] if total_result else 0
-        
-        # Sort and paginate
-        sort_field = f"b.{sort_by}"
-        query += f" RETURN b ORDER BY {sort_field} {sort_order.upper()}"
-        query += f" SKIP {(page - 1) * per_page} LIMIT {per_page}"
-        
-        result = safe_run(session, query, params)
-        businesses = [record['b'] for record in (result or [])]
-        
-        # Get categories for filter
-        cat_result = safe_run(session, "MATCH (b:Business) WHERE b.category IS NOT NULL RETURN DISTINCT b.category as category")
-        categories = [rec['category'] for rec in (cat_result or [])]
-        
-        # Get stats - must be inside the session context
-        approved_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = true RETURN COUNT(b) as count")
-        pending_result = safe_run(session, "MATCH (b:Business) WHERE b.is_approved = false AND b.is_rejected = false RETURN COUNT(b) as count")
-        featured_result = safe_run(session, "MATCH (b:Business) WHERE b.is_featured = true RETURN COUNT(b) as count")
-    
-    total_pages = (total_businesses + per_page - 1) // per_page
-    
-    stats = {
-        'total_businesses': total_businesses,
-        'approved_count': approved_result[0]['count'] if approved_result else 0,
-        'pending_count': pending_result[0]['count'] if pending_result else 0,
-        'featured_count': featured_result[0]['count'] if featured_result else 0,
-    }
-    
-    return render_template('admin/businesses_management.html',
-                         businesses=businesses,
-                         total_businesses=total_businesses,
-                         approved_count=stats['approved_count'],
-                         pending_count=stats['pending_count'],
-                         featured_count=stats['featured_count'],
-                         categories=categories,
-                         current_page=page,
-                         total_pages=total_pages,
-                         search=search,
-                         category_filter=category_filter,
-                         status_filter=status_filter,
-                         featured_filter=featured_filter,
-                         sort_by=sort_by,
-                         sort_order=sort_order,
-                         stats=get_realtime_stats())
-
-
+        return render_template('admin/businesses_management.html',
+                                 businesses=businesses,
+                                 total_businesses=total_businesses,
+                                 approved_count=stats['approved_count'],
+                                 pending_count=stats['pending_count'],
+                                 featured_count=stats['featured_count'],
+                                 categories=categories,
+                                 current_page=page,
+                                 total_pages=total_pages,
+                                 search=search,
+                                 category_filter=category_filter,
+                                 status_filter=status_filter,
+                                 featured_filter=featured_filter,
+                                 sort_by=sort_by,
+                                 sort_order=sort_order,
+                                 stats=get_realtime_stats())
+    except Exception as e:
+        logger.error(f"Error in business_management: {e}")
+        flash('Error loading business management page', 'error')
+        return redirect(url_for('admin_mgmt.dashboard'))
 @admin_mgmt.route('/business/<business_id>/edit', methods=['GET', 'POST'])
 @login_required
 @admin_required

@@ -249,6 +249,14 @@
                         Find your next career opportunity in Catanduanes
                     </p>
                 </div>
+                {% if current_user.is_authenticated and current_user.role == 'business_owner' %}
+                <div class="mt-4 md:mt-0">
+                    <a href="{{ url_for('jobs.my_postings') }}" class="inline-flex items-center bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg transform hover:scale-105">
+                        <i class="fas fa-list mr-2"></i>My Job Postings
+                    </a>
+                </div>
+                {% endif %}
+                </div>
                 <div class="mt-6 md:mt-0 flex gap-3 flex-wrap">
                     {% if current_user.is_authenticated and current_user.role == 'business_owner' %}
                     <a href="{{ url_for('jobs.create_job') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center transition-all duration-300 transform hover:scale-105 shadow-lg">

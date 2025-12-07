@@ -177,12 +177,14 @@
                             </td>
                             <td class="px-8 py-4">
                                 <span class="px-3 py-1 rounded-full text-xs font-bold
-                                    {% if job.employment_type == 'full_time' %}bg-blue-100 text-blue-800
-                                    {% elif job.employment_type == 'part_time' %}bg-purple-100 text-purple-800
-                                    {% elif job.employment_type == 'contract' %}bg-orange-100 text-orange-800
-                                    {% else %}bg-green-100 text-green-800
+                                    {% if job.type == 'Full-time' %}bg-blue-100 text-blue-800
+                                    {% elif job.type == 'Part-time' %}bg-purple-100 text-purple-800
+                                    {% elif job.type == 'Contract' %}bg-orange-100 text-orange-800
+                                    {% elif job.type == 'Temporary' %}bg-pink-100 text-pink-800
+                                    {% elif job.type == 'Internship' %}bg-green-100 text-green-800
+                                    {% else %}bg-gray-100 text-gray-800
                                     {% endif %}">
-                                    {{ job.employment_type|replace('_', ' ')|title }}
+                                    {{ job.type }}
                                 </span>
                             </td>
                             <td class="px-8 py-4">
@@ -220,19 +222,15 @@
                             </td>
                             <td class="px-8 py-4">
                                 <div class="flex justify-center gap-2 flex-wrap">
-                                    <a href="{{ url_for('admin_mgmt.view_job', job_id=job.id) }}" 
+                                    <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" 
                                        class="text-blue-600 hover:text-blue-800 font-semibold text-sm px-2 py-1 rounded hover:bg-blue-100 transition-colors">
                                         <i class="fas fa-eye"></i> View
-                                    </a>
-                                    
-                                    <a href="{{ url_for('admin_mgmt.edit_job', job_id=job.id) }}" 
-                                       class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm px-2 py-1 rounded hover:bg-indigo-100 transition-colors">
-                                        <i class="fas fa-edit"></i> Edit
                                     </a>
                                     
                                     {% if job.status == 'pending' %}
                                     <form method="POST" action="{{ url_for('admin_mgmt.approve_job', job_id=job.id) }}" class="inline"
                                           onsubmit="return confirm('Approve this job?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="text-green-600 hover:text-green-800 font-semibold text-sm px-2 py-1 rounded hover:bg-green-100 transition-colors">
                                             <i class="fas fa-check"></i> Approve
                                         </button>
@@ -246,6 +244,7 @@
                                     {% if job.status == 'active' and not job.is_featured %}
                                     <form method="POST" action="{{ url_for('admin_mgmt.feature_job', job_id=job.id) }}" class="inline"
                                           onsubmit="return confirm('Mark as featured?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="text-yellow-600 hover:text-yellow-800 font-semibold text-sm px-2 py-1 rounded hover:bg-yellow-100 transition-colors">
                                             <i class="fas fa-star"></i> Feature
                                         </button>
@@ -253,6 +252,7 @@
                                     {% elif job.is_featured %}
                                     <form method="POST" action="{{ url_for('admin_mgmt.unfeature_job', job_id=job.id) }}" class="inline"
                                           onsubmit="return confirm('Remove featured status?');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <button type="submit" class="text-gray-600 hover:text-gray-800 font-semibold text-sm px-2 py-1 rounded hover:bg-gray-100 transition-colors">
                                             <i class="fas fa-star"></i> Unfeature
                                         </button>
@@ -304,6 +304,7 @@
     <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
         <h2 class="text-2xl font-bold text-gray-900 mb-4">Reject Job</h2>
         <form id="rejectForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="mb-6">
                 <label class="block text-sm font-semibold text-gray-700 mb-2">Rejection Reason</label>
                 <textarea name="reason" rows="3" placeholder="Why are you rejecting this job?" required
@@ -326,6 +327,7 @@
         <div class="flex gap-3">
             <button type="button" onclick="closeDeleteModal()" class="flex-1 px-4 py-3 bg-gray-300 text-gray-900 rounded-lg font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
             <form id="deleteForm" method="POST" class="flex-1">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="w-full px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">Delete</button>
             </form>
         </div>
