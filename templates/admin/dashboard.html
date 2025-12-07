@@ -23,8 +23,8 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <h6 class="text-sm font-semibold text-blue-100 mb-2">Total Users</h6>
-                        <h3 class="text-3xl font-bold mb-2">{{ stats.total_users }}</h3>
-                        <p class="text-sm text-blue-100">{{ stats.active_users }} active (last 30 days)</p>
+                        <h3 class="text-3xl font-bold mb-2 stat-value" id="stats-total-users">{{ stats.total_users }}</h3>
+                        <p class="text-sm text-blue-100" id="stats-active-users">{{ stats.active_users }} active</p>
                     </div>
                     <div class="text-blue-100 text-3xl">
                         <i class="fas fa-users"></i>
@@ -35,97 +35,54 @@
                 </a>
             </div>
             
-            <!-- Active Jobs Card -->
+            <!-- Verifications Card -->
             <div class="bg-gradient-to-br from-yellow-500 to-yellow-600 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 text-white">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h6 class="card-title">Verifications</h6>
-                        <h3 class="mb-0">{{ stats.pending_verifications }}</h3>
+                        <h6 class="text-sm font-semibold text-yellow-100 mb-2">Pending Verifications</h6>
+                        <h3 class="text-3xl font-bold mb-2 stat-value" id="stats-pending-verifications">{{ stats.pending_verifications }}</h3>
+                        <p class="text-sm text-yellow-100" id="stats-verified-users">{{ stats.verified_users }} verified</p>
                     </div>
-                    <div class="text-white-50">
-                        <i class="fas fa-user-check fa-2x"></i>
+                    <div class="text-yellow-100 text-3xl">
+                        <i class="fas fa-user-check"></i>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <small>{{ stats.verified_users }} users verified</small>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('admin.verification_review') }}" class="text-white">
-                    <small>Review Verifications <i class="fas fa-arrow-right"></i></small>
+                <a href="{{ url_for('admin.verification_review') }}" class="mt-4 inline-block text-white hover:text-yellow-100 transition-colors duration-300">
+                    <small class="font-semibold">Review Verifications <i class="fas fa-arrow-right ml-1"></i></small>
                 </a>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+            
+            <!-- Businesses Card -->
+            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 text-white">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h6 class="card-title">Businesses</h6>
-                        <h3 class="mb-0">{{ stats.total_businesses }}</h3>
+                        <h6 class="text-sm font-semibold text-green-100 mb-2">Businesses</h6>
+                        <h3 class="text-3xl font-bold mb-2 stat-value" id="stats-total-businesses">{{ stats.total_businesses }}</h3>
+                        <p class="text-sm text-green-100" id="stats-pending-businesses">{{ stats.pending_businesses }} pending</p>
                     </div>
-                    <div class="text-white-50">
-                        <i class="fas fa-building fa-2x"></i>
+                    <div class="text-green-100 text-3xl">
+                        <i class="fas fa-building"></i>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <small>{{ stats.pending_businesses }} pending verification</small>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('admin.businesses') }}" class="text-white">
-                    <small>Manage Businesses <i class="fas fa-arrow-right"></i></small>
+                <a href="{{ url_for('admin.businesses') }}" class="mt-4 inline-block text-white hover:text-green-100 transition-colors duration-300">
+                    <small class="font-semibold">Manage Businesses <i class="fas fa-arrow-right ml-1"></i></small>
                 </a>
             </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
+            
+            <!-- Jobs Card -->
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 p-6 text-white">
+                <div class="flex justify-between items-start">
                     <div>
-                        <h6 class="card-title">Jobs</h6>
-                        <h3 class="mb-0">{{ stats.total_jobs }}</h3>
+                        <h6 class="text-sm font-semibold text-indigo-100 mb-2">Jobs</h6>
+                        <h3 class="text-3xl font-bold mb-2 stat-value" id="stats-total-jobs">{{ stats.total_jobs }}</h3>
+                        <p class="text-sm text-indigo-100" id="stats-active-jobs">{{ stats.active_jobs }} active</p>
                     </div>
-                    <div class="text-white-50">
-                        <i class="fas fa-briefcase fa-2x"></i>
-                    </div>
-                </div>
-                <div class="mt-2">
-                    <small>{{ stats.active_jobs }} currently active</small>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('admin.jobs') }}" class="text-white">
-                    <small>Manage Jobs <i class="fas fa-arrow-right"></i></small>
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card text-white bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="card-title">Services</h6>
-                        <h3 class="mb-0">{{ stats.total_services }}</h3>
-                    </div>
-                    <div class="text-white-50">
-                        <i class="fas fa-tools fa-2x"></i>
+                    <div class="text-indigo-100 text-3xl">
+                        <i class="fas fa-briefcase"></i>
                     </div>
                 </div>
-                <div class="mt-2">
-                    <small>Available services</small>
-                </div>
-            </div>
-            <div class="card-footer">
-                <a href="{{ url_for('admin.services') }}" class="text-white">
-                    <small>Manage Services <i class="fas fa-arrow-right"></i></small>
+                <a href="{{ url_for('admin.jobs') }}" class="mt-4 inline-block text-white hover:text-indigo-100 transition-colors duration-300">
+                    <small class="font-semibold">Manage Jobs <i class="fas fa-arrow-right ml-1"></i></small>
                 </a>
             </div>
         </div>
@@ -133,157 +90,194 @@
 </div>
 
 <!-- System Health & Quick Actions -->
-<div class="row mb-4">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-chart-line"></i> System Health</h5>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- System Health Card -->
+        <div class="lg:col-span-2 bg-white rounded-lg shadow-md">
+            <div class="px-6 py-5 border-b-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h5 class="font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-line mr-3 text-indigo-600"></i>System Health
+                </h5>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 text-center">
-                        <div class="text-success">
-                            <i class="fas fa-database fa-2x"></i>
-                            <h6 class="mt-2">Database</h6>
-                            <small>{{ health.database_status }}</small>
+            <div class="p-6">
+                <div class="grid grid-cols-4 gap-4">
+                    <div class="text-center">
+                        <div class="text-green-600">
+                            <i class="fas fa-database text-2xl"></i>
+                            <h6 class="mt-2 font-semibold">Database</h6>
+                            <small class="text-gray-600">{{ health.database_status }}</small>
                         </div>
                     </div>
-                    <div class="col-md-3 text-center">
-                        <div class="text-success">
-                            <i class="fas fa-envelope fa-2x"></i>
-                            <h6 class="mt-2">Email</h6>
-                            <small>{{ health.email_status }}</small>
+                    <div class="text-center">
+                        <div class="text-blue-600">
+                            <i class="fas fa-envelope text-2xl"></i>
+                            <h6 class="mt-2 font-semibold">Email</h6>
+                            <small class="text-gray-600">{{ health.email_status }}</small>
                         </div>
                     </div>
-                    <div class="col-md-3 text-center">
-                        <div class="text-success">
-                            <i class="fas fa-robot fa-2x"></i>
-                            <h6 class="mt-2">AI Service</h6>
-                            <small>{{ health.ai_service_status }}</small>
+                    <div class="text-center">
+                        <div class="text-purple-600">
+                            <i class="fas fa-robot text-2xl"></i>
+                            <h6 class="mt-2 font-semibold">AI Service</h6>
+                            <small class="text-gray-600">{{ health.ai_service_status }}</small>
                         </div>
                     </div>
-                    <div class="col-md-3 text-center">
-                        <div class="text-info">
-                            <i class="fas fa-clock fa-2x"></i>
-                            <h6 class="mt-2">Uptime</h6>
-                            <small>{{ health.uptime }}</small>
+                    <div class="text-center">
+                        <div class="text-indigo-600">
+                            <i class="fas fa-clock text-2xl"></i>
+                            <h6 class="mt-2 font-semibold">Uptime</h6>
+                            <small class="text-gray-600">{{ health.uptime }}</small>
                         </div>
                     </div>
                 </div>
                 
-                <hr>
+                <hr class="my-4">
                 
-                <div class="row">
-                    <div class="col-md-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div>
                         <p class="mb-1"><strong>Last Backup:</strong> {{ health.last_backup[:10] }}</p>
-                        <p class="mb-1"><strong>Cache Status:</strong> Active</p>
+                        <p class="mb-0"><strong>Cache Status:</strong> Active</p>
                     </div>
-                    <div class="col-md-6">
+                    <div>
                         <p class="mb-1"><strong>Rate Limiting:</strong> Active</p>
-                        <p class="mb-1"><strong>Security:</strong> CSRF Protection Enabled</p>
+                        <p class="mb-0"><strong>Security:</strong> CSRF Enabled</p>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-bolt"></i> Quick Actions</h5>
+        
+        <!-- Quick Actions Card -->
+        <div class="bg-white rounded-lg shadow-md">
+            <div class="px-6 py-5 border-b-2 border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+                <h5 class="font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-bolt mr-3 text-yellow-600"></i>Quick Actions
+                </h5>
             </div>
-            <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('admin.users') }}" class="btn btn-primary">
-                        <i class="fas fa-users"></i> Manage Users
-                    </a>
-                    <a href="{{ url_for('admin.verification_review') }}" class="btn btn-warning">
-                        <i class="fas fa-user-check"></i> Review Verifications
-                    </a>
-                    <a href="{{ url_for('admin.businesses') }}" class="btn btn-success">
-                        <i class="fas fa-building"></i> Review Businesses
-                    </a>
-                    <a href="{{ url_for('admin.analytics') }}" class="btn btn-info">
-                        <i class="fas fa-chart-bar"></i> View Analytics
-                    </a>
-                    <a href="{{ url_for('admin.settings') }}" class="btn btn-secondary">
-                        <i class="fas fa-cog"></i> System Settings
-                    </a>
-                </div>
+            <div class="p-6 space-y-3">
+                <a href="{{ url_for('admin.users') }}" class="block w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold text-center">
+                    <i class="fas fa-users mr-2"></i>Manage Users
+                </a>
+                <a href="{{ url_for('admin.verification_review') }}" class="block w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-semibold text-center">
+                    <i class="fas fa-user-check mr-2"></i>Verifications
+                </a>
+                <a href="{{ url_for('admin.businesses') }}" class="block w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold text-center">
+                    <i class="fas fa-building mr-2"></i>Businesses
+                </a>
+                <a href="{{ url_for('admin.analytics') }}" class="block w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-semibold text-center">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </a>
+                <a href="{{ url_for('admin.settings') }}" class="block w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-semibold text-center">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                </a>
             </div>
         </div>
     </div>
 </div>
 
 <!-- Recent Activity -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0"><i class="fas fa-history"></i> Recent Activity</h5>
-            </div>
-            <div class="card-body">
-                {% if recent_activity %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Time</th>
-                                    <th>Activity</th>
-                                    <th>Details</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for activity in recent_activity %}
-                                <tr>
-                                    <td>
-                                        <small class="text-muted">
-                                            {{ activity.timestamp[:10] }} {{ activity.timestamp[11:16] }}
-                                        </small>
-                                    </td>
-                                    <td>
-                                        {% if activity.type == 'new_user' %}
-                                            <span class="badge bg-primary">New User</span>
-                                        {% elif activity.type == 'new_business' %}
-                                            <span class="badge bg-success">New Business</span>
-                                        {% elif activity.type == 'new_job' %}
-                                            <span class="badge bg-info">New Job</span>
-                                        {% elif activity.type == 'verification' %}
-                                            {% if activity.status == 'pending' %}
-                                                <span class="badge bg-warning">Verification Submitted</span>
-                                            {% elif activity.status == 'verified' %}
-                                                <span class="badge bg-success">Verification Approved</span>
-                                            {% elif activity.status == 'rejected' %}
-                                                <span class="badge bg-danger">Verification Rejected</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="badge bg-secondary">Activity</span>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md">
+        <div class="px-6 py-5 border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
+            <h5 class="font-bold text-gray-900 flex items-center">
+                <i class="fas fa-history mr-3 text-gray-600"></i>Recent Activity
+            </h5>
+        </div>
+        <div class="p-6">
+            {% if recent_activity %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Activity</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for activity in recent_activity %}
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-4 py-3">
+                                    <small class="text-gray-500">
+                                        {{ activity.timestamp[:10] }} {{ activity.timestamp[11:16] }}
+                                    </small>
+                                </td>
+                                <td class="px-4 py-3">
+                                    {% if activity.type == 'new_user' %}
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800">New User</span>
+                                    {% elif activity.type == 'new_business' %}
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">New Business</span>
+                                    {% elif activity.type == 'new_job' %}
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">New Job</span>
+                                    {% elif activity.type == 'verification' %}
+                                        {% if activity.status == 'pending' %}
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-800">Verification Submitted</span>
+                                        {% elif activity.status == 'verified' %}
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800">Verification Approved</span>
+                                        {% elif activity.status == 'rejected' %}
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-800">Verification Rejected</span>
                                         {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if activity.type == 'verification' %}
-                                            {{ activity.name }}
-                                            {% if activity.status == 'pending' %}
-                                                submitted verification documents
-                                            {% elif activity.status == 'verified' %}
-                                                was verified
-                                            {% elif activity.status == 'rejected' %}
-                                                verification was rejected
-                                            {% endif %}
-                                        {% else %}
-                                            {{ activity.name }}
+                                    {% else %}
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-800">Activity</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-4 py-3 text-sm text-gray-700">
+                                    {% if activity.type == 'verification' %}
+                                        {{ activity.name }}
+                                        {% if activity.status == 'pending' %}
+                                            submitted verification documents
+                                        {% elif activity.status == 'verified' %}
+                                            was verified
+                                        {% elif activity.status == 'rejected' %}
+                                            verification was rejected
                                         {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <p class="text-muted text-center">No recent activity</p>
-                {% endif %}
-            </div>
+                                    {% else %}
+                                        {{ activity.name }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-gray-500 text-center py-8">No recent activity</p>
+            {% endif %}
         </div>
     </div>
 </div>
+
+<style>
+    /* Stat value animation */
+    .stat-value {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .stat-value.updated {
+        animation: statPulse 0.6s ease-in-out;
+    }
+
+    @keyframes statPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/realtime-stats.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.REALTIME_STATS_CONFIG = {
+        type: 'admin-dashboard',
+        statsElements: {
+            'total_users': 'stats-total-users',
+            'verified_users': 'stats-verified-users',
+            'pending_verifications': 'stats-pending-verifications',
+            'total_businesses': 'stats-total-businesses',
+            'pending_businesses': 'stats-pending-businesses',
+            'total_jobs': 'stats-total-jobs',
+            'active_jobs': 'stats-active-jobs'
+        }
+    };
+});
+</script>
 {% endblock %}

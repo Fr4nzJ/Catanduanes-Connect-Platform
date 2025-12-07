@@ -30,7 +30,7 @@
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-gray-600 text-sm font-semibold">Your Applications</p>
-                                        <p class="text-3xl font-bold text-blue-600 mt-2">0</p>
+                                        <p class="text-3xl font-bold text-blue-600 mt-2 stat-value" id="total-applications">0</p>
                                     </div>
                                     <i class="fas fa-file-upload text-4xl text-blue-200"></i>
                                 </div>
@@ -40,10 +40,10 @@
                             <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-6 border-l-4 border-green-600">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-gray-600 text-sm font-semibold">Saved Items</p>
-                                        <p class="text-3xl font-bold text-green-600 mt-2">0</p>
+                                        <p class="text-gray-600 text-sm font-semibold">Accepted</p>
+                                        <p class="text-3xl font-bold text-green-600 mt-2 stat-value" id="accepted">0</p>
                                     </div>
-                                    <i class="fas fa-bookmark text-4xl text-green-200"></i>
+                                    <i class="fas fa-check-circle text-4xl text-green-200"></i>
                                 </div>
                             </div>
 
@@ -51,10 +51,10 @@
                             <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-6 border-l-4 border-purple-600">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-gray-600 text-sm font-semibold">Profile Views</p>
-                                        <p class="text-3xl font-bold text-purple-600 mt-2">0</p>
+                                        <p class="text-gray-600 text-sm font-semibold">Pending</p>
+                                        <p class="text-3xl font-bold text-purple-600 mt-2 stat-value" id="pending">0</p>
                                     </div>
-                                    <i class="fas fa-eye text-4xl text-purple-200"></i>
+                                    <i class="fas fa-hourglass-half text-4xl text-purple-200"></i>
                                 </div>
                             </div>
                         </div>
@@ -77,4 +77,35 @@
         </div>
     </main>
 </div>
+
+<style>
+    /* Stat value animation */
+    .stat-value {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .stat-value.updated {
+        animation: statPulse 0.6s ease-in-out;
+    }
+
+    @keyframes statPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
+</style>
+
+<script src="{{ url_for('static', filename='js/realtime-stats.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.REALTIME_STATS_CONFIG = {
+        type: 'dashboard',
+        statsElements: {
+            'total_applications': 'total-applications',
+            'accepted': 'accepted',
+            'pending': 'pending'
+        }
+    };
+});
+</script>
 {% endblock %}

@@ -86,7 +86,7 @@
 
     <!-- Stats Cards -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
             <!-- Total Businesses -->
             <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-500 hover:shadow-lg transition-shadow duration-200">
                 <div class="flex items-center">
@@ -94,50 +94,60 @@
                         <i class="fas fa-building text-2xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Businesses</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.business_count or 0 }}</p>
+                        <p class="text-sm font-medium text-gray-600">Businesses</p>
+                        <p class="text-3xl font-bold text-gray-900 stat-value" id="total-jobs" data-value="{{ stats.business_count or 0 }}">{{ stats.business_count or 0 }}</p>
                     </div>
                 </div>
             </div>
             
-            <!-- Active Jobs -->
+            <!-- Total Jobs Posted -->
+            <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-purple-500 hover:shadow-lg transition-shadow duration-200">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100 text-purple-600">
+                        <i class="fas fa-list text-2xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total Jobs</p>
+                        <p class="text-3xl font-bold text-gray-900 stat-value" id="active-jobs" data-value="{{ stats.job_count or 0 }}">{{ stats.job_count or 0 }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filled Jobs -->
             <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-indigo-500 hover:shadow-lg transition-shadow duration-200">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
-                        <i class="fas fa-briefcase text-2xl"></i>
+                        <i class="fas fa-check-circle text-2xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Active Jobs</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.job_count or 0 }}</p>
+                        <p class="text-sm font-medium text-gray-600">Filled Jobs</p>
+                        <p class="text-3xl font-bold text-gray-900 stat-value" id="filled-jobs" data-value="{{ stats.filled_jobs or 0 }}">{{ stats.filled_jobs or 0 }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Total Applications -->
+            <!-- Total Applicants -->
             <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-green-500 hover:shadow-lg transition-shadow duration-200">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
-                        <i class="fas fa-file-alt text-2xl"></i>
+                        <i class="fas fa-users text-2xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Total Applications</p>
-                        <p class="text-3xl font-bold text-gray-900">{{ stats.application_count or 0 }}</p>
+                        <p class="text-sm font-medium text-gray-600">Applicants</p>
+                        <p class="text-3xl font-bold text-gray-900 stat-value" id="total-applicants" data-value="{{ stats.application_count or 0 }}">{{ stats.application_count or 0 }}</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Average Rating -->
+            <!-- Pending Applications -->
             <div class="bg-white rounded-lg shadow-md p-6 border-t-4 border-yellow-500 hover:shadow-lg transition-shadow duration-200">
                 <div class="flex items-center">
                     <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                        <i class="fas fa-star text-2xl"></i>
+                        <i class="fas fa-hourglass-half text-2xl"></i>
                     </div>
                     <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-600">Average Rating</p>
-                        <div class="flex items-baseline">
-                            <p class="text-3xl font-bold text-gray-900">{{ "%.1f"|format(stats.avg_rating or 0) }}</p>
-                            <p class="text-xs text-gray-500 ml-2">({{ stats.review_count or 0 }} reviews)</p>
-                        </div>
+                        <p class="text-sm font-medium text-gray-600">Pending</p>
+                        <p class="text-3xl font-bold text-gray-900 stat-value" id="pending-applicants" data-value="{{ stats.pending_applicants or 0 }}">{{ stats.pending_applicants or 0 }}</p>
                     </div>
                 </div>
             </div>
@@ -408,5 +418,36 @@
     .bg-white {
         transition: all 0.3s ease-in-out;
     }
+
+    /* Stat value animation */
+    .stat-value {
+        transition: all 0.3s ease-in-out;
+    }
+
+    .stat-value.updated {
+        animation: statPulse 0.6s ease-in-out;
+    }
+
+    @keyframes statPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.1); }
+        100% { transform: scale(1); }
+    }
 </style>
+
+<script src="{{ url_for('static', filename='js/realtime-stats.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    window.REALTIME_STATS_CONFIG = {
+        type: 'dashboard',
+        statsElements: {
+            'total_jobs': 'total-jobs',
+            'active_jobs': 'active-jobs',
+            'filled_jobs': 'filled-jobs',
+            'total_applicants': 'total-applicants',
+            'pending_applicants': 'pending-applicants'
+        }
+    };
+});
+</script>
 {% endblock %}

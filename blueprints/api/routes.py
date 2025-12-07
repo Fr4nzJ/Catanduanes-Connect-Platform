@@ -1,7 +1,8 @@
 from flask import jsonify, current_app
-from flask_login import current_user
+from flask_login import current_user, login_required
 from . import api_bp
 from database import get_neo4j_db, safe_run
+from .realtime import get_platform_stats, get_business_owner_stats, get_job_seeker_stats
 
 @api_bp.route('/homepage/featured-jobs')
 def featured_jobs():
@@ -9,7 +10,24 @@ def featured_jobs():
 
 @api_bp.route('/homepage/stats')
 def homepage_stats():
-    return jsonify({"jobs": 0, "businesses": 0, "services": 0})
+    """Get real-time homepage statistics"""
+    stats = get_platform_stats()
+    return jsonify(stats)
+
+@api_bp.route('/realtime/stats')
+def realtime_stats():
+    """Get real-time statistics for dashboard"""
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    if current_user.role == 'business_owner':
+        stats = get_business_owner_stats(current_user.id)
+    elif current_user.role == 'job_seeker':
+        stats = get_job_seeker_stats(current_user.id)
+    else:
+        stats = get_platform_stats()
+    
+    return jsonify(stats)
 
 @api_bp.route('/current-user')
 def get_current_user():

@@ -280,4 +280,21 @@ function displayFeaturedBusinesses(businesses) {
     `).join('');
 }
 </script>
+
+<!-- Real-time Stats Script -->
+<script src="{{ url_for('static', filename='js/realtime-stats.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize real-time stats for homepage
+    window.REALTIME_STATS_CONFIG = {
+        type: 'homepage',
+        statsElements: {
+            'active_jobs': 'stats-jobs',
+            'total_businesses': 'stats-businesses',
+            'total_services': 'stats-services',
+            'total_users': 'stats-users'
+        }
+    };
+});
+</script>
 {% endblock %}
