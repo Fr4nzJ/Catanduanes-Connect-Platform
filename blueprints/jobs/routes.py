@@ -12,7 +12,7 @@ import json
 import logging
 import os
 from datetime import datetime, timedelta
-from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, g
+from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, g, make_response
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -25,6 +25,18 @@ from tasks import send_email_task, create_notification_task
 from extensions import csrf
 
 logger = logging.getLogger(__name__)
+
+def no_cache(f):
+    """Decorator to prevent caching of responses"""
+    from functools import wraps
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        response = make_response(f(*args, **kwargs))
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, public, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+        return response
+    return decorated_function
 
 # ============================================================================
 # JOB LISTING & FILTERING ROUTES
@@ -243,6 +255,7 @@ def list_jobs():
 @jobs_bp.route('/<job_id>')
 @jobs_bp.route('/<job_id>/detail')
 @login_required_optional
+@no_cache
 def job_detail(job_id):
     """Display detailed job information"""
     
@@ -656,6 +669,18 @@ def edit_job(job_id):
     
     form = JobForm()
     
+    # Populate form choices
+    with db.session() as session:
+        businesses_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            WHERE b.is_verified = true AND b.is_active = true
+            RETURN b.id as id, b.name as name
+            ORDER BY b.name ASC
+        """, {'user_id': current_user.id})
+        
+        if businesses_result:
+            form.business_id.choices = [(b['id'], b['name']) for b in businesses_result]
+    
     if form.validate_on_submit():
         with db.session() as session:
             update_data = {
@@ -663,25 +688,42 @@ def edit_job(job_id):
                 'description': form.description.data,
                 'category': form.category.data,
                 'type': form.type.data,
-                'setup': form.setup.data if hasattr(form, 'setup') else 'on_site',
+                'employment_type': form.employment_type.data,
                 'salary_min': float(form.salary_min.data) if form.salary_min.data else None,
                 'salary_max': float(form.salary_max.data) if form.salary_max.data else None,
+                'currency': form.currency.data,
                 'requirements': form.requirements.data.split('\n') if form.requirements.data else [],
                 'benefits': form.benefits.data.split('\n') if form.benefits.data else [],
                 'updated_at': datetime.utcnow().isoformat()
             }
             
-            safe_run(session, """
-                MATCH (j:Job {id: $job_id})
-                SET j += $update_data
-                RETURN j
-            """, {
-                'job_id': job_id,
-                'update_data': update_data
-            })
-        
-        flash('Job updated successfully!', 'success')
-        return redirect(url_for('jobs.job_detail', job_id=job_id))
+            try:
+                result = safe_run(session, """
+                    MATCH (j:Job {id: $job_id})
+                    SET j += $update_data
+                    RETURN j
+                """, {
+                    'job_id': job_id,
+                    'update_data': update_data
+                })
+                
+                if result:
+                    logger.info(f"Job {job_id} updated successfully")
+                    flash('Job updated successfully!', 'success')
+                    return redirect(url_for('jobs.job_detail', job_id=job_id))
+                else:
+                    flash('Failed to update job. Job not found.', 'error')
+                    return redirect(url_for('jobs.list_jobs'))
+            except Exception as e:
+                logger.error(f"Error updating job {job_id}: {e}")
+                flash('Error updating job. Please try again.', 'error')
+                return redirect(url_for('jobs.list_jobs'))
+    else:
+        # Log form validation errors
+        logger.error(f"Form validation failed for job edit: {form.errors}")
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"{field}: {error}", 'error')
     
     # Populate form with existing data
     job_node = job_result[0]['j']
@@ -690,8 +732,10 @@ def edit_job(job_id):
         form.description.data = job_node.get('description')
         form.category.data = job_node.get('category')
         form.type.data = job_node.get('type')
+        form.employment_type.data = job_node.get('employment_type', 'On-site')
         form.salary_min.data = job_node.get('salary_min')
         form.salary_max.data = job_node.get('salary_max')
+        form.currency.data = job_node.get('currency', 'PHP')
         
         reqs = job_node.get('requirements', [])
         form.requirements.data = '\n'.join(reqs) if reqs else ''
@@ -701,8 +745,9 @@ def edit_job(job_id):
     
     # Convert job node to Job object for template
     job = Job(**_node_to_dict(job_node))
+    job_data = _node_to_dict(job_node)
     
-    return render_template('jobs/jobs_edit.html', form=form, job=job, job_id=job_id)
+    return render_template('jobs/jobs_edit.html', form=form, job=job_data, job_id=job_id)
 
 @jobs_bp.route('/<job_id>/close', methods=['POST'])
 @login_required

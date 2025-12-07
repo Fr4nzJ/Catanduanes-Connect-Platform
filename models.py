@@ -159,14 +159,22 @@ class Job:
         'part_time': 'Part Time',
         'contract': 'Contract',
         'internship': 'Internship',
-        'freelance': 'Freelance'
+        'freelance': 'Freelance',
+        'Full-time': 'Full Time',
+        'Part-time': 'Part Time',
+        'Contract': 'Contract',
+        'Temporary': 'Temporary',
+        'Internship': 'Internship'
     }
     
     # Employment setup types
     SETUP_TYPES = {
         'on_site': 'On-Site',
         'remote': 'Remote',
-        'hybrid': 'Hybrid'
+        'hybrid': 'Hybrid',
+        'On-site': 'On-Site',
+        'Remote': 'Remote',
+        'Hybrid': 'Hybrid'
     }
     
     def __init__(self, **kwargs):
@@ -176,7 +184,8 @@ class Job:
         self.description = kwargs.get('description')
         self.category = kwargs.get('category')
         self.type = kwargs.get('type', 'full_time')  # full_time, part_time, contract, internship, freelance
-        self.setup = kwargs.get('setup', 'on_site')  # on_site, remote, hybrid
+        # Handle both 'setup' and 'employment_type' field names
+        self.setup = kwargs.get('setup') or kwargs.get('employment_type', 'on_site')  # on_site, remote, hybrid
         self.salary_min = kwargs.get('salary_min')
         self.salary_max = kwargs.get('salary_max')
         self.currency = kwargs.get('currency', 'PHP')
@@ -194,6 +203,7 @@ class Job:
         self.expires_at = kwargs.get('expires_at')
         self.applications_count = kwargs.get('applications_count', 0)
         self.views_count = kwargs.get('views_count', 0)
+        self.status = kwargs.get('status')
         
     @property
     def salary_range_display(self) -> str:
