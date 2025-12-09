@@ -85,29 +85,25 @@ class BusinessForm(FlaskForm):
 
 class JobForm(FlaskForm):
     """Job posting form"""
-    business_id = SelectField('Business', validators=[Optional()], coerce=str)
+    business_id = SelectField('Business', validators=[DataRequired()], coerce=str)
     title = StringField('Job Title', validators=[DataRequired(), Length(min=3, max=100)])
     description = TextAreaField('Job Description', validators=[DataRequired(), Length(min=20, max=2000)])
     category = SelectField('Category', choices=[
-        ('IT', 'IT & Technology'),
-        ('Sales', 'Sales & Marketing'),
-        ('Finance', 'Finance & Accounting'),
-        ('Healthcare', 'Healthcare'),
-        ('Education', 'Education'),
-        ('Hospitality', 'Hospitality & Tourism'),
-        ('Other', 'Other')
+        ('technology', 'Technology'),
+        ('healthcare', 'Healthcare'),
+        ('education', 'Education'),
+        ('retail', 'Retail'),
+        ('hospitality', 'Hospitality'),
+        ('construction', 'Construction'),
+        ('manufacturing', 'Manufacturing'),
+        ('services', 'Services'),
+        ('other', 'Other')
     ], validators=[DataRequired()])
     type = SelectField('Job Type', choices=[
-        ('Full-time', 'Full Time'),
-        ('Part-time', 'Part Time'),
-        ('Contract', 'Contract'),
-        ('Temporary', 'Temporary'),
-        ('Internship', 'Internship')
-    ], validators=[DataRequired()])
-    employment_type = SelectField('Employment Type', choices=[
-        ('On-site', 'On-site'),
-        ('Remote', 'Remote'),
-        ('Hybrid', 'Hybrid')
+        ('full_time', 'Full Time'),
+        ('part_time', 'Part Time'),
+        ('contract', 'Contract'),
+        ('internship', 'Internship')
     ], validators=[DataRequired()])
     salary_min = DecimalField('Minimum Salary', validators=[Optional(), NumberRange(min=0)])
     salary_max = DecimalField('Maximum Salary', validators=[Optional(), NumberRange(min=0)])
