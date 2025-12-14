@@ -994,7 +994,7 @@ def reject_applicant(application_id):
         # Verify ownership and update status
         result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b]->(b)
             SET a.status = 'rejected', a.rejection_reason = $reason, a.reviewed_at = datetime()
             RETURN applicant.email as applicant_email, applicant.username as applicant_name, 
                    j.title as job_title
@@ -1042,7 +1042,7 @@ def message_applicant(application_id):
         # Verify ownership and get applicant info
         result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
             RETURN applicant.email as applicant_email, applicant.username as applicant_name,
                    owner.username as owner_name, j.title as job_title, a.id as application_id
         """, {'app_id': application_id, 'owner_id': current_user.id})
