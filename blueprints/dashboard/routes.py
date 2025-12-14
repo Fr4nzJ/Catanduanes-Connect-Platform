@@ -31,14 +31,11 @@ def business_owner():
         stats_result = safe_run(session, """
             MATCH (u:User {id: $user_id})
             OPTIONAL MATCH (u)-[:OWNS]->(b:Business)
-            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
-            OPTIONAL MATCH (b)<-[:POSTED_BY]-(j:Job)
-            OPTIONAL MATCH (j)<-[:APPLIED_TO]-(a:JobApplication)
+            OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b)
+            OPTIONAL MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
             RETURN coalesce(count(DISTINCT b), 0) as business_count,
                    coalesce(count(DISTINCT j), 0) as job_count,
-                   coalesce(count(DISTINCT a), 0) as application_count,
-                   coalesce(avg(r.rating), 0) as avg_rating,
-                   coalesce(count(DISTINCT r), 0) as review_count
+                   coalesce(count(DISTINCT a), 0) as application_count
         """, {'user_id': current_user.id})
         
         # Convert stats result to dictionary
@@ -48,14 +45,13 @@ def business_owner():
             stats = {
                 'business_count': result.get('business_count', 0) if isinstance(result, dict) else getattr(result, 'business_count', 0),
                 'job_count': result.get('job_count', 0) if isinstance(result, dict) else getattr(result, 'job_count', 0),
-                'application_count': result.get('application_count', 0) if isinstance(result, dict) else getattr(result, 'application_count', 0),
-                'avg_rating': result.get('avg_rating', 0) if isinstance(result, dict) else getattr(result, 'avg_rating', 0),
-                'review_count': result.get('review_count', 0) if isinstance(result, dict) else getattr(result, 'review_count', 0)
+                'application_count': result.get('application_count', 0) if isinstance(result, dict) else getattr(result, 'application_count', 0)
             }
         
         # Get recent job applications
         applications = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
             MATCH (j)<-[:FOR_JOB]-(a:JobApplication)<-[:APPLIED_TO]-(applicant:User)
             RETURN a, j.title as job_title, applicant.username as applicant_name
             ORDER BY a.created_at DESC LIMIT 5
@@ -64,12 +60,9 @@ def business_owner():
         # Get user's businesses
         businesses_result = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
-            OPTIONAL MATCH (b)-[:POSTED_BY]->(j:Job) WHERE j.is_active = true
-            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
+            OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b) WHERE j.is_active = true
             RETURN b,
-                   count(DISTINCT j) as jobs_count,
-                   count(DISTINCT r) as reviews_count,
-                   avg(r.rating) as rating
+                   count(DISTINCT j) as jobs_count
             ORDER BY b.created_at DESC
         """, {'user_id': current_user.id})
         
@@ -80,8 +73,6 @@ def business_owner():
             if business_node:
                 business_dict = dict(business_node) if hasattr(business_node, 'items') else _node_to_dict(business_node)
                 business_dict['jobs_count'] = record.get('jobs_count', 0)
-                business_dict['reviews_count'] = record.get('reviews_count', 0)
-                business_dict['rating'] = record.get('rating', 0)
                 businesses.append(business_dict)
         
         # Get verification status
