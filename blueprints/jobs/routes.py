@@ -637,7 +637,8 @@ def edit_job(job_id):
     with db.session() as session:
         # Check ownership
         ownership_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(:Job {id: $job_id})
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (:Job {id: $job_id})-[:POSTED_BY]->(b)
             RETURN count(*) as count
         """, {'user_id': current_user.id, 'job_id': job_id})
         
@@ -715,7 +716,8 @@ def close_job(job_id):
     with db.session() as session:
         # Check ownership
         ownership_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)-[:POSTED_BY]->(:Job {id: $job_id})
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (:Job {id: $job_id})-[:POSTED_BY]->(b)
             RETURN count(*) as count
         """, {'user_id': current_user.id, 'job_id': job_id})
         
@@ -741,7 +743,8 @@ def my_postings():
     db = get_neo4j_db()
     with db.session() as session:
         postings_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
             RETURN j, b.name as business_name
             ORDER BY j.created_at DESC
         """, {'user_id': current_user.id})
@@ -769,7 +772,8 @@ def my_applicants():
     with db.session() as session:
         # Get all applications for jobs posted by user's businesses
         applicants_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication)-[:FOR_JOB]->(j)
             RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name
             ORDER BY a.created_at DESC
@@ -801,7 +805,8 @@ def job_applicants(job_id):
     with db.session() as session:
         # Verify user owns the job
         owner_check = safe_run(session, """
-            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)<-[:POSTED_BY]-(j:Job {id: $job_id})
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b)
             RETURN j.id as id
         """, {'user_id': current_user.id, 'job_id': job_id})
         
@@ -849,7 +854,7 @@ def view_applicant_profile(application_id):
         # Get application and applicant details
         app_result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
             RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name
         """, {'app_id': application_id, 'owner_id': current_user.id})
         
@@ -900,7 +905,7 @@ def download_cv(application_id):
         # Get application and verify ownership
         app_result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
             RETURN a.cv_file as cv_file
         """, {'app_id': application_id, 'owner_id': current_user.id})
         
@@ -942,7 +947,7 @@ def accept_applicant(application_id):
         # Verify ownership and update status
         result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
             SET a.status = 'accepted', a.reviewed_at = datetime()
             SET j.status = 'filled', j.filled_at = datetime()
             RETURN applicant.email as applicant_email, applicant.username as applicant_name, 
@@ -989,7 +994,7 @@ def reject_applicant(application_id):
         # Verify ownership and update status
         result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
-            MATCH (j)-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User {id: $owner_id})
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
             SET a.status = 'rejected', a.rejection_reason = $reason, a.reviewed_at = datetime()
             RETURN applicant.email as applicant_email, applicant.username as applicant_name, 
                    j.title as job_title
