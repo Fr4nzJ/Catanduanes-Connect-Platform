@@ -187,11 +187,11 @@ def seed_database():
             driver = GraphDatabase.driver(
                 uri, 
                 auth=(username, password),
-                max_connection_lifetime=30 * 60
+                max_connection_lifetime=30 * 60,
+                keep_alive=True
             )
             # Verify connection
-            with driver.session(database="neo4j") as test_session:
-                test_session.run("RETURN 1")
+            driver.verify_connectivity()
             print(f"Connected to Neo4j (attempt {attempt + 1})")
             break
         except Exception as e:
@@ -213,7 +213,7 @@ def seed_database():
         return
     
     try:
-        with driver.session(database="neo4j") as session:
+        with driver.session() as session:
             
             # Generate businesses
             print("Generating 30 businesses with complete credentials...")
