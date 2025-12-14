@@ -31,27 +31,16 @@ def business_owner():
     stats = {
         'business_count': 0,
         'job_count': 0,
-        'application_count': 0
+        'application_count': 0,
+        'filled_jobs': 0,
+        'pending_applicants': 0
     }
     applications = []
     businesses = []
     verification = {}
     
     with db.session() as session:
-        # Step 1: Ensure OWNS relationships exist
-        logger.info(f"Dashboard: Creating OWNS relationships for user {current_user.id}")
-        create_owns = safe_run(session, """
-            MATCH (u:User {id: $user_id})
-            MATCH (b:Business)
-            MERGE (u)-[:OWNS]->(b)
-            RETURN count(*) as created
-        """, {'user_id': current_user.id})
-        
-        if create_owns:
-            logger.info(f"Dashboard: Created/verified {create_owns[0].get('created', 0)} OWNS relationships")
-        
-        # Step 2: Get business count
-        logger.info("Dashboard: Fetching business count")
+        # Step 1: Get business count (only businesses owned by user)
         business_count_result = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             RETURN count(b) as count
@@ -59,76 +48,71 @@ def business_owner():
         
         if business_count_result and len(business_count_result) > 0:
             stats['business_count'] = business_count_result[0].get('count', 0)
-            logger.info(f"Dashboard: Found {stats['business_count']} businesses")
         
-        # Step 3: Get job count
-        logger.info("Dashboard: Fetching job count")
-        job_count_result = safe_run(session, """
+        # Step 2: Get job counts and filled jobs
+        job_results = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             MATCH (j:Job)-[:POSTED_BY]->(b)
-            WHERE j.is_active = true
-            RETURN count(j) as count
+            RETURN 
+                sum(CASE WHEN j.is_active = true THEN 1 ELSE 0 END) as active_jobs,
+                sum(CASE WHEN j.is_active = false THEN 1 ELSE 0 END) as filled_jobs
         """, {'user_id': current_user.id})
         
-        if job_count_result and len(job_count_result) > 0:
-            stats['job_count'] = job_count_result[0].get('count', 0)
-            logger.info(f"Dashboard: Found {stats['job_count']} jobs")
+        if job_results and len(job_results) > 0:
+            stats['job_count'] = job_results[0].get('active_jobs', 0)
+            stats['filled_jobs'] = job_results[0].get('filled_jobs', 0)
         
-        # Step 4: Get application count
-        logger.info("Dashboard: Fetching application count")
-        app_count_result = safe_run(session, """
+        # Step 3: Get application counts with pending status
+        app_results = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             MATCH (j:Job)-[:POSTED_BY]->(b)
             MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
-            RETURN count(a) as count
+            RETURN 
+                count(a) as total_applications,
+                sum(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) as pending_applicants
         """, {'user_id': current_user.id})
         
-        if app_count_result and len(app_count_result) > 0:
-            stats['application_count'] = app_count_result[0].get('count', 0)
-            logger.info(f"Dashboard: Found {stats['application_count']} applications")
+        if app_results and len(app_results) > 0:
+            stats['application_count'] = app_results[0].get('total_applications', 0)
+            stats['pending_applicants'] = app_results[0].get('pending_applicants', 0)
         
-        # Step 5: Get recent applications with details
-        logger.info("Dashboard: Fetching recent applications")
+        # Step 4: Get recent applications with proper formatting
         applications_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             MATCH (j:Job)-[:POSTED_BY]->(b)
             MATCH (j)<-[:FOR_JOB]-(a:JobApplication)<-[:APPLIED_TO]-(applicant:User)
-            RETURN a as application, 
-                   j.title as job_title, 
-                   applicant.username as applicant_name,
-                   applicant.email as applicant_email
+            RETURN a, j.title as job_title, applicant.username as applicant_name
             ORDER BY a.created_at DESC 
             LIMIT 5
         """, {'user_id': current_user.id})
         
         if applications_raw:
-            logger.info(f"Dashboard: Processing {len(applications_raw)} applications")
             applications = applications_raw
         
-        # Step 6: Get all businesses with their job counts
-        logger.info("Dashboard: Fetching businesses")
+        # Step 5: Get all businesses with job counts and reviews
         businesses_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b) WHERE j.is_active = true
-            WITH b, count(j) as job_count
-            RETURN b, job_count
+            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
+            WITH b, count(DISTINCT j) as job_count, count(DISTINCT r) as reviews_count, avg(r.rating) as avg_rating
+            RETURN b, job_count, reviews_count, avg_rating
             ORDER BY b.created_at DESC
         """, {'user_id': current_user.id})
         
         if businesses_raw:
-            logger.info(f"Dashboard: Processing {len(businesses_raw)} businesses")
             for record in businesses_raw:
                 try:
                     business_node = record.get('b')
                     if business_node:
                         business_dict = _node_to_dict(business_node) if hasattr(business_node, '__dict__') else dict(business_node)
                         business_dict['jobs_count'] = record.get('job_count', 0)
+                        business_dict['reviews_count'] = record.get('reviews_count', 0)
+                        business_dict['rating'] = round(record.get('avg_rating', 0), 1) if record.get('avg_rating') else 0
                         businesses.append(business_dict)
                 except Exception as e:
                     logger.error(f"Dashboard: Error processing business: {str(e)}")
         
-        # Step 7: Get verification status
-        logger.info("Dashboard: Fetching verification status")
+        # Step 6: Get verification status
         verification_result = safe_run(session, """
             MATCH (u:User {id: $user_id})
             RETURN u.verification_status as status,
@@ -140,9 +124,6 @@ def business_owner():
                 'status': verification_result[0].get('status', 'unverified'),
                 'is_verified': verification_result[0].get('is_verified', False)
             }
-            logger.info(f"Dashboard: Verification status: {verification['status']}")
-    
-    logger.info(f"Dashboard: Rendering with stats - businesses: {stats['business_count']}, jobs: {stats['job_count']}, applications: {stats['application_count']}")
     
     return render_template('business/business_owner_dashboard.html',
         stats=stats,
@@ -150,7 +131,7 @@ def business_owner():
         businesses=businesses,
         verification=verification
     )
-
+    
 @dashboard_bp.route('/job-seeker')
 @login_required
 @role_required('job_seeker')
