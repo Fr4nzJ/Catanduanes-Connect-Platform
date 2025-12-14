@@ -176,7 +176,7 @@
                                                     <i class="fas fa-star text-sm {% if i < job.business_rating|int %}text-yellow-400{% else %}text-gray-300{% endif %}"></i>
                                                 {% endfor %}
                                             </div>
-                                            <span class="text-xs text-gray-600 ml-2">{{ "{:.1f}"|format(job.business_rating) }}</span>
+                                            <span class="text-xs text-gray-600 ml-2">{{ "%.1f"|format(job.business_rating or 0) }}</span>
                                         </div>
                                         {% endif %}
                                         
