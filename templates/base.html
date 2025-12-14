@@ -54,8 +54,15 @@
                 </div>
                 
                 <!-- Desktop Navigation -->
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
+                <div style="display: none;" class="hidden md:block md:display-block md:flex">
+                    <style>
+                        @media (min-width: 768px) {
+                            .desktop-nav {
+                                display: flex !important;
+                            }
+                        }
+                    </style>
+                    <div class="desktop-nav ml-10 flex items-baseline space-x-4">
                         <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Home
                         </a>
