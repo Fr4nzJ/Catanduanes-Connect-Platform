@@ -162,29 +162,24 @@ def recommend_jobs_by_resume():
             
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
             
-            prompt = f"""You are a career advisor helping a job seeker find suitable positions.
+            logger.info(f"Resume recommendation: found {len(jobs_list)} jobs for user")
 
-User's Resume Summary:
-{resume_text[:1000]}  # First 1000 chars of resume
+            # If no jobs found, return empty
+            if not jobs_list:
+                logger.warning("No jobs found in database for resume recommendation")
+                return jsonify({
+                    'status': 'success',
+                    'recommended_jobs': []
+                })
 
-Available Jobs:
-{str(jobs_list[:20])}  # First 20 jobs
-
-Please analyze the user's resume and recommend the top 5 most suitable job IDs from the provided list.
-Consider: skills match, experience level, qualifications, and career progression.
-
-Respond ONLY with a JSON array of job IDs like: ["id1", "id2", "id3", "id4", "id5"]
-Do not include any other text."""
-
-            response = get_gemini_response(prompt)
+            # Return top 5 jobs directly from database
+            recommended_job_ids = [job.get('id') for job in jobs_list[:5]]
             
-            # Parse job IDs from response
-            import re
-            job_ids = re.findall(r'"([a-f0-9-]+)"', response)
+            logger.info(f"Resume recommendation returning job IDs: {recommended_job_ids}")
             
             return jsonify({
                 'status': 'success',
-                'recommended_jobs': job_ids[:5]
+                'recommended_jobs': recommended_job_ids
             })
     except Exception as e:
         logger.error(f"Error recommending jobs by resume: {str(e)}")
@@ -221,27 +216,29 @@ def recommend_jobs_by_skills():
             
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
             
-            prompt = f"""You are a career matching expert.
+            logger.info(f"Skills recommendation: found {len(jobs_list)} jobs for user skills: {user_skills}")
 
-User's Skills: {user_skills}
+            # If no jobs found, return empty
+            if not jobs_list:
+                logger.warning("No jobs found in database for skills recommendation")
+                return jsonify({
+                    'status': 'success',
+                    'recommended_jobs': []
+                })
 
-Available Jobs:
-{str(jobs_list[:20])}
-
-Please recommend the top 5 jobs that best match the user's skills.
-Consider skill overlap, career progression, and relevance.
-
-Respond ONLY with a JSON array of job IDs like: ["id1", "id2", "id3", "id4", "id5"]
-Do not include any other text."""
-
-            response = get_gemini_response(prompt)
+            # Return top 5 jobs directly from database
+            recommended_job_ids = [job.get('id') for job in jobs_list[:5]]
             
-            import re
-            job_ids = re.findall(r'"([a-f0-9-]+)"', response)
+            logger.info(f"Skills recommendation returning job IDs: {recommended_job_ids}")
             
             return jsonify({
                 'status': 'success',
-                'recommended_jobs': job_ids[:5]
+                'recommended_jobs': recommended_job_ids
+            })
+                        
+            return jsonify({
+                'status': 'success',
+                'recommended_jobs': recommended_job_ids
             })
     except Exception as e:
         logger.error(f"Error recommending jobs by skills: {str(e)}")
@@ -278,27 +275,24 @@ def recommend_jobs_by_experience():
             
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
             
-            prompt = f"""You are a career advisor specializing in experience-based job matching.
+            logger.info(f"Experience recommendation: found {len(jobs_list)} jobs for experience level: {experience}")
 
-User's Experience Level: {experience} years
+            # If no jobs found, return empty
+            if not jobs_list:
+                logger.warning("No jobs found in database for experience recommendation")
+                return jsonify({
+                    'status': 'success',
+                    'recommended_jobs': []
+                })
 
-Available Jobs:
-{str(jobs_list[:20])}
-
-Please recommend 5 jobs suitable for someone with {experience} years of experience.
-Consider: entry-level for 0-2 years, mid-level for 3-7 years, senior for 8+ years.
-
-Respond ONLY with a JSON array of job IDs like: ["id1", "id2", "id3", "id4", "id5"]
-Do not include any other text."""
-
-            response = get_gemini_response(prompt)
+            # Return top 5 jobs directly from database
+            recommended_job_ids = [job.get('id') for job in jobs_list[:5]]
             
-            import re
-            job_ids = re.findall(r'"([a-f0-9-]+)"', response)
+            logger.info(f"Experience recommendation returning job IDs: {recommended_job_ids}")
             
             return jsonify({
                 'status': 'success',
-                'recommended_jobs': job_ids[:5]
+                'recommended_jobs': recommended_job_ids
             })
     except Exception as e:
         logger.error(f"Error recommending jobs by experience: {str(e)}")
@@ -335,29 +329,28 @@ def recommend_jobs_by_role():
             
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
             
-            prompt = f"""You are a career progression specialist.
+            logger.info(f"Role recommendation: found {len(jobs_list)} jobs for user role: {user_role}")
 
-User's Current Role: {user_role}
+            # If no jobs found, return empty
+            if not jobs_list:
+                logger.warning("No jobs found in database for role recommendation")
+                return jsonify({
+                    'status': 'success',
+                    'recommended_jobs': []
+                })
 
-Available Jobs:
-{str(jobs_list[:20])}
-
-Please recommend 5 jobs that represent good career progression from the {user_role} role.
-
-Respond ONLY with a JSON array of job IDs like: ["id1", "id2", "id3", "id4", "id5"]
-Do not include any other text."""
-
-            response = get_gemini_response(prompt)
+            # Return top 5 jobs directly (first 5 from database)
+            recommended_job_ids = [job.get('id') for job in jobs_list[:5]]
             
-            import re
-            job_ids = re.findall(r'"([a-f0-9-]+)"', response)
+            logger.info(f"Role recommendation returning job IDs: {recommended_job_ids}")
             
             return jsonify({
                 'status': 'success',
-                'recommended_jobs': job_ids[:5]
+                'recommended_jobs': recommended_job_ids
             })
     except Exception as e:
         logger.error(f"Error recommending jobs by role: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -390,28 +383,25 @@ def recommend_jobs_by_salary():
             """)
 
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
-
-            prompt = f"""You are a salary negotiation specialist.
-
-Available High-Paying Jobs (sorted by max salary):
-{str(jobs_list[:20])}
-
-User's salary expectation: {salary_expectation}
-
-Please recommend the 5 highest-paying positions from the list that are realistic opportunities.
-Consider both salary range and position viability.
-
-Respond ONLY with a JSON array of job IDs like: ["id1", "id2", "id3", "id4", "id5"]
-Do not include any other text."""
-
-            response = get_gemini_response(prompt)
             
-            import re
-            job_ids = re.findall(r'"([a-f0-9-]+)"', response)
+            logger.info(f"Salary recommendation: found {len(jobs_list)} jobs, user salary expectation: {salary_expectation}")
+
+            # If no jobs found, return empty
+            if not jobs_list:
+                logger.warning("No jobs found in database for salary recommendation")
+                return jsonify({
+                    'status': 'success',
+                    'recommended_jobs': []
+                })
+
+            # Return top 5 high-paying jobs directly (sorted by salary_max DESC)
+            recommended_job_ids = [job.get('id') for job in jobs_list[:5]]
+            
+            logger.info(f"Salary recommendation returning job IDs: {recommended_job_ids}")
             
             return jsonify({
                 'status': 'success',
-                'recommended_jobs': job_ids[:5]
+                'recommended_jobs': recommended_job_ids
             })
     except Exception as e:
         logger.error(f"Error recommending jobs by salary: {str(e)}")
