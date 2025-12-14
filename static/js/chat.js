@@ -392,13 +392,3 @@ window.Chat = {
     sendQuickMessage,
     clearChatSession
 };
-const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-
-fetch('/chatbot/message', {
-    method : 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken          // ← required header
-    },
-    body: JSON.stringify({message: userMessage})
-});
