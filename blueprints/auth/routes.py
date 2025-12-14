@@ -17,8 +17,6 @@ from tasks import send_email_task
 from forms import LoginForm, RegistrationForm, PasswordResetForm
 from flask import session
 from database import get_neo4j_db
-from flask import Blueprint
-auth_bp = Blueprint('auth', __name__)
 
 logger = logging.getLogger(__name__)
 
