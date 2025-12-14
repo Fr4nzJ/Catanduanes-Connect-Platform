@@ -370,12 +370,15 @@ def recommend_jobs_by_salary():
         
         db = get_neo4j_db()
         with db.session() as session:
-            # Get user's salary preference
+            # Get user's salary preference (handle missing property safely)
             user_data = safe_run(session, """
                 MATCH (u:User {id: $user_id})
-                RETURN u.salary_expectation as salary_expectation
+                RETURN coalesce(u.salary_expectation, 0) as salary_expectation
             """, {'user_id': current_user.id})
-            
+            salary_expectation = 0
+            if user_data and len(user_data) > 0:
+                salary_expectation = user_data[0].get('salary_expectation', 0)
+
             # Get all available jobs sorted by salary
             jobs_data = safe_run(session, """
                 MATCH (j:Job)
@@ -385,13 +388,15 @@ def recommend_jobs_by_salary():
                 ORDER BY j.salary_max DESC
                 LIMIT 50
             """)
-            
+
             jobs_list = [dict(j) for j in jobs_data] if jobs_data else []
-            
+
             prompt = f"""You are a salary negotiation specialist.
 
 Available High-Paying Jobs (sorted by max salary):
 {str(jobs_list[:20])}
+
+User's salary expectation: {salary_expectation}
 
 Please recommend the 5 highest-paying positions from the list that are realistic opportunities.
 Consider both salary range and position viability.
