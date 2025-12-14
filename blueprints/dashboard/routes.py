@@ -95,8 +95,7 @@ def business_owner():
         businesses=businesses,
         verification=verification
     )
-        verification=verification
-    )
+
     
 @dashboard_bp.route('/job-seeker')
 @login_required
