@@ -11,12 +11,7 @@ import uuid
 from datetime import datetime, timedelta
 import random
 from dotenv import load_dotenv
-
-# Add project root to Python path
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-from app import create_app
-from database import get_neo4j_db, safe_run
+from neo4j import GraphDatabase
 
 # Load environment variables
 load_dotenv()
@@ -155,24 +150,36 @@ def generate_jobs(business_id, business_name):
     
     return jobs
 
+def safe_run(session, query, params=None):
+    """Execute a Cypher query safely"""
+    try:
+        result = session.run(query, params or {})
+        return result.data()
+    except Exception as e:
+        print(f"Error executing query: {e}")
+        return None
+
 def seed_database():
     """Main seed function"""
     print("="*70)
-    print("🌱 CATANDUANES CONNECT PLATFORM - DATABASE SEEDING")
+    print("CATANDUANES CONNECT PLATFORM - DATABASE SEEDING")
     print("="*70)
     print(f"\nOwner: {OWNER_USERNAME}")
     print(f"Email: {OWNER_EMAIL}")
     print(f"ID: {OWNER_ID}\n")
     
-    # Create Flask app context
-    app = create_app()
+    # Create direct Neo4j connection
+    uri = os.getenv('NEO4J_URI', 'neo4j+s://37bf8852.databases.neo4j.io')
+    username = os.getenv('NEO4J_USERNAME', 'neo4j')
+    password = os.getenv('NEO4J_PASSWORD', '')
     
-    with app.app_context():
-        try:
-            db = get_neo4j_db()
+    driver = GraphDatabase.driver(uri, auth=(username, password))
+    
+    try:
+        with driver.session() as session:
             
             # Generate businesses
-            print("📊 Generating 30 businesses with complete credentials...")
+            print("Generating 30 businesses with complete credentials...")
             businesses = generate_businesses(OWNER_ID)
             
             total_jobs = 0
@@ -180,135 +187,136 @@ def seed_database():
             total_created_jobs = 0
             
             # Create businesses and jobs
-            with db.session() as session:
-                for i, business in enumerate(businesses, 1):
-                    try:
-                        # Create business node
-                        create_business_query = """
-                            CREATE (b:Business {
+            for i, business in enumerate(businesses, 1):
+                try:
+                    # Create business node
+                    create_business_query = """
+                        CREATE (b:Business {
+                            id: $id,
+                            name: $name,
+                            category: $category,
+                            description: $description,
+                            address: $address,
+                            phone: $phone,
+                            email: $email,
+                            website: $website,
+                            owner_id: $owner_id,
+                            is_active: $is_active,
+                            is_verified: $is_verified,
+                            verification_status: $verification_status,
+                            employee_count: $employee_count,
+                            established_year: $established_year,
+                            rating: $rating,
+                            reviews_count: $reviews_count,
+                            latitude: $latitude,
+                            longitude: $longitude,
+                            created_at: $created_at,
+                            updated_at: $updated_at,
+                            business_hours: $business_hours,
+                            permit_number: $permit_number,
+                            is_hiring: $is_hiring
+                        })
+                        RETURN b.id as id
+                    """
+                    
+                    result = safe_run(session, create_business_query, business)
+                    if result:
+                        total_created_businesses += 1
+                    
+                    # Create relationship to owner
+                    owner_rel_query = """
+                        MATCH (b:Business {id: $business_id})
+                        MATCH (u:User {id: $owner_id})
+                        CREATE (u)-[:OWNS]->(b)
+                    """
+                    safe_run(session, owner_rel_query, {
+                        "business_id": business["id"],
+                        "owner_id": OWNER_ID
+                    })
+                    
+                    # Generate and create jobs for this business
+                    print(f"  OK Business {i}/30: {business['name']}")
+                    print(f"     Creating 30 jobs for this business...")
+                    
+                    jobs = generate_jobs(business["id"], business["name"])
+                    
+                    created_jobs = 0
+                    for job in jobs:
+                        create_job_query = """
+                            CREATE (j:Job {
                                 id: $id,
-                                name: $name,
-                                category: $category,
+                                title: $title,
                                 description: $description,
-                                address: $address,
-                                phone: $phone,
-                                email: $email,
-                                website: $website,
-                                owner_id: $owner_id,
+                                business_id: $business_id,
+                                business_name: $business_name,
+                                category: $category,
+                                location: $location,
+                                employment_type: $employment_type,
+                                salary_min: $salary_min,
+                                salary_max: $salary_max,
+                                salary_currency: $salary_currency,
+                                required_skills: $required_skills,
+                                experience_required: $experience_required,
+                                education_level: $education_level,
+                                posted_date: $posted_date,
+                                deadline: $deadline,
+                                applications_count: $applications_count,
+                                views_count: $views_count,
                                 is_active: $is_active,
-                                is_verified: $is_verified,
-                                verification_status: $verification_status,
-                                employee_count: $employee_count,
-                                established_year: $established_year,
-                                rating: $rating,
-                                reviews_count: $reviews_count,
-                                latitude: $latitude,
-                                longitude: $longitude,
+                                is_filled: $is_filled,
+                                status: $status,
                                 created_at: $created_at,
                                 updated_at: $updated_at,
-                                business_hours: $business_hours,
-                                permit_number: $permit_number,
-                                is_hiring: $is_hiring
+                                benefits: $benefits,
+                                job_description: $job_description
                             })
-                            RETURN b.id as id
+                            RETURN j.id as id
                         """
                         
-                        result = safe_run(session, create_business_query, business)
-                        if result:
-                            total_created_businesses += 1
+                        job_result = safe_run(session, create_job_query, job)
+                        if job_result:
+                            created_jobs += 1
                         
-                        # Create relationship to owner
-                        owner_rel_query = """
+                        # Create relationship from business to job
+                        job_rel_query = """
                             MATCH (b:Business {id: $business_id})
-                            MATCH (u:User {id: $owner_id})
-                            CREATE (u)-[:OWNS]->(b)
+                            MATCH (j:Job {id: $job_id})
+                            CREATE (b)-[:POSTS]->(j)
                         """
-                        safe_run(session, owner_rel_query, {
+                        safe_run(session, job_rel_query, {
                             "business_id": business["id"],
-                            "owner_id": OWNER_ID
+                            "job_id": job["id"]
                         })
-                        
-                        # Generate and create jobs for this business
-                        print(f"  ✓ Business {i}/30: {business['name']}")
-                        print(f"    └─ Creating 30 jobs for this business...")
-                        
-                        jobs = generate_jobs(business["id"], business["name"])
-                        
-                        created_jobs = 0
-                        for job in jobs:
-                            create_job_query = """
-                                CREATE (j:Job {
-                                    id: $id,
-                                    title: $title,
-                                    description: $description,
-                                    business_id: $business_id,
-                                    business_name: $business_name,
-                                    category: $category,
-                                    location: $location,
-                                    employment_type: $employment_type,
-                                    salary_min: $salary_min,
-                                    salary_max: $salary_max,
-                                    salary_currency: $salary_currency,
-                                    required_skills: $required_skills,
-                                    experience_required: $experience_required,
-                                    education_level: $education_level,
-                                    posted_date: $posted_date,
-                                    deadline: $deadline,
-                                    applications_count: $applications_count,
-                                    views_count: $views_count,
-                                    is_active: $is_active,
-                                    is_filled: $is_filled,
-                                    status: $status,
-                                    created_at: $created_at,
-                                    updated_at: $updated_at,
-                                    benefits: $benefits,
-                                    job_description: $job_description
-                                })
-                                RETURN j.id as id
-                            """
-                            
-                            job_result = safe_run(session, create_job_query, job)
-                            if job_result:
-                                created_jobs += 1
-                            
-                            # Create relationship from business to job
-                            job_rel_query = """
-                                MATCH (b:Business {id: $business_id})
-                                MATCH (j:Job {id: $job_id})
-                                CREATE (b)-[:POSTS]->(j)
-                            """
-                            safe_run(session, job_rel_query, {
-                                "business_id": business["id"],
-                                "job_id": job["id"]
-                            })
-                        
-                        total_created_jobs += created_jobs
-                        print(f"    └─ {created_jobs} jobs created successfully\n")
-                        
-                    except Exception as e:
-                        print(f"  ✗ Error processing business {i}: {e}\n")
-                        continue
+                    
+                    total_created_jobs += created_jobs
+                    print(f"     {created_jobs} jobs created successfully\n")
+                    
+                except Exception as e:
+                    print(f"  ERROR processing business {i}: {e}\n")
+                    continue
             
             # Print summary
             print("\n" + "="*70)
-            print("✅ SEEDING COMPLETED SUCCESSFULLY!")
+            print("SUCCESS: SEEDING COMPLETED!")
             print("="*70)
-            print(f"\n📈 Database Statistics:")
-            print(f"   • Businesses Created: {total_created_businesses}/30")
-            print(f"   • Total Jobs Created: {total_created_jobs}")
-            print(f"   • Average Jobs per Business: {total_created_jobs // max(total_created_businesses, 1)}")
-            print(f"   • Owner: {OWNER_USERNAME} ({OWNER_EMAIL})")
-            print(f"   • Owner ID: {OWNER_ID}")
+            print(f"\nDatabase Statistics:")
+            print(f"   - Businesses Created: {total_created_businesses}/30")
+            print(f"   - Total Jobs Created: {total_created_jobs}")
+            print(f"   - Average Jobs per Business: {total_created_jobs // max(total_created_businesses, 1)}")
+            print(f"   - Owner: {OWNER_USERNAME} ({OWNER_EMAIL})")
+            print(f"   - Owner ID: {OWNER_ID}")
             print("\n" + "="*70)
-            print("\n✨ Your database is now populated with realistic Catanduanes business data!")
-            print("📍 You can now test the application with real businesses and job listings.")
-            print("🔗 All businesses and jobs are linked to user 'ren'.\n")
+            print("\nYour database is now populated with realistic Catanduanes business data!")
+            print("You can now test the application with real businesses and job listings.")
+            print("All businesses and jobs are linked to user 'ren'.\n")
             
-        except Exception as e:
-            print(f"\n❌ Error during seeding: {e}")
-            import traceback
-            traceback.print_exc()
-            sys.exit(1)
+    except Exception as e:
+        print(f"\nERROR during seeding: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+    finally:
+        driver.close()
 
 if __name__ == "__main__":
     seed_database()
