@@ -148,23 +148,31 @@ def job_seeker():
                    sum(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) as rejected_applications
         """, {'user_id': current_user.id})
         
-        # Get recent applications
-        applications = safe_run(session, """
+        # Get recent applications with complete job data
+        applications_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:APPLIED_TO]->(a:JobApplication)-[:FOR_JOB]->(j:Job)
             MATCH (j)-[:POSTED_BY]->(b:Business)
-            RETURN a, j.title as job_title, b.name as business_name
+            RETURN a, j, b.name as business_name
             ORDER BY a.created_at DESC LIMIT 5
         """, {'user_id': current_user.id})
+        
+        # Format applications with nested job data for template
+        applications = []
+        for record in applications_raw:
+            app_node = record.get('a')
+            job_node = record.get('j')
+            if app_node and job_node:
+                app_dict = _node_to_dict(app_node) if hasattr(app_node, '__dict__') else dict(app_node)
+                job_dict = _node_to_dict(job_node) if hasattr(job_node, '__dict__') else dict(job_node)
+                app_dict['job'] = job_dict
+                app_dict['business_name'] = record.get('business_name', '')
+                applications.append(app_dict)
         
         # Get verification status
         verification = safe_run(session, """
             MATCH (u:User {id: $user_id})
-            OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
-            WITH u, v ORDER BY v.created_at DESC LIMIT 1
             RETURN u.verification_status as status,
-                   v.submitted_at as submitted_at,
-                   v.reviewed_at as reviewed_at,
-                   v.reviewer_notes as notes
+                   u.is_verified as is_verified
         """, {'user_id': current_user.id})
         
         # Get recommended jobs
