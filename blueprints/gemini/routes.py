@@ -371,13 +371,12 @@ def recommend_jobs_by_salary():
             if user_data and len(user_data) > 0:
                 salary_expectation = user_data[0].get('salary_expectation', 0)
 
-            # Get all available jobs sorted by salary
+            # Get all available jobs sorted by salary (or by ID if salary not available)
             jobs_data = safe_run(session, """
                 MATCH (j:Job)
-                WHERE j.salary_max IS NOT NULL
                 RETURN j.id as id, j.title as title, j.salary_min as salary_min, 
                        j.salary_max as salary_max, j.category as category
-                ORDER BY j.salary_max DESC
+                ORDER BY coalesce(j.salary_max, j.salary_min, 0) DESC
                 LIMIT 50
             """)
 
