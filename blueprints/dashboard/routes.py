@@ -24,79 +24,131 @@ def index():
 @login_required
 @role_required('business_owner')
 def business_owner():
-    """Business owner dashboard"""
+    """Business owner dashboard - fetch all data explicitly from database"""
     db = get_neo4j_db()
+    
+    # Initialize data
+    stats = {
+        'business_count': 0,
+        'job_count': 0,
+        'application_count': 0
+    }
+    applications = []
+    businesses = []
+    verification = {}
+    
     with db.session() as session:
-        # Ensure OWNS relationships exist (auto-create if missing)
-        safe_run(session, """
+        # Step 1: Ensure OWNS relationships exist
+        logger.info(f"Dashboard: Creating OWNS relationships for user {current_user.id}")
+        create_owns = safe_run(session, """
             MATCH (u:User {id: $user_id})
             MATCH (b:Business)
             MERGE (u)-[:OWNS]->(b)
+            RETURN count(*) as created
         """, {'user_id': current_user.id})
         
-        # Get business statistics for businesses owned by this user
-        stats_result = safe_run(session, """
+        if create_owns:
+            logger.info(f"Dashboard: Created/verified {create_owns[0].get('created', 0)} OWNS relationships")
+        
+        # Step 2: Get business count
+        logger.info("Dashboard: Fetching business count")
+        business_count_result = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
-            OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b)
-            OPTIONAL MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
-            RETURN coalesce(count(DISTINCT b), 0) as business_count,
-                   coalesce(count(DISTINCT j), 0) as job_count,
-                   coalesce(count(DISTINCT a), 0) as application_count
+            RETURN count(b) as count
         """, {'user_id': current_user.id})
         
-        # Convert stats result to dictionary
-        stats = {}
-        if stats_result:
-            result = stats_result[0]
-            stats = {
-                'business_count': result.get('business_count', 0) if isinstance(result, dict) else getattr(result, 'business_count', 0),
-                'job_count': result.get('job_count', 0) if isinstance(result, dict) else getattr(result, 'job_count', 0),
-                'application_count': result.get('application_count', 0) if isinstance(result, dict) else getattr(result, 'application_count', 0)
-            }
+        if business_count_result and len(business_count_result) > 0:
+            stats['business_count'] = business_count_result[0].get('count', 0)
+            logger.info(f"Dashboard: Found {stats['business_count']} businesses")
         
-        # Get recent job applications
-        applications = safe_run(session, """
+        # Step 3: Get job count
+        logger.info("Dashboard: Fetching job count")
+        job_count_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
+            WHERE j.is_active = true
+            RETURN count(j) as count
+        """, {'user_id': current_user.id})
+        
+        if job_count_result and len(job_count_result) > 0:
+            stats['job_count'] = job_count_result[0].get('count', 0)
+            logger.info(f"Dashboard: Found {stats['job_count']} jobs")
+        
+        # Step 4: Get application count
+        logger.info("Dashboard: Fetching application count")
+        app_count_result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
+            MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
+            RETURN count(a) as count
+        """, {'user_id': current_user.id})
+        
+        if app_count_result and len(app_count_result) > 0:
+            stats['application_count'] = app_count_result[0].get('count', 0)
+            logger.info(f"Dashboard: Found {stats['application_count']} applications")
+        
+        # Step 5: Get recent applications with details
+        logger.info("Dashboard: Fetching recent applications")
+        applications_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             MATCH (j:Job)-[:POSTED_BY]->(b)
             MATCH (j)<-[:FOR_JOB]-(a:JobApplication)<-[:APPLIED_TO]-(applicant:User)
-            RETURN a, j.title as job_title, applicant.username as applicant_name
-            ORDER BY a.created_at DESC LIMIT 5
+            RETURN a as application, 
+                   j.title as job_title, 
+                   applicant.username as applicant_name,
+                   applicant.email as applicant_email
+            ORDER BY a.created_at DESC 
+            LIMIT 5
         """, {'user_id': current_user.id})
         
-        # Get user's businesses
-        businesses_result = safe_run(session, """
+        if applications_raw:
+            logger.info(f"Dashboard: Processing {len(applications_raw)} applications")
+            applications = applications_raw
+        
+        # Step 6: Get all businesses with their job counts
+        logger.info("Dashboard: Fetching businesses")
+        businesses_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b) WHERE j.is_active = true
-            RETURN b,
-                   count(DISTINCT j) as jobs_count
+            WITH b, count(j) as job_count
+            RETURN b, job_count
             ORDER BY b.created_at DESC
         """, {'user_id': current_user.id})
         
-        # Format businesses for template
-        businesses = []
-        for record in businesses_result:
-            business_node = record.get('b')
-            if business_node:
-                business_dict = dict(business_node) if hasattr(business_node, 'items') else _node_to_dict(business_node)
-                business_dict['jobs_count'] = record.get('jobs_count', 0)
-                businesses.append(business_dict)
+        if businesses_raw:
+            logger.info(f"Dashboard: Processing {len(businesses_raw)} businesses")
+            for record in businesses_raw:
+                try:
+                    business_node = record.get('b')
+                    if business_node:
+                        business_dict = _node_to_dict(business_node) if hasattr(business_node, '__dict__') else dict(business_node)
+                        business_dict['jobs_count'] = record.get('job_count', 0)
+                        businesses.append(business_dict)
+                except Exception as e:
+                    logger.error(f"Dashboard: Error processing business: {str(e)}")
         
-        # Get verification status
-        verification = safe_run(session, """
+        # Step 7: Get verification status
+        logger.info("Dashboard: Fetching verification status")
+        verification_result = safe_run(session, """
             MATCH (u:User {id: $user_id})
-            OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
-            WITH u, v ORDER BY v.created_at DESC LIMIT 1
             RETURN u.verification_status as status,
-                   v.submitted_at as submitted_at,
-                   v.reviewed_at as reviewed_at,
-                   v.reviewer_notes as notes
+                   u.is_verified as is_verified
         """, {'user_id': current_user.id})
+        
+        if verification_result and len(verification_result) > 0:
+            verification = {
+                'status': verification_result[0].get('status', 'unverified'),
+                'is_verified': verification_result[0].get('is_verified', False)
+            }
+            logger.info(f"Dashboard: Verification status: {verification['status']}")
+    
+    logger.info(f"Dashboard: Rendering with stats - businesses: {stats['business_count']}, jobs: {stats['job_count']}, applications: {stats['application_count']}")
     
     return render_template('business/business_owner_dashboard.html',
         stats=stats,
         applications=applications,
         businesses=businesses,
-        verification=verification[0] if verification else {}
+        verification=verification
     )
 
 @dashboard_bp.route('/job-seeker')
