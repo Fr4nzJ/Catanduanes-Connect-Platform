@@ -54,7 +54,7 @@
                 </div>
                 
                 <!-- Desktop Navigation -->
-                <div class="block">
+                <div class="hidden md:block">
                     <div class="ml-10 flex items-baseline space-x-4">
                         <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
                             Home
@@ -153,7 +153,9 @@
                     
                     <!-- Mobile menu button -->
                     <div class="md:hidden">
-                        <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-600 hover:text-blue-600">
+                        <button @click="mobileMenuOpen = !mobileMenuOpen" 
+                                :aria-expanded="mobileMenuOpen"
+                                class="text-gray-600 hover:text-blue-600">
                             <i class="fas fa-bars text-lg"></i>
                         </button>
                     </div>
@@ -174,7 +176,7 @@
                 <a href="{{ url_for('businesses.list_businesses') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Businesses
                 </a>
-                <a href="{{ url_for('chat.chatbot_view') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
+                <a href="{{ url_for('chat.user_chat_view') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Chat
                 </a>
                 <a href="{{ url_for('about') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
@@ -279,42 +281,6 @@
             </script>
         {% endif %}
     {% endwith %}
-    
-    <!-- Mobile Menu Toggle Script -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
-            const mobileNav = document.getElementById('mobile-nav');
-            
-            if (mobileMenuToggle && mobileNav) {
-                mobileMenuToggle.addEventListener('click', function() {
-                    mobileNav.classList.toggle('hidden');
-                    const isExpanded = !mobileNav.classList.contains('hidden');
-                    mobileMenuToggle.setAttribute('aria-expanded', isExpanded);
-                });
-                
-                // Close menu when a link is clicked
-                const navLinks = mobileNav.querySelectorAll('a');
-                navLinks.forEach(link => {
-                    link.addEventListener('click', function() {
-                        mobileNav.classList.add('hidden');
-                        mobileMenuToggle.setAttribute('aria-expanded', false);
-                    });
-                });
-                
-                // Close menu when clicking outside
-                document.addEventListener('click', function(event) {
-                    const isClickInsideNav = mobileNav.contains(event.target);
-                    const isClickOnToggle = mobileMenuToggle.contains(event.target);
-                    
-                    if (!isClickInsideNav && !isClickOnToggle && !mobileNav.classList.contains('hidden')) {
-                        mobileNav.classList.add('hidden');
-                        mobileMenuToggle.setAttribute('aria-expanded', false);
-                    }
-                });
-            }
-        });
-    </script>
     
     {% block scripts %}{% endblock %}
 </body>
