@@ -3,174 +3,58 @@
 {% block title %}AI Chatbot Assistant{% endblock %}
 
 {% block content %}
-<style>
-    /* Hide the base.html chat elements on this page */
-    .fixed.bottom-6.right-6.z-50 {
-        display: none !important;
-    }
-
-    #chat-modal {
-        display: none !important;
-    }
-
-    /* AI Bubble Styles */
-    .ai-bubble {
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        z-index: 40;
-    }
-
-    .ai-bubble-button {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
-        border: none;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.3s ease;
-        color: white;
-    }
-
-    .ai-bubble-button:hover {
-        transform: scale(1.1);
-        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
-    }
-
-    .ai-popup {
-        position: fixed;
-        bottom: 9rem;
-        right: 1.5rem;
-        width: 420px;
-        max-height: 600px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        display: none;
-        flex-direction: column;
-        z-index: 41;
-        overflow: hidden;
-        animation: slideUp 0.3s ease;
-    }
-
-    .ai-popup.show {
-        display: flex;
-    }
-
-    @keyframes slideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .ai-popup-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .ai-popup-body {
-        padding: 20px;
-        flex: 1;
-        overflow-y: auto;
-    }
-
-    .ai-commands {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .ai-command-btn {
-        background: #f0f4ff;
-        border: 2px solid #e0e7ff;
-        border-radius: 12px;
-        padding: 12px 16px;
-        text-align: left;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        font-size: 13px;
-        font-weight: 500;
-        color: #2d3748;
-    }
-
-    .ai-command-btn:hover {
-        background: #667eea;
-        color: white;
-        border-color: #667eea;
-        transform: translateX(4px);
-    }
-
-    .ai-popup-close {
-        background: none;
-        border: none;
-        color: white;
-        font-size: 24px;
-        cursor: pointer;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-</style>
-
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-10">
-    <!-- AI Bubble -->
-    <div class="ai-bubble">
-        <button class="ai-bubble-button" id="ai-bubble-btn" title="Chat Assistant">
-            <span style="font-size: 28px;">✨</span>
-        </button>
-        <div class="ai-popup" id="ai-popup">
-            <div class="ai-popup-header">
-                <div class="flex items-center gap-2">
-                    <span style="font-size: 20px;">🤖</span>
-                    <span class="font-bold" id="ai-header-text">Chat Assistant</span>
-                </div>
-                <button class="ai-popup-close" id="ai-popup-close">
-                    <span style="font-size: 24px;">✕</span>
-                </button>
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="flex items-center justify-center gap-3 mb-4">
+                <i class="fas fa-robot text-5xl text-blue-600"></i>
             </div>
-            <div class="ai-popup-body">
-                <p class="text-gray-700 font-semibold mb-4" id="ai-helper-text">Quick chat help</p>
-                <div class="ai-commands">
-                    <button class="ai-command-btn" onclick="insertPrompt('Tell me about available jobs')">
-                        <span style="font-size: 16px; margin-right: 8px;">💼</span>
-                        <span id="btn-ask-jobs">Ask about jobs</span>
-                    </button>
-                    <button class="ai-command-btn" onclick="insertPrompt('Show me local businesses')">
-                        <span style="font-size: 16px; margin-right: 8px;">🏪</span>
-                        <span id="btn-ask-business">Ask about businesses</span>
-                    </button>
-                    <button class="ai-command-btn" onclick="insertPrompt('What services are available')">
-                        <span style="font-size: 16px; margin-right: 8px;">🛠️</span>
-                        <span id="btn-ask-services">Ask about services</span>
-                    </button>
-                    <button class="ai-command-btn" onclick="insertPrompt('Help me find job opportunities')">
-                        <span style="font-size: 16px; margin-right: 8px;">🎯</span>
-                        <span id="btn-ask-recommendations">Get recommendations</span>
-                    </button>
-                    <button class="ai-command-btn" onclick="clearChat()">
-                        <span style="font-size: 16px; margin-right: 8px;">🔄</span>
-                        <span id="btn-clear">Clear chat</span>
-                    </button>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">Gemini AI Assistant</h1>
+            <p class="text-xl text-gray-600">Ask anything about jobs, businesses, or services in Catanduanes</p>
+        </div>
+
+        <!-- Chat Container -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Messages Area -->
+            <div id="chat-messages" class="h-96 overflow-y-auto p-6 bg-gray-50 space-y-4">
+                <div class="flex justify-start">
+                    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-4 rounded-xl rounded-tl-none max-w-xs shadow-md">
+                        <p class="font-semibold">👋 Hello!</p>
+                        <p class="text-sm mt-1">I'm your Gemini AI Assistant. How can I help you today? Feel free to ask me about jobs, businesses, services, or anything else about Catanduanes!</p>
+                    </div>
                 </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="bg-white border-t-2 border-gray-200 p-6">
+                <form id="chat-form" class="flex gap-3">
+                    <input type="text" 
+                           id="user-input" 
+                           class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-colors" 
+                           placeholder="Type your message here..."
+                           required>
+                    <button type="submit" 
+                            class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg hover:scale-105 transition-all duration-300 flex items-center gap-2">
+                        <i class="fas fa-paper-plane"></i>Send
+                    </button>
+                </form>
             </div>
         </div>
-    </div>
 
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Info Box -->
+        <div class="mt-8 bg-blue-50 border-2 border-blue-200 rounded-xl p-6">
+            <p class="text-blue-900 text-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                <strong>Tip:</strong> You can ask me questions like "What jobs are available?", "Show me businesses in X category", or "What services are nearby?"
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Add chat-specific JavaScript -->
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}
         <!-- Header -->
         <div class="text-center mb-10">
             <div class="flex items-center justify-center gap-3 mb-4">
