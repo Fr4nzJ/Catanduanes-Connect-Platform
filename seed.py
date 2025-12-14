@@ -8,7 +8,7 @@ Run with: python seed.py
 import os
 import sys
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import random
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
@@ -92,8 +92,8 @@ def generate_businesses(owner_id):
             "reviews_count": random.randint(10, 500),
             "latitude": round(random.uniform(13.5, 14.0), 4),
             "longitude": round(random.uniform(123.5, 124.5), 4),
-            "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 365))).isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 365))).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "business_hours": "8:00 AM - 5:00 PM",
             "permit_number": f"PERMIT-{i+1:03d}-2024",
             "is_hiring": True
@@ -128,15 +128,15 @@ def generate_jobs(business_id, business_name):
             "required_skills": random.sample(SKILLS, random.randint(3, 7)),
             "experience_required": f"{random.randint(0, 5)} years",
             "education_level": random.choice(["High School", "Associate", "Bachelor", "Master"]),
-            "posted_date": (datetime.utcnow() - timedelta(days=random.randint(1, 60))).isoformat(),
-            "deadline": (datetime.utcnow() + timedelta(days=random.randint(10, 60))).isoformat(),
+            "posted_date": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 60))).isoformat(),
+            "deadline": (datetime.now(timezone.utc) + timedelta(days=random.randint(10, 60))).isoformat(),
             "applications_count": random.randint(0, 50),
             "views_count": random.randint(50, 500),
             "is_active": random.choice([True, True, True, False]),  # 75% active
             "is_filled": random.choice([False, False, False, False, False, True]),  # 17% filled
             "status": "open" if random.random() > 0.17 else "filled",
-            "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 60))).isoformat(),
-            "updated_at": datetime.utcnow().isoformat(),
+            "created_at": (datetime.now(timezone.utc) - timedelta(days=random.randint(1, 60))).isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "benefits": [
                 "Health Insurance",
                 "13th Month Pay",
