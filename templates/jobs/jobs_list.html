@@ -777,13 +777,11 @@
         }
     }
 
-    function displayRecommendations(recommendedJobIds) {
+    async function displayRecommendations(recommendedJobIds) {
         const recommendedSection = document.getElementById('recommended-section');
         const recommendedJobsContainer = document.getElementById('recommended-jobs');
 
         console.log('Recommended Job IDs from backend:', recommendedJobIds);
-        console.log('All available jobs:', allJobsData);
-        console.log('All job IDs:', allJobsData.map(j => j.id));
 
         if (!recommendedJobIds || recommendedJobIds.length === 0) {
             recommendedJobsContainer.innerHTML = `
@@ -795,10 +793,34 @@
             return;
         }
 
-        // Filter jobs based on recommended IDs
-        const recommendedJobs = allJobsData.filter(job => recommendedJobIds.includes(job.id));
-        
-        console.log('Filtered recommended jobs:', recommendedJobs);
+        // Fetch full job details from backend
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/fetch-jobs-by-ids', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                },
+                body: JSON.stringify({ job_ids: recommendedJobIds })
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch job details');
+            
+            const data = await response.json();
+            const recommendedJobs = data.jobs || [];
+            
+            console.log('Fetched recommended jobs:', recommendedJobs);
+
+            if (!recommendedJobs || recommendedJobs.length === 0) {
+                recommendedJobsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <p class="text-gray-600"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>No job details found.</p>
+                    </div>
+                `;
+                recommendedSection.classList.add('show');
+                return;
+            }
 
         // Create job cards
         const jobsHTML = recommendedJobs.map(job => `
@@ -869,6 +891,15 @@
         
         // Scroll to recommendations
         document.getElementById('recommended-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+            console.error('Error fetching job details:', error);
+            recommendedJobsContainer.innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <p class="text-gray-600"><i class="fas fa-exclamation-circle text-gray-300 text-3xl mb-2 block"></i>Error loading recommendations. Please try again.</p>
+                </div>
+            `;
+            recommendedSection.classList.add('show');
+        }
     }
 </script>
 {% endblock %}

@@ -405,3 +405,86 @@ def recommend_jobs_by_salary():
         logger.error(f"Error recommending jobs by salary: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
+
+@gemini_bp.route('/fetch-jobs-by-ids', methods=['POST'])
+@login_required
+def fetch_jobs_by_ids():
+    """Fetch full job details for given job IDs"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        job_ids = data.get('job_ids', [])
+        
+        if not job_ids or not isinstance(job_ids, list):
+            return jsonify({'status': 'error', 'message': 'job_ids must be a non-empty array'}), 400
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Fetch job details for all provided IDs
+            jobs_data = safe_run(session, """
+                MATCH (j:Job)
+                WHERE j.id IN $job_ids
+                OPTIONAL MATCH (j)-[:POSTED_BY]->(b:Business)
+                RETURN j.id as id, j.title as title, j.description as description,
+                       j.type as type_val, j.setup as setup, j.category as category,
+                       j.location as location, j.salary_min as salary_min,
+                       j.salary_max as salary_max, j.latitude as latitude,
+                       j.longitude as longitude,
+                       COALESCE(b.name, 'Company') as business_name
+            """, {'job_ids': job_ids})
+            
+            # Format jobs for frontend
+            jobs_list = []
+            if jobs_data:
+                for job in jobs_data:
+                    # Determine display values
+                    job_type_map = {
+                        'full_time': 'Full-time',
+                        'part_time': 'Part-time',
+                        'contract': 'Contract',
+                        'internship': 'Internship'
+                    }
+                    job_setup_map = {
+                        'on_site': 'On-site',
+                        'remote': 'Remote',
+                        'hybrid': 'Hybrid'
+                    }
+                    
+                    type_display = job_type_map.get(job.get('type_val'), job.get('type_val', 'Full-time'))
+                    setup_display = job_setup_map.get(job.get('setup'), job.get('setup', 'On-site'))
+                    
+                    # Format salary
+                    salary_range = ''
+                    if job.get('salary_min') or job.get('salary_max'):
+                        if job.get('salary_min') and job.get('salary_max'):
+                            salary_range = f"₱{job.get('salary_min'):,} - ₱{job.get('salary_max'):,}/month"
+                        elif job.get('salary_max'):
+                            salary_range = f"Up to ₱{job.get('salary_max'):,}/month"
+                        elif job.get('salary_min'):
+                            salary_range = f"From ₱{job.get('salary_min'):,}/month"
+                    
+                    job_dict = {
+                        'id': job.get('id'),
+                        'title': job.get('title'),
+                        'description': job.get('description'),
+                        'business_name': job.get('business_name'),
+                        'type_display': type_display,
+                        'setup_display': setup_display,
+                        'salary_range_display': salary_range,
+                        'category': job.get('category'),
+                        'location': job.get('location'),
+                        'latitude': job.get('latitude'),
+                        'longitude': job.get('longitude')
+                    }
+                    jobs_list.append(job_dict)
+            
+            logger.info(f"Fetched {len(jobs_list)} job details for IDs: {job_ids}")
+            
+            return jsonify({
+                'status': 'success',
+                'jobs': jobs_list
+            })
+    except Exception as e:
+        logger.error(f"Error fetching jobs by IDs: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
