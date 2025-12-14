@@ -46,18 +46,10 @@ class GeminiChat:
             
             # Initialize the Gemini client with basic configuration
             genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash-lite')
+            self.model = genai.GenerativeModel('gemini-2.5-flash')
             
-            # Test the connection with a simple prompt
-            try:
-                response = self.model.generate_content("Hi")
-                if response and hasattr(response, 'text') and response.text:
-                    logger.info("Successfully initialized and tested Gemini client")
-                else:
-                    raise ValueError("Failed to get test response from Gemini model")
-            except Exception as test_error:
-                logger.warning(f"Failed to test Gemini connection: {str(test_error)}")
-                logger.info("Gemini client initialized but test failed - some features may be unavailable")
+            # Skip connection test to avoid quota limits on free tier
+            logger.info("Gemini client initialized (connection test skipped to preserve quota)")
             
         except Exception as e:
             logger.error(f"Failed to initialize Gemini client: {str(e)}")

@@ -69,7 +69,7 @@ def list_jobs():
         # Build base query
         query = """
             MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
+            WHERE j.is_active = true
         """
         params = {
             'skip': skip,
@@ -127,7 +127,7 @@ def list_jobs():
         # Get total count
         count_query = """
             MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
+            WHERE j.is_active = true
         """
         count_params = {}
         
@@ -159,7 +159,7 @@ def list_jobs():
         # Get category counts
         categories_result = safe_run(session, """
             MATCH (j:Job)
-            WHERE j.is_active = true AND (j.status IS NULL OR j.status <> 'filled')
+            WHERE j.is_active = true
             RETURN j.category as category, count(j) as count
             ORDER BY count DESC
         """, {})
@@ -252,9 +252,7 @@ def job_detail(job_id):
         result = safe_run(session, """
             MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
             MATCH (u:User)-[:OWNS]->(b)
-            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
-            WITH j, b, u, avg(r.rating) as avg_rating, count(r) as review_count
-            RETURN j, b, u.id as business_owner_id, avg_rating, review_count
+            RETURN j, b, u.id as business_owner_id
         """, {'job_id': job_id})
         
         if not result:
@@ -266,8 +264,6 @@ def job_detail(job_id):
         job_data['business_id'] = record['b']['id']
         job_data['business_name'] = record['b']['name']
         job_data['business_owner_id'] = record['business_owner_id']
-        job_data['business_rating'] = record['avg_rating'] or 0.0
-        job_data['business_review_count'] = record['review_count'] or 0
         
         job = Job(**job_data)
         
