@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from database import Neo4jConnection, safe_run, _node_to_dict
-from models import User, Business, Job, Service, Review, Notification
+from models import User, Business, Job, Review, Notification
 
 # Load environment variables
 load_dotenv()

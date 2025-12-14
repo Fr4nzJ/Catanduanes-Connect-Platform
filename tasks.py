@@ -14,6 +14,14 @@ from celery import Celery, shared_task
 # Initialize Celery
 celery = Celery(__name__)
 
+# Configure Celery broker
+# Try environment variables in order: CELERY_BROKER_URL, REDIS_URL, then fallback to localhost
+broker_url = (os.environ.get('CELERY_BROKER_URL') or 
+              os.environ.get('REDIS_URL') or 
+              'redis://localhost:6379/0')
+celery.conf.broker_url = broker_url
+celery.conf.result_backend = broker_url
+
 def run_async(fn):
     """Decorator to run a function asynchronously"""
     def wrapper(*args, **kwargs):
