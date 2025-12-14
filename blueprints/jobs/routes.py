@@ -872,9 +872,17 @@ def view_applicant_profile(application_id):
         if resume_data and isinstance(resume_data, str):
             try:
                 import json
+                from flask import current_app
                 resume_data = json.loads(resume_data)
-            except (json.JSONDecodeError, TypeError):
+                current_app.logger.info(f"Successfully parsed resume_data for applicant {applicant_data.get('id')}: {bool(resume_data)}")
+            except (json.JSONDecodeError, TypeError) as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to parse resume_data: {str(e)}")
                 resume_data = None
+        else:
+            if resume_data:
+                import logging
+                logging.getLogger(__name__).info(f"Resume data is already parsed or empty: {type(resume_data)}")
         
         # Format applicant profile
         applicant = {
