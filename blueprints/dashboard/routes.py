@@ -1,12 +1,16 @@
 import os
+import logging
 import uuid
 from datetime import datetime
 from flask import render_template, redirect, url_for, current_app
+
 from flask_login import login_required, current_user
 
 from . import dashboard_bp
 from database import get_neo4j_db, safe_run, _node_to_dict
 from decorators import role_required
+
+logger = logging.getLogger(__name__)
 
 @dashboard_bp.route('/')
 @login_required
