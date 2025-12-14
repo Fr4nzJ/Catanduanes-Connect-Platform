@@ -30,7 +30,10 @@ def business_owner():
     # Initialize data
     stats = {
         'business_count': 0,
-        'job_count': 0
+        'job_count': 0,
+        'application_count': 0,
+        'filled_jobs': 0,
+        'pending_applicants': 0
     }
     applications = []
     businesses = []
@@ -46,22 +49,53 @@ def business_owner():
         if business_count_result and len(business_count_result) > 0:
             stats['business_count'] = business_count_result[0].get('count', 0)
         
-        # Step 2: Get job counts
+        # Step 2: Get job counts and filled jobs
         job_results = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             MATCH (j:Job)-[:POSTED_BY]->(b)
-            RETURN count(j) as total_jobs
+            RETURN 
+                sum(CASE WHEN j.is_active = true THEN 1 ELSE 0 END) as active_jobs,
+                sum(CASE WHEN j.is_active = false THEN 1 ELSE 0 END) as filled_jobs
         """, {'user_id': current_user.id})
         
         if job_results and len(job_results) > 0:
-            stats['job_count'] = job_results[0].get('total_jobs', 0)
+            stats['job_count'] = job_results[0].get('active_jobs', 0)
+            stats['filled_jobs'] = job_results[0].get('filled_jobs', 0)
         
-        # Step 3: Get all businesses with job counts
+        # Step 3: Get application counts with pending status
+        app_results = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
+            MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
+            RETURN 
+                count(a) as total_applications,
+                sum(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) as pending_applicants
+        """, {'user_id': current_user.id})
+        
+        if app_results and len(app_results) > 0:
+            stats['application_count'] = app_results[0].get('total_applications', 0)
+            stats['pending_applicants'] = app_results[0].get('pending_applicants', 0)
+        
+        # Step 4: Get recent applications with proper formatting
+        applications_raw = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
+            MATCH (j:Job)-[:POSTED_BY]->(b)
+            MATCH (j)<-[:FOR_JOB]-(a:JobApplication)<-[:APPLIED_TO]-(applicant:User)
+            RETURN a, j.title as job_title, applicant.username as applicant_name
+            ORDER BY a.created_at DESC 
+            LIMIT 5
+        """, {'user_id': current_user.id})
+        
+        if applications_raw:
+            applications = applications_raw
+        
+        # Step 5: Get all businesses with job counts and reviews
         businesses_raw = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
-            OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b)
-            WITH b, count(DISTINCT j) as job_count
-            RETURN b, job_count
+            OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b) WHERE j.is_active = true
+            OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
+            WITH b, count(DISTINCT j) as job_count, count(DISTINCT r) as reviews_count, avg(r.rating) as avg_rating
+            RETURN b, job_count, reviews_count, avg_rating
             ORDER BY b.created_at DESC
         """, {'user_id': current_user.id})
         
@@ -72,11 +106,13 @@ def business_owner():
                     if business_node:
                         business_dict = _node_to_dict(business_node) if hasattr(business_node, '__dict__') else dict(business_node)
                         business_dict['jobs_count'] = record.get('job_count', 0)
+                        business_dict['reviews_count'] = record.get('reviews_count', 0)
+                        business_dict['rating'] = round(record.get('avg_rating', 0), 1) if record.get('avg_rating') else 0
                         businesses.append(business_dict)
                 except Exception as e:
                     logger.error(f"Dashboard: Error processing business: {str(e)}")
         
-        # Step 4: Get verification status
+        # Step 6: Get verification status
         verification_result = safe_run(session, """
             MATCH (u:User {id: $user_id})
             RETURN u.verification_status as status,
@@ -95,7 +131,6 @@ def business_owner():
         businesses=businesses,
         verification=verification
     )
-
     
 @dashboard_bp.route('/job-seeker')
 @login_required
@@ -104,19 +139,52 @@ def job_seeker():
     """Job seeker dashboard"""
     db = get_neo4j_db()
     with db.session() as session:
-        # Get all jobs for recommendations (since we don't have application tracking)
+        # Get application statistics
+        stats = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:APPLIED_TO]->(a:JobApplication)
+            RETURN count(a) as total_applications,
+                   sum(CASE WHEN a.status = 'pending' THEN 1 ELSE 0 END) as pending_applications,
+                   sum(CASE WHEN a.status = 'accepted' THEN 1 ELSE 0 END) as accepted_applications,
+                   sum(CASE WHEN a.status = 'rejected' THEN 1 ELSE 0 END) as rejected_applications
+        """, {'user_id': current_user.id})
+        
+        # Get recent applications
+        applications = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:APPLIED_TO]->(a:JobApplication)-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)
+            RETURN a, j.title as job_title, b.name as business_name
+            ORDER BY a.created_at DESC LIMIT 5
+        """, {'user_id': current_user.id})
+        
+        # Get verification status
+        verification = safe_run(session, """
+            MATCH (u:User {id: $user_id})
+            OPTIONAL MATCH (u)-[:SUBMITTED]->(v:Verification)
+            WITH u, v ORDER BY v.created_at DESC LIMIT 1
+            RETURN u.verification_status as status,
+                   v.submitted_at as submitted_at,
+                   v.reviewed_at as reviewed_at,
+                   v.reviewer_notes as notes
+        """, {'user_id': current_user.id})
+        
+        # Get recommended jobs
         recommended_jobs_raw = safe_run(session, """
-            MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-            WHERE j.is_active = true
-            RETURN j, b.name AS business_name
-            ORDER BY j.created_at DESC
+            MATCH (u:User {id: $user_id})
+            OPTIONAL MATCH (u)-[:APPLIED_TO]->(:JobApplication)-[:FOR_JOB]->(appliedJob:Job)
+            WITH u, collect(DISTINCT appliedJob.id) AS appliedIds
+
+            MATCH (newJob:Job)-[:POSTED_BY]->(b:Business)
+            WHERE newJob.is_active = true
+            AND NOT newJob.id IN appliedIds
+            RETURN newJob, b.name AS business_name, b.rating AS business_rating
+            ORDER BY newJob.created_at DESC
             LIMIT 5
         """, {'user_id': current_user.id})
         
         # Format recommended jobs for template
         recommended_jobs = []
         for record in recommended_jobs_raw:
-            job_data = record.get('j')
+            job_data = record.get('newJob')
             if job_data:
                 recommended_jobs.append({
                     'id': job_data.get('id'),
@@ -125,36 +193,28 @@ def job_seeker():
                     'location': job_data.get('location', ''),
                     'created_at': job_data.get('created_at', ''),
                     'business_name': record.get('business_name', ''),
-                    'business_rating': 0
+                    'business_rating': record.get('business_rating', 0) or 0
                 })
         
-        # Initialize empty stats since we don't have application tracking yet
-        stats = {
-            'total_applications': 0,
-            'pending_applications': 0,
-            'accepted_applications': 0,
-            'rejected_applications': 0
-        }
-        
-        applications = []
-        
-        # Get verification status
-        verification_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})
-            RETURN u.verification_status as status,
-                   u.is_verified as is_verified
-        """, {'user_id': current_user.id})
-        
-        verification_info = verification_result[0] if verification_result else {}
+        verification_info = verification[0] if verification else {}
         verification_status = verification_info.get('status', 'pending')
     
+    # FIX: Handle empty stats safely
+    stats_data = stats[0] if stats and len(stats) > 0 else {
+        'total_applications': 0,
+        'pending_applications': 0,
+        'accepted_applications': 0,
+        'rejected_applications': 0
+    }
+    
     return render_template('dashboard/job_seeker_dashboard.html',
-        stats=stats[0] if stats else {},
+        stats=stats_data,
         applications=applications,
         verification=verification_info,
         verification_status=verification_status,
         recommended_jobs=recommended_jobs
     )
+
 
 @dashboard_bp.route('/service-provider')
 @login_required
