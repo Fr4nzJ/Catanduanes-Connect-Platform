@@ -250,7 +250,8 @@ def job_detail(job_id):
     with db.session() as session:
         # Get job and business details
         result = safe_run(session, """
-            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)<-[:OWNS]-(u:User)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
+            MATCH (u:User)-[:OWNS]->(b)
             OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
             WITH j, b, u, avg(r.rating) as avg_rating, count(r) as review_count
             RETURN j, b, u.id as business_owner_id, avg_rating, review_count
@@ -355,7 +356,8 @@ def apply_job(job_id):
     with db.session() as session:
         # Check if job exists and is active, and get business owner info
         job_result = safe_run(session, """
-            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)<-[:OWNS]-(u:User)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
+            MATCH (u:User)-[:OWNS]->(b)
             WHERE j.is_active = true
             RETURN j, b.id as business_id, b.name as business_name, b.email as business_email, u.email as owner_email, u.id as owner_id
         """, {'job_id': job_id})
@@ -455,7 +457,8 @@ def apply_job(job_id):
         
         # Get owner info for email
         owner_result = safe_run(session, """
-            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)<-[:OWNS]-(owner:User)
+            MATCH (j:Job {id: $job_id})-[:POSTED_BY]->(b:Business)
+            MATCH (owner:User)-[:OWNS]->(b)
             RETURN owner.email as owner_email, owner.id as owner_id, b.name as business_name
         """, {'job_id': job_id})
         
