@@ -27,10 +27,16 @@ def business_owner():
     """Business owner dashboard"""
     db = get_neo4j_db()
     with db.session() as session:
+        # Ensure OWNS relationships exist (auto-create if missing)
+        safe_run(session, """
+            MATCH (u:User {id: $user_id})
+            MATCH (b:Business)
+            MERGE (u)-[:OWNS]->(b)
+        """, {'user_id': current_user.id})
+        
         # Get business statistics for businesses owned by this user
         stats_result = safe_run(session, """
-            MATCH (u:User {id: $user_id})
-            OPTIONAL MATCH (u)-[:OWNS]->(b:Business)
+            MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b)
             OPTIONAL MATCH (j)<-[:FOR_JOB]-(a:JobApplication)
             RETURN coalesce(count(DISTINCT b), 0) as business_count,
