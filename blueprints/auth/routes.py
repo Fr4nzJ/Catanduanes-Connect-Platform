@@ -1,3 +1,27 @@
+@auth_bp.route('/update-salary-expectation', methods=['POST'])
+@login_required
+def update_salary_expectation():
+    """Update the user's salary expectation property in Neo4j"""
+    try:
+        salary = request.form.get('salary_expectation', '').strip()
+        if not salary.isdigit() or int(salary) < 0:
+            flash('Please enter a valid salary amount.', 'salary')
+            return redirect(url_for('auth.profile'))
+        salary = int(salary)
+        db = get_neo4j_db()
+        with db.session() as session:
+            safe_run(session, """
+                MATCH (u:User {id: $user_id})
+                SET u.salary_expectation = $salary
+            """, {'user_id': current_user.id, 'salary': salary})
+        # Optionally update current_user if property is cached
+        if hasattr(current_user, 'salary_expectation'):
+            current_user.salary_expectation = salary
+        flash('Salary expectation updated!', 'salary')
+    except Exception as e:
+        logger.error(f"Error updating salary_expectation: {str(e)}")
+        flash('Failed to update salary expectation.', 'salary')
+    return redirect(url_for('auth.profile'))
 import uuid
 import logging
 from datetime import datetime, timedelta

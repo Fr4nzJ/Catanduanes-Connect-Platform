@@ -21,6 +21,7 @@ class User(UserMixin):
         self.profile_picture = kwargs.get('profile_picture')
         self.phone           = kwargs.get('phone')
         self.location        = kwargs.get('location')
+        self.salary_expectation = kwargs.get('salary_expectation')
     
     @property
     def is_authenticated(self):
@@ -62,7 +63,8 @@ class User(UserMixin):
             'created_at': self.created_at,
             'profile_picture': self.profile_picture,
             'phone': self.phone,
-            'location': self.location
+            'location': self.location,
+            'salary_expectation': self.salary_expectation
         }
 
     
