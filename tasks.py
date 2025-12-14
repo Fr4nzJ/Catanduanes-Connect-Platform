@@ -9,7 +9,10 @@ import uuid
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from jinja2 import Environment, FileSystemLoader
-from celery import shared_task
+from celery import Celery, shared_task
+
+# Initialize Celery
+celery = Celery(__name__)
 
 def run_async(fn):
     """Decorator to run a function asynchronously"""
@@ -20,24 +23,20 @@ def run_async(fn):
         return thread
     return wrapper
 
-def send_email_task(to, subject, template, context=None, attachments=None):
-    """Send email using SMTP"""
-    from flask import current_app
-    
-    # If we're outside the application context, get the config values from environment
-    if not current_app:
-        from config import Config
+@shared_task(bind=True, max_retries=3)
+def send_email_task_async(self, to, subject, template, context=None, attachments=None):
+    """Send email asynchronously using Celery"""
+    try:
+        # Get config from environment (Celery runs outside app context)
         mail_username = os.environ.get('GMAIL_USER')
         mail_password = os.environ.get('GMAIL_PASSWORD')
-        mail_server = Config.MAIL_SERVER
-        mail_port = Config.MAIL_PORT
-    else:
-        mail_username = current_app.config['MAIL_USERNAME']
-        mail_password = current_app.config['MAIL_PASSWORD']
-        mail_server = current_app.config['MAIL_SERVER']
-        mail_port = current_app.config['MAIL_PORT']
-    
-    try:
+        mail_server = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+        mail_port = int(os.environ.get('MAIL_PORT', 587))
+        
+        if not mail_username or not mail_password:
+            logging.error("Gmail credentials not configured")
+            return False
+        
         # Create message
         msg = MIMEMultipart()
         msg['From'] = mail_username
@@ -61,42 +60,28 @@ def send_email_task(to, subject, template, context=None, attachments=None):
                                   f'attachment; filename={attachment["filename"]}')
                     msg.attach(part)
         
-        # Send email
-        try:
-            logging.info(f"Attempting to send email to {to} via {mail_server}:{mail_port}")
-            with smtplib.SMTP(mail_server, mail_port) as server:
-                server.starttls()
-                server.login(mail_username, mail_password)
-                server.send_message(msg)
-                logging.info(f"Email sent successfully to {to}")
-                return True
-        except Exception as e:
-            logging.error(f"Failed to send email: {str(e)}")
-            # Log more detailed error information for debugging
-            import traceback
-            logging.error(f"Detailed error: {traceback.format_exc()}")
-            logging.error(f"Mail settings: server={mail_server}, port={mail_port}, username={mail_username}")
-            return False
-    except Exception as e:
-        logging.error(f"Error preparing email: {str(e)}")
-        # Log more detailed error information for debugging
-        import traceback
-        logging.error(f"Detailed error: {traceback.format_exc()}")
-        return False
-        server = smtplib.SMTP(current_app.config['MAIL_SERVER'], 
-                             current_app.config['MAIL_PORT'])
-        server.starttls()
-        server.login(current_app.config['MAIL_USERNAME'], 
-                    current_app.config['MAIL_PASSWORD'])
-        
-        server.send_message(msg)
-        server.quit()
-        
-        logging.info(f"Email sent successfully to {to}")
+        # Send email with timeout
+        logging.info(f"Attempting to send email to {to} via {mail_server}:{mail_port}")
+        with smtplib.SMTP(mail_server, mail_port, timeout=10) as server:
+            server.starttls()
+            server.login(mail_username, mail_password)
+            server.send_message(msg)
+            logging.info(f"Email sent successfully to {to}")
+            return True
+            
+    except Exception as exc:
+        logging.error(f"Failed to send email to {to}: {exc}")
+        # Retry with exponential backoff (max 3 times)
+        raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
+
+def send_email_task(to, subject, template, context=None, attachments=None):
+    """Wrapper to send email via Celery"""
+    try:
+        # Send task asynchronously
+        send_email_task_async.delay(to, subject, template, context, attachments)
         return True
-        
     except Exception as e:
-        logging.error(f"Failed to send email to {to}: {e}")
+        logging.error(f"Failed to queue email task: {e}")
         return False
 
 @run_async
