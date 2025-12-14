@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/additional_styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin_styles.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-responsive.css') }}">>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-responsive.css') }}">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -42,7 +42,7 @@
     </a>
     
     <!-- Navigation -->
-    <nav class="bg-white shadow-sm sticky top-0 z-40" role="navigation" aria-label="Main navigation">
+    <nav class="bg-white shadow-sm sticky top-0 z-40" role="navigation" aria-label="Main navigation" x-data="{ mobileMenuOpen: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <!-- Logo -->
@@ -163,7 +163,7 @@
         
         <!-- Mobile Navigation -->
         <div x-show="mobileMenuOpen" @click.away="mobileMenuOpen = false" 
-             class="md:hidden bg-white border-t" x-data="{ mobileMenuOpen: false }">
+             class="md:hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
                 <a href="{{ url_for('home') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Home
