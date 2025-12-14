@@ -3,8 +3,237 @@
 {% block title %}Businesses - Catanduanes Connect{% endblock %}
 
 {% block content %}
+<style>
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    /* AI Bubble Styles */
+    .ai-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 40;
+    }
+
+    .ai-bubble-button {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .ai-bubble-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-popup {
+        position: fixed;
+        bottom: 9rem;
+        right: 1.5rem;
+        width: 420px;
+        max-height: 600px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        z-index: 41;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+
+    .ai-popup.show {
+        display: flex;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-popup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ai-popup-body {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .ai-commands {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .ai-command-btn {
+        background: #f0f4ff;
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 13px;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .ai-command-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateX(4px);
+    }
+
+    .ai-popup-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .recommended-section {
+        display: none;
+        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+        border-left: 4px solid #667eea;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+
+    .recommended-section.show {
+        display: block;
+        animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .recommended-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 12px;
+    }
+
+    .recommended-header h2 {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .ai-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+</style>
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-7xl mx-auto">
+        <!-- AI Bubble -->
+        <div class="ai-bubble">
+            <button class="ai-bubble-button" id="ai-bubble-btn" title="AI Business Assistant">
+                <span style="font-size: 28px;">✨</span>
+            </button>
+            <div class="ai-popup" id="ai-popup">
+                <div class="ai-popup-header">
+                    <div class="flex items-center gap-2">
+                        <span style="font-size: 20px;">🤖</span>
+                        <span class="font-bold" id="ai-header-text">Business AI Assistant</span>
+                    </div>
+                    <button class="ai-popup-close" id="ai-popup-close">
+                        <span style="font-size: 24px;">✕</span>
+                    </button>
+                </div>
+                <div class="ai-popup-body">
+                    <p class="text-gray-700 font-semibold mb-4" id="ai-helper-text">How can I help you find better businesses?</p>
+                    <div class="ai-commands">
+                        <button class="ai-command-btn" onclick="getBusinessesByCategory()">
+                            <span style="font-size: 16px; margin-right: 8px;">🏪</span>
+                            <span id="btn-category">Explore by category</span>
+                        </button>
+                        <button class="ai-command-btn" onclick="getBusinessesByRating()">
+                            <span style="font-size: 16px; margin-right: 8px;">⭐</span>
+                            <span id="btn-rating">Find top-rated businesses</span>
+                        </button>
+                        <button class="ai-command-btn" onclick="getBusinessesByLocation()">
+                            <span style="font-size: 16px; margin-right: 8px;">📍</span>
+                            <span id="btn-location">Nearby businesses</span>
+                        </button>
+                        <button class="ai-command-btn" onclick="getBusinessesByRecent()">
+                            <span style="font-size: 16px; margin-right: 8px;">🆕</span>
+                            <span id="btn-recent">Recently added</span>
+                        </button>
+                        <button class="ai-command-btn" onclick="getBusinessesByPopular()">
+                            <span style="font-size: 16px; margin-right: 8px;">🔥</span>
+                            <span id="btn-popular">Most reviewed</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recommended Businesses Section -->
+        <div class="recommended-section" id="recommended-section">
+            <div class="recommended-header">
+                <h2 id="recommended-title">Recommended for you</h2>
+                <span class="ai-badge">
+                    <span style="margin-right: 6px;">🧠</span>AI Powered
+                </span>
+                <button id="close-recommendations" class="ml-auto text-gray-500 hover:text-gray-700 text-2xl" title="Close">
+                    ✕
+                </button>
+            </div>
+            <div id="recommended-businesses" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Recommended businesses will be loaded here -->
+            </div>
+        </div>
+
         <!-- Header Section -->
         <div class="mb-12">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
@@ -449,5 +678,312 @@
             document.getElementById('map-container').classList.add('hidden');
         }
     });
+
+    // AI Bubble functionality
+    const aiBubbleBtn = document.getElementById('ai-bubble-btn');
+    const aiPopup = document.getElementById('ai-popup');
+    const aiPopupClose = document.getElementById('ai-popup-close');
+
+    aiBubbleBtn.addEventListener('click', () => {
+        aiPopup.classList.toggle('show');
+    });
+
+    aiPopupClose.addEventListener('click', () => {
+        aiPopup.classList.remove('show');
+    });
+
+    // Close popup when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ai-bubble')) {
+            aiPopup.classList.remove('show');
+        }
+    });
+
+    // Close recommendations section
+    document.getElementById('close-recommendations').addEventListener('click', () => {
+        document.getElementById('recommended-section').classList.remove('show');
+    });
+
+    // Multi-language support
+    const userLanguage = localStorage.getItem('language') || 'en';
+    
+    const translations = {
+        en: {
+            'ai-header-text': 'Business AI Assistant',
+            'ai-helper-text': 'How can I help you find better businesses?',
+            'btn-category': 'Explore by category',
+            'btn-rating': 'Find top-rated businesses',
+            'btn-location': 'Nearby businesses',
+            'btn-recent': 'Recently added',
+            'btn-popular': 'Most reviewed',
+            'recommended-title': 'Recommended for you',
+            'no-results': 'No businesses found.',
+            'error-loading': 'Error loading recommendations. Please try again.'
+        },
+        es: {
+            'ai-header-text': 'Asistente de IA de Negocios',
+            'ai-helper-text': '¿Cómo puedo ayudarte a encontrar mejores negocios?',
+            'btn-category': 'Explorar por categoría',
+            'btn-rating': 'Encontrar negocios mejor valorados',
+            'btn-location': 'Negocios cercanos',
+            'btn-recent': 'Agregados recientemente',
+            'btn-popular': 'Más reseñados',
+            'recommended-title': 'Recomendado para ti',
+            'no-results': 'No se encontraron negocios.',
+            'error-loading': 'Error al cargar las recomendaciones. Por favor, intenta de nuevo.'
+        },
+        tl: {
+            'ai-header-text': 'Business AI Assistant',
+            'ai-helper-text': 'Paano ako makakatulong sa iyo na makahanap ng mas magagandang negosyo?',
+            'btn-category': 'Tuklasin ayon sa kategorya',
+            'btn-rating': 'Hanapin ang pinaka-rated na negosyo',
+            'btn-location': 'Malapit na negosyo',
+            'btn-recent': 'Kamakailan na idinagdag',
+            'btn-popular': 'Pinaka-sinusuri',
+            'recommended-title': 'Inilaan para sa iyo',
+            'no-results': 'Walang negosyong nahanap.',
+            'error-loading': 'Kamalian sa pagkarga ng mga rekomendasyon. Subukan muli.'
+        }
+    };
+
+    function setLanguage(lang) {
+        const trans = translations[lang] || translations['en'];
+        Object.keys(trans).forEach(key => {
+            const el = document.getElementById(key);
+            if (el) el.textContent = trans[key];
+        });
+        localStorage.setItem('language', lang);
+    }
+
+    // Initialize language
+    setLanguage(userLanguage);
+
+    // Store all businesses data for filtering
+    const allBusinessesData = {{ businesses_data | tojson }};
+
+    async function getBusinessesByCategory() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/get-businesses-by-category', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get businesses');
+            
+            const data = await response.json();
+            displayBusinessRecommendations(data.businesses || [], 'Businesses by Category');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting businesses by category');
+        }
+    }
+
+    async function getBusinessesByRating() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/get-businesses-by-rating', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get businesses');
+            
+            const data = await response.json();
+            displayBusinessRecommendations(data.businesses || [], 'Top Rated Businesses');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting top-rated businesses');
+        }
+    }
+
+    async function getBusinessesByLocation() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/get-businesses-by-location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get businesses');
+            
+            const data = await response.json();
+            displayBusinessRecommendations(data.businesses || [], 'Nearby Businesses');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting nearby businesses');
+        }
+    }
+
+    async function getBusinessesByRecent() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/get-businesses-by-recent', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get businesses');
+            
+            const data = await response.json();
+            displayBusinessRecommendations(data.businesses || [], 'Recently Added');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting recently added businesses');
+        }
+    }
+
+    async function getBusinessesByPopular() {
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/get-businesses-by-popular', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                }
+            });
+
+            if (!response.ok) throw new Error('Failed to get businesses');
+            
+            const data = await response.json();
+            displayBusinessRecommendations(data.businesses || [], 'Most Reviewed');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error getting most reviewed businesses');
+        }
+    }
+
+    async function displayBusinessRecommendations(businessIds, title) {
+        const recommendedSection = document.getElementById('recommended-section');
+        const recommendedContainer = document.getElementById('recommended-businesses');
+        const titleEl = document.getElementById('recommended-title');
+        
+        titleEl.textContent = title;
+
+        if (!businessIds || businessIds.length === 0) {
+            const trans = translations[userLanguage] || translations['en'];
+            recommendedContainer.innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <p class="text-gray-600"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>${trans['no-results']}</p>
+                </div>
+            `;
+            recommendedSection.classList.add('show');
+            return;
+        }
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const response = await fetch('/gemini/fetch-businesses-by-ids', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken || ''
+                },
+                body: JSON.stringify({ business_ids: businessIds })
+            });
+
+            if (!response.ok) throw new Error('Failed to fetch business details');
+            
+            const data = await response.json();
+            const businesses = data.businesses || [];
+
+            if (!businesses || businesses.length === 0) {
+                const trans = translations[userLanguage] || translations['en'];
+                recommendedContainer.innerHTML = `
+                    <div class="col-span-full text-center py-8">
+                        <p class="text-gray-600"><i class="fas fa-inbox text-gray-300 text-3xl mb-2 block"></i>No business details found.</p>
+                    </div>
+                `;
+                recommendedSection.classList.add('show');
+                return;
+            }
+
+            const businessesHTML = businesses.map(business => `
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                    <!-- Business Header -->
+                    <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-5 relative">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-white truncate">${business.name}</h3>
+                                <p class="text-green-100 text-sm mt-2">${business.category}</p>
+                            </div>
+                            ${business.rating ? `
+                                <div class="bg-white/20 px-3 py-2 rounded-lg text-center">
+                                    <div class="text-white font-bold text-lg">${business.rating.toFixed(1)}</div>
+                                    <div class="text-green-100 text-xs">★ Rating</div>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Business Body -->
+                    <div class="p-6">
+                        <!-- Business Info -->
+                        <div class="space-y-3 mb-5 text-sm">
+                            ${business.address ? `
+                                <div class="flex items-start text-gray-600">
+                                    <i class="fas fa-map-marker-alt mr-3 mt-0.5 text-green-500 flex-shrink-0"></i>
+                                    <span class="line-clamp-2 text-xs">${business.address}</span>
+                                </div>
+                            ` : ''}
+                            ${business.phone ? `
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-phone mr-3 text-green-500 flex-shrink-0"></i>
+                                    <a href="tel:${business.phone}" class="text-xs hover:text-green-600 transition-colors">${business.phone}</a>
+                                </div>
+                            ` : ''}
+                            ${business.email ? `
+                                <div class="flex items-center text-gray-600">
+                                    <i class="fas fa-envelope mr-3 text-green-500 flex-shrink-0"></i>
+                                    <a href="mailto:${business.email}" class="text-xs hover:text-green-600 transition-colors truncate">${business.email}</a>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- Description -->
+                        ${business.description ? `
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-2">
+                                ${business.description}
+                            </p>
+                        ` : ''}
+
+                        <!-- Action Button -->
+                        <div class="pt-4 border-t border-gray-200">
+                            <a href="/businesses/${business.id}" 
+                               class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-4 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 text-center shadow-md">
+                                <i class="fas fa-eye mr-2"></i>View Business
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            recommendedContainer.innerHTML = businessesHTML;
+            recommendedSection.classList.add('show');
+            document.getElementById('recommended-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } catch (error) {
+            console.error('Error fetching business details:', error);
+            const trans = translations[userLanguage] || translations['en'];
+            recommendedContainer.innerHTML = `
+                <div class="col-span-full text-center py-8">
+                    <p class="text-gray-600"><i class="fas fa-exclamation-circle text-gray-300 text-3xl mb-2 block"></i>${trans['error-loading']}</p>
+                </div>
+            `;
+            recommendedSection.classList.add('show');
+        }
+    }
 </script>
 {% endblock %}

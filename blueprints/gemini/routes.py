@@ -488,3 +488,437 @@ def fetch_jobs_by_ids():
     except Exception as e:
         logger.error(f"Error fetching jobs by IDs: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+# ===== Business Recommendation Endpoints (Template-Compatible Names) =====
+
+@gemini_bp.route('/get-businesses-by-category', methods=['POST'])
+@login_required
+def get_businesses_by_category():
+    """Recommend businesses by category preference (template-compatible)"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        language = data.get('language', 'English')
+        
+        # Get all business categories
+        db = get_neo4j_db()
+        with db.session() as session:
+            categories = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN DISTINCT b.category as category
+                LIMIT 20
+            """)
+        
+            # Get businesses from each category
+            businesses_info = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.category as category
+                LIMIT 100
+            """)
+        
+        # Group by category and select best from each
+        category_groups = {}
+        if businesses_info:
+            for biz in businesses_info:
+                cat = biz['category']
+                if cat not in category_groups:
+                    category_groups[cat] = []
+                category_groups[cat].append(biz['id'])
+        
+        # Get up to 5 businesses from different categories
+        recommended_ids = []
+        for cat, ids in list(category_groups.items())[:5]:
+            if ids:
+                recommended_ids.append(ids[0])
+        
+        logger.info(f"Recommended businesses by category: {recommended_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'businesses': recommended_ids
+        })
+    except Exception as e:
+        logger.error(f"Error getting businesses by category: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/get-businesses-by-rating', methods=['POST'])
+@login_required
+def get_businesses_by_rating():
+    """Get top-rated businesses (template-compatible)"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_data = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true AND b.rating IS NOT NULL
+                RETURN b.id as id, b.name as name, b.rating as rating
+                ORDER BY b.rating DESC
+                LIMIT 10
+            """)
+        
+        recommended_ids = [b['id'] for b in (businesses_data or [])]
+        
+        logger.info(f"Top-rated businesses: {recommended_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'businesses': recommended_ids
+        })
+    except Exception as e:
+        logger.error(f"Error getting top-rated businesses: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/get-businesses-by-location', methods=['POST'])
+@login_required
+def get_businesses_by_location():
+    """Get nearby businesses (template-compatible)"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_data = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.location as location
+                LIMIT 10
+            """)
+        
+        recommended_ids = [b['id'] for b in (businesses_data or [])]
+        
+        logger.info(f"Nearby businesses: {recommended_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'businesses': recommended_ids
+        })
+    except Exception as e:
+        logger.error(f"Error getting nearby businesses: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/get-businesses-by-recent', methods=['POST'])
+@login_required
+def get_businesses_by_recent():
+    """Get recently added businesses (template-compatible)"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_data = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.created_at as created_at
+                ORDER BY b.created_at DESC
+                LIMIT 10
+            """)
+        
+        recommended_ids = [b['id'] for b in (businesses_data or [])]
+        
+        logger.info(f"Recently added businesses: {recommended_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'businesses': recommended_ids
+        })
+    except Exception as e:
+        logger.error(f"Error getting recently added businesses: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/get-businesses-by-popular', methods=['POST'])
+@login_required
+def get_businesses_by_popular():
+    """Get most reviewed businesses (template-compatible)"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_data = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true AND b.review_count IS NOT NULL
+                RETURN b.id as id, b.name as name, b.review_count as review_count
+                ORDER BY b.review_count DESC
+                LIMIT 10
+            """)
+        
+        recommended_ids = [b['id'] for b in (businesses_data or [])]
+        
+        logger.info(f"Most reviewed businesses: {recommended_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'businesses': recommended_ids
+        })
+    except Exception as e:
+        logger.error(f"Error getting most reviewed businesses: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+# ===== Advanced Business Recommendation Endpoints =====
+
+@gemini_bp.route('/recommend-businesses-by-interests', methods=['POST'])
+@login_required
+def recommend_businesses_by_interests():
+    """Recommend businesses based on user interests"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        interests = data.get('interests', [])
+        language = data.get('language', 'English')
+        
+        if not interests or not isinstance(interests, list):
+            return jsonify({'status': 'error', 'message': 'interests must be a non-empty array'}), 400
+        
+        # Get all available business categories and names
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_info = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.category as category, 
+                       b.description as description, b.location as location,
+                       b.rating as rating, b.review_count as review_count
+                LIMIT 50
+            """)
+        
+        # Format business data for AI
+        business_list_str = "\n".join([
+            f"- {b['name']} (Category: {b['category']}, Location: {b['location']}, Rating: {b['rating'] or 'N/A'}, ID: {b['id']})"
+            for b in (businesses_info or [])
+        ])
+        
+        interests_str = ", ".join(interests)
+        
+        prompt = f"""Based on the user's interests in: {interests_str}
+
+Here are available businesses in our platform:
+{business_list_str}
+
+Please recommend the top 5 businesses that best match the user's interests. 
+Respond ONLY with the business IDs (one per line, no other text or explanations).
+Example format:
+business-id-1
+business-id-2
+business-id-3
+business-id-4
+business-id-5
+
+If fewer than 5 businesses match, return as many as possible."""
+
+        response = get_gemini_response(prompt)
+        
+        # Parse response to get business IDs
+        recommended_business_ids = [
+            line.strip() for line in response.strip().split('\n') 
+            if line.strip() and line.strip().startswith('business-')
+        ]
+        
+        logger.info(f"AI recommended businesses: {recommended_business_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'recommended_businesses': recommended_business_ids
+        })
+    except Exception as e:
+        logger.error(f"Error recommending businesses by interests: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/recommend-businesses-by-category', methods=['POST'])
+@login_required
+def recommend_businesses_by_category():
+    """Recommend businesses by category preference"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        preferred_categories = data.get('categories', [])
+        language = data.get('language', 'English')
+        
+        if not preferred_categories or not isinstance(preferred_categories, list):
+            return jsonify({'status': 'error', 'message': 'categories must be a non-empty array'}), 400
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_info = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.category as category, 
+                       b.description as description, b.location as location,
+                       b.rating as rating, b.review_count as review_count
+                LIMIT 50
+            """)
+        
+        business_list_str = "\n".join([
+            f"- {b['name']} (Category: {b['category']}, Location: {b['location']}, ID: {b['id']})"
+            for b in (businesses_info or [])
+        ])
+        
+        categories_str = ", ".join(preferred_categories)
+        
+        prompt = f"""The user is interested in the following business categories: {categories_str}
+
+Available businesses in our platform:
+{business_list_str}
+
+Please recommend the top 5 businesses that match these categories, prioritizing higher-rated businesses.
+Respond ONLY with the business IDs (one per line, no other text).
+Example format:
+business-id-1
+business-id-2
+business-id-3
+business-id-4
+business-id-5"""
+
+        response = get_gemini_response(prompt)
+        
+        # Parse response to get business IDs
+        recommended_business_ids = [
+            line.strip() for line in response.strip().split('\n') 
+            if line.strip() and line.strip().startswith('business-')
+        ]
+        
+        logger.info(f"AI recommended businesses by category: {recommended_business_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'recommended_businesses': recommended_business_ids
+        })
+    except Exception as e:
+        logger.error(f"Error recommending businesses by category: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/recommend-businesses-by-location', methods=['POST'])
+@login_required
+def recommend_businesses_by_location():
+    """Recommend businesses by location"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        preferred_location = data.get('location', '').strip()
+        language = data.get('language', 'English')
+        
+        if not preferred_location:
+            return jsonify({'status': 'error', 'message': 'location is required'}), 400
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses_info = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+                RETURN b.id as id, b.name as name, b.category as category, 
+                       b.location as location, b.address as address,
+                       b.rating as rating
+                LIMIT 50
+            """)
+        
+        business_list_str = "\n".join([
+            f"- {b['name']} (Category: {b['category']}, Location: {b['location']}, Address: {b['address']}, ID: {b['id']})"
+            for b in (businesses_info or [])
+        ])
+        
+        prompt = f"""The user is looking for businesses near: {preferred_location}
+
+Available businesses in our platform:
+{business_list_str}
+
+Please recommend the top 5 businesses that are located in or near {preferred_location}.
+Respond ONLY with the business IDs (one per line, no other text).
+Example format:
+business-id-1
+business-id-2
+business-id-3
+business-id-4
+business-id-5"""
+
+        response = get_gemini_response(prompt)
+        
+        # Parse response to get business IDs
+        recommended_business_ids = [
+            line.strip() for line in response.strip().split('\n') 
+            if line.strip() and line.strip().startswith('business-')
+        ]
+        
+        logger.info(f"AI recommended businesses by location: {recommended_business_ids}")
+        
+        return jsonify({
+            'status': 'success',
+            'recommended_businesses': recommended_business_ids
+        })
+    except Exception as e:
+        logger.error(f"Error recommending businesses by location: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+@gemini_bp.route('/fetch-businesses-by-ids', methods=['POST'])
+@login_required
+def fetch_businesses_by_ids():
+    """Fetch full business details for given business IDs"""
+    try:
+        from database import get_neo4j_db, safe_run
+        
+        data = request.get_json()
+        business_ids = data.get('business_ids', [])
+        
+        if not business_ids or not isinstance(business_ids, list):
+            return jsonify({'status': 'error', 'message': 'business_ids must be a non-empty array'}), 400
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Fetch business details for all provided IDs
+            businesses_data = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.id IN $business_ids
+                RETURN b.id as id, b.name as name, b.description as description,
+                       b.category as category, b.location as location,
+                       b.address as address, b.phone as phone,
+                       b.email as email, b.website as website,
+                       b.rating as rating, b.review_count as review_count,
+                       b.latitude as latitude, b.longitude as longitude,
+                       b.image_url as image_url
+            """, {'business_ids': business_ids})
+            
+            # Format businesses for frontend
+            businesses_list = []
+            if businesses_data:
+                for business in businesses_data:
+                    business_dict = {
+                        'id': business.get('id'),
+                        'name': business.get('name'),
+                        'description': business.get('description'),
+                        'category': business.get('category'),
+                        'location': business.get('location'),
+                        'address': business.get('address'),
+                        'phone': business.get('phone'),
+                        'email': business.get('email'),
+                        'website': business.get('website'),
+                        'rating': business.get('rating') or 'N/A',
+                        'review_count': business.get('review_count') or 0,
+                        'latitude': business.get('latitude'),
+                        'longitude': business.get('longitude'),
+                        'image_url': business.get('image_url')
+                    }
+                    businesses_list.append(business_dict)
+            
+            logger.info(f"Fetched {len(businesses_list)} business details for IDs: {business_ids}")
+            
+            return jsonify({
+                'status': 'success',
+                'businesses': businesses_list
+            })
+    except Exception as e:
+        logger.error(f"Error fetching businesses by IDs: {str(e)}")
+        return jsonify({'status': 'error', 'message': str(e)}), 500
