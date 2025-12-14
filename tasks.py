@@ -83,7 +83,7 @@ def send_email_task_async(self, to, subject, template, context=None, attachments
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
 def send_email_task(to, subject, template, context=None, attachments=None):
-    """Wrapper to send email via Celery with fallback to sync"""
+    """Wrapper to send email via Celery with fallback to async thread"""
     try:
         # Try to send task asynchronously via Celery
         send_email_task_async.delay(to, subject, template, context, attachments)
@@ -91,12 +91,20 @@ def send_email_task(to, subject, template, context=None, attachments=None):
         return True
     except Exception as e:
         logging.error(f"Failed to queue email task via Celery: {e}")
-        # Fallback to synchronous email sending
-        logging.info(f"Falling back to synchronous email sending for {to}")
+        # Fallback to threaded email sending (non-blocking)
+        logging.info(f"Falling back to threaded email sending for {to}")
         try:
-            return send_email_task_async(to, subject, template, context, attachments)
-        except Exception as sync_error:
-            logging.error(f"Synchronous email send also failed for {to}: {sync_error}")
+            @run_async
+            def send_sync_email():
+                try:
+                    send_email_task_async(to, subject, template, context, attachments)
+                except Exception as sync_error:
+                    logging.error(f"Threaded email send failed for {to}: {sync_error}")
+            
+            send_sync_email()
+            return True
+        except Exception as thread_error:
+            logging.error(f"Failed to start email thread for {to}: {thread_error}")
             return False
 
 @run_async
