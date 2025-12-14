@@ -1,561 +1,314 @@
 #!/usr/bin/env python3
 """
-Seed script for Catanduanes Connect
-Creates demo users, businesses, jobs, and services
+Comprehensive Seed Script for Catanduanes Connect Platform
+Creates 30 businesses with 30 jobs each for user 'ren'
+Run with: python seed.py
 """
 
 import os
 import sys
 import uuid
 from datetime import datetime, timedelta
+import random
 from dotenv import load_dotenv
 
-# Add the project root to Python path
+# Add project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from database import Neo4jConnection, safe_run, _node_to_dict
-from models import User, Business, Job, Review, Notification
+from app import create_app
+from database import get_neo4j_db, safe_run
 
 # Load environment variables
 load_dotenv()
 
-def create_demo_users(db):
-    """Create demo users for different roles"""
-    print("Creating demo users...")
-    
-    users = [
-        {
-            'id': str(uuid.uuid4()),
-            'email': 'admin@example.com',
-            'username': 'admin',
-            'password_hash': '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewlyZjHVj65PJ.Pm',  # Password123!
-            'role': 'admin',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'phone': '09123456789',
-            'location': 'Virac, Catanduanes'
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'email': 'job_seeker@example.com',
-            'username': 'job_seeker',
-            'password_hash': '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewlyZjHVj65PJ.Pm',  # Password123!
-            'role': 'job_seeker',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'phone': '09123456790',
-            'location': 'Virac, Catanduanes'
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'email': 'business_owner@example.com',
-            'username': 'business_owner',
-            'password_hash': '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewlyZjHVj65PJ.Pm',  # Password123!
-            'role': 'business_owner',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'phone': '09123456791',
-            'location': 'Virac, Catanduanes'
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'email': 'service_client@example.com',
-            'username': 'service_provider',
-            'password_hash': '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewlyZjHVj65PJ.Pm',  # Password123!
-            'role': 'service_client',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'phone': '09123456792',
-            'location': 'Virac, Catanduanes'
-        }
-    ]
-    
-    with db.session() as session:
-        for user_data in users:
-            safe_run(session, """
-                CREATE (u:User $user_data)
-            """, {'user_data': user_data})
-    
-    print(f"Created {len(users)} demo users")
-    return users
+# User details (ren - verified business owner)
+OWNER_ID = "6d994a64-141a-462b-a880-03e0228b3ba7"
+OWNER_EMAIL = "akagamiren9@gmail.com"
+OWNER_USERNAME = "ren"
 
-def create_demo_businesses(db, users):
-    """Create demo businesses"""
-    print("Creating demo businesses...")
+# Catanduanes businesses data
+BUSINESS_NAMES = [
+    "Virac Seafood Trading", "Pandan Island Fishing Co.", "Catanduanes Coconut Products",
+    "Baras Agricultural Supply", "Viga Marine Resources", "Island Spice Exports",
+    "Catanduanes Tourism Services", "Pandan Furniture Workshop", "Virac Hardware Store",
+    "Caramoran Beach Resort", "Island Textile Industries", "Catanduanes Coffee Roastery",
+    "Marine Tech Solutions", "Virac Food Processing", "Agricultural Equipment Rental",
+    "Island Transport Services", "Pandan Craft Gallery", "Catanduanes Aquaculture",
+    "Virac Printing Services", "Island Construction Materials", "Catanduanes Travel Agency",
+    "Baras Organic Farm", "Pandan Hospitality Services", "Virac Logistics Hub",
+    "Island Manufacturing Co.", "Catanduanes Retail Network", "Pandan Services Group",
+    "Virac Trading Post", "Island Entertainment Center", "Catanduanes Tech Services",
+    "Baras Import-Export Services"
+]
+
+CATEGORIES = [
+    "seafood", "agriculture", "tourism", "manufacturing", "retail",
+    "services", "logistics", "hospitality", "technology", "construction"
+]
+
+JOB_TITLES = [
+    "Sales Representative", "Warehouse Manager", "Customer Service Officer",
+    "Operations Supervisor", "Logistics Coordinator", "Quality Inspector",
+    "Production Technician", "Administrative Assistant", "Delivery Driver",
+    "Store Manager", "Junior Engineer", "Maintenance Technician",
+    "Business Analyst", "Data Entry Specialist", "Inventory Manager",
+    "Marketing Coordinator", "HR Officer", "Finance Clerk",
+    "Event Coordinator", "Project Manager", "Account Executive",
+    "Technical Support", "Safety Officer", "Supply Chain Officer",
+    "Procurement Specialist", "Team Lead", "Assistant Manager",
+    "Branch Manager", "Regional Manager", "Operations Manager"
+]
+
+LOCATIONS = [
+    "Virac", "Baras", "Pandan", "Caramoran", "San Andres",
+    "Gigante", "Viga", "Panganiban", "Sagapo", "Bula"
+]
+
+SKILLS = [
+    "communication", "teamwork", "problem-solving", "time-management",
+    "customer-service", "sales", "data-entry", "microsoft-office",
+    "warehouse-management", "inventory", "driving", "physical-fitness",
+    "attention-to-detail", "multitasking", "leadership", "negotiation",
+    "report-writing", "phone-etiquette", "cash-handling", "stock-management"
+]
+
+def generate_businesses(owner_id):
+    """Generate 30 businesses with complete credentials"""
+    businesses = []
     
-    businesses = [
-        {
-            'id': str(uuid.uuid4()),
-            'name': 'Virac IT Solutions',
-            'description': 'Leading technology solutions provider offering software development, IT consulting, and digital transformation services for businesses in Catanduanes.',
-            'category': 'technology',
-            'address': 'Rizal Avenue, Virac, Catanduanes',
-            'latitude': 13.5809,
-            'longitude': 124.3842,
-            'phone': '0528112345',
-            'email': 'info@viracitsolutions.com',
-            'website': 'https://viracitsolutions.com',
-            'owner_id': users[2]['id'],  # business_owner
-            'permit_number': 'BP-2024-001',
-            'permit_file': 'businesses/virac-it-solutions/permit.pdf',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'rating': 4.8,
-            'review_count': 12
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'name': 'Catanduanes Coastal Restaurant',
-            'description': 'Authentic Filipino coastal cuisine featuring fresh seafood and traditional Bicolano dishes. Perfect for family dining and special occasions.',
-            'category': 'restaurant',
-            'address': 'San Pedro Street, Virac, Catanduanes',
-            'latitude': 13.5820,
-            'longitude': 124.3830,
-            'phone': '0528112346',
-            'email': 'info@coastalrestaurant.com',
-            'website': 'https://coastalrestaurant.com',
-            'owner_id': users[2]['id'],  # business_owner
-            'permit_number': 'BP-2024-002',
-            'permit_file': 'businesses/coastal-restaurant/permit.pdf',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=5)).isoformat(),
-            'rating': 4.6,
-            'review_count': 8
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'name': 'Island Healthcare Center',
-            'description': 'Modern healthcare facility providing comprehensive medical services, emergency care, and specialized treatments for the community.',
-            'category': 'healthcare',
-            'address': 'Health Avenue, Virac, Catanduanes',
-            'latitude': 13.5815,
-            'longitude': 124.3850,
-            'phone': '0528112347',
-            'email': 'info@islandhealthcare.com',
-            'website': 'https://islandhealthcare.com',
-            'owner_id': users[2]['id'],  # business_owner
-            'permit_number': 'BP-2024-003',
-            'permit_file': 'businesses/island-healthcare/permit.pdf',
-            'is_verified': True,
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=10)).isoformat(),
-            'rating': 4.9,
-            'review_count': 15
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'name': 'Bicol Tech Academy',
-            'description': 'Educational institution offering technology courses, vocational training, and professional development programs for students and professionals.',
-            'category': 'education',
-            'address': 'Education Boulevard, Virac, Catanduanes',
-            'latitude': 13.5800,
-            'longitude': 124.3860,
-            'phone': '0528112348',
-            'email': 'info@bicoltechacademy.com',
-            'website': 'https://bicoltechacademy.com',
-            'owner_id': users[2]['id'],  # business_owner
-            'permit_number': 'BP-2024-004',
-            'permit_file': 'businesses/bicol-tech-academy/permit.pdf',
-            'is_verified': False,  # Pending verification
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=2)).isoformat(),
-            'rating': 0.0,
-            'review_count': 0
+    for i, name in enumerate(BUSINESS_NAMES):
+        business_id = str(uuid.uuid4())
+        business = {
+            "id": business_id,
+            "name": name,
+            "category": random.choice(CATEGORIES),
+            "description": f"{name} is a leading business in Catanduanes, providing quality products and services since 2015. We specialize in delivering excellent service to our clients.",
+            "address": f"{random.choice(LOCATIONS)}, Catanduanes, Philippines",
+            "phone": f"+63{random.randint(900000000, 999999999)}",
+            "email": f"contact@{name.lower().replace(' ', '')}.ph",
+            "website": f"www.{name.lower().replace(' ', '')}.ph",
+            "owner_id": owner_id,
+            "is_active": True,
+            "is_verified": True,
+            "verification_status": "verified",
+            "employee_count": random.randint(5, 100),
+            "established_year": random.randint(2010, 2020),
+            "rating": round(random.uniform(3.5, 5.0), 1),
+            "reviews_count": random.randint(10, 500),
+            "latitude": round(random.uniform(13.5, 14.0), 4),
+            "longitude": round(random.uniform(123.5, 124.5), 4),
+            "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 365))).isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "business_hours": "8:00 AM - 5:00 PM",
+            "permit_number": f"PERMIT-{i+1:03d}-2024",
+            "is_hiring": True
         }
-    ]
+        businesses.append(business)
     
-    with db.session() as session:
-        for business_data in businesses:
-            safe_run(session, """
-                CREATE (b:Business $business_data)
-            """, {'business_data': business_data})
-            
-            # Create ownership relationship
-            safe_run(session, """
-                MATCH (u:User {id: $owner_id}), (b:Business {id: $business_id})
-                CREATE (u)-[:OWNS]->(b)
-            """, {
-                'owner_id': business_data['owner_id'],
-                'business_id': business_data['id']
-            })
-    
-    print(f"Created {len(businesses)} demo businesses")
     return businesses
 
-def create_demo_jobs(db, businesses):
-    """Create demo jobs"""
-    print("Creating demo jobs...")
+def generate_jobs(business_id, business_name):
+    """Generate 30 jobs for a business"""
+    jobs = []
     
-    jobs = [
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Senior Software Developer',
-            'description': 'We are looking for an experienced software developer to join our team. You will be responsible for designing, developing, and maintaining web applications using modern technologies.',
-            'category': 'technology',
-            'type': 'full_time',
-            'salary_min': 50000,
-            'salary_max': 80000,
-            'currency': 'PHP',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5809,
-            'longitude': 124.3842,
-            'business_id': businesses[0]['id'],  # Virac IT Solutions
-            'business_name': 'Virac IT Solutions',
-            'requirements': 'Bachelor\'s degree in Computer Science, 3+ years experience in web development, proficiency in Python/JavaScript',
-            'benefits': 'Health insurance, flexible working hours, professional development opportunities',
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'expires_at': (datetime.utcnow() + timedelta(days=30)).isoformat(),
-            'applications_count': 0
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Restaurant Manager',
-            'description': 'Seeking an experienced restaurant manager to oversee daily operations, manage staff, and ensure excellent customer service at our coastal restaurant.',
-            'category': 'hospitality',
-            'type': 'full_time',
-            'salary_min': 35000,
-            'salary_max': 50000,
-            'currency': 'PHP',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5820,
-            'longitude': 124.3830,
-            'business_id': businesses[1]['id'],  # Coastal Restaurant
-            'business_name': 'Catanduanes Coastal Restaurant',
-            'requirements': 'Experience in restaurant management, leadership skills, customer service orientation',
-            'benefits': 'Meal allowance, performance bonuses, career advancement opportunities',
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=3)).isoformat(),
-            'expires_at': (datetime.utcnow() + timedelta(days=27)).isoformat(),
-            'applications_count': 2
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Registered Nurse',
-            'description': 'Join our healthcare team as a registered nurse. Provide compassionate care to patients and support our medical staff in delivering quality healthcare services.',
-            'category': 'healthcare',
-            'type': 'full_time',
-            'salary_min': 40000,
-            'salary_max': 60000,
-            'currency': 'PHP',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5815,
-            'longitude': 124.3850,
-            'business_id': businesses[2]['id'],  # Island Healthcare
-            'business_name': 'Island Healthcare Center',
-            'requirements': 'Bachelor of Science in Nursing, valid PRC license, experience in clinical setting preferred',
-            'benefits': 'Competitive salary, health insurance, continuing education support',
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=7)).isoformat(),
-            'expires_at': (datetime.utcnow() + timedelta(days=23)).isoformat(),
-            'applications_count': 5
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Part-time Web Developer',
-            'description': 'Looking for a part-time web developer to assist with ongoing projects. Flexible hours, perfect for students or those seeking additional income.',
-            'category': 'technology',
-            'type': 'part_time',
-            'salary_min': 25000,
-            'salary_max': 35000,
-            'currency': 'PHP',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5809,
-            'longitude': 124.3842,
-            'business_id': businesses[0]['id'],  # Virac IT Solutions
-            'business_name': 'Virac IT Solutions',
-            'requirements': 'Basic knowledge of HTML, CSS, and JavaScript, willingness to learn',
-            'benefits': 'Flexible schedule, remote work option, mentorship opportunities',
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=1)).isoformat(),
-            'expires_at': (datetime.utcnow() + timedelta(days=29)).isoformat(),
-            'applications_count': 1
+    for i in range(30):
+        job_id = str(uuid.uuid4())
+        job_title = JOB_TITLES[i % len(JOB_TITLES)]
+        
+        # Salary range based on job type
+        base_salary = random.randint(15000, 35000)
+        
+        job = {
+            "id": job_id,
+            "title": f"{job_title} - {business_name}",
+            "description": f"We are hiring a {job_title} for {business_name}. You will be responsible for various tasks including customer service, operations, and business development. This is an excellent opportunity to grow your career with a reputable company in Catanduanes.",
+            "business_id": business_id,
+            "business_name": business_name,
+            "category": random.choice(CATEGORIES),
+            "location": random.choice(LOCATIONS) + ", Catanduanes",
+            "employment_type": random.choice(["Full-time", "Part-time", "Contract", "Temporary"]),
+            "salary_min": base_salary,
+            "salary_max": base_salary + random.randint(5000, 15000),
+            "salary_currency": "PHP",
+            "required_skills": random.sample(SKILLS, random.randint(3, 7)),
+            "experience_required": f"{random.randint(0, 5)} years",
+            "education_level": random.choice(["High School", "Associate", "Bachelor", "Master"]),
+            "posted_date": (datetime.utcnow() - timedelta(days=random.randint(1, 60))).isoformat(),
+            "deadline": (datetime.utcnow() + timedelta(days=random.randint(10, 60))).isoformat(),
+            "applications_count": random.randint(0, 50),
+            "views_count": random.randint(50, 500),
+            "is_active": random.choice([True, True, True, False]),  # 75% active
+            "is_filled": random.choice([False, False, False, False, False, True]),  # 17% filled
+            "status": "open" if random.random() > 0.17 else "filled",
+            "created_at": (datetime.utcnow() - timedelta(days=random.randint(1, 60))).isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+            "benefits": [
+                "Health Insurance",
+                "13th Month Pay",
+                "Performance Bonus",
+                "Paid Leave",
+                "Training & Development"
+            ],
+            "job_description": f"Position: {job_title}\n\nResponsibilities:\n- Perform core duties related to {job_title.lower()}\n- Collaborate with team members\n- Maintain quality standards\n- Report to management\n- Contribute to team goals\n\nRequirements:\n- {random.randint(0, 5)} years of experience\n- Excellent communication skills\n- Problem-solving ability\n- Team player mentality\n- Willingness to learn\n\nLocation: {random.choice(LOCATIONS)}, Catanduanes"
         }
-    ]
+        jobs.append(job)
     
-    with db.session() as session:
-        for job_data in jobs:
-            safe_run(session, """
-                CREATE (j:Job $job_data)
-            """, {'job_data': job_data})
-            
-            # Create relationship with business
-            safe_run(session, """
-                MATCH (b:Business {id: $business_id}), (j:Job {id: $job_id})
-                CREATE (b)-[:POSTED_BY]->(j)
-            """, {
-                'business_id': job_data['business_id'],
-                'job_id': job_data['id']
-            })
-    
-    print(f"Created {len(jobs)} demo jobs")
     return jobs
 
-def create_demo_services(db, users):
-    """Create demo services"""
-    print("Creating demo services...")
+def seed_database():
+    """Main seed function"""
+    print("="*70)
+    print("🌱 CATANDUANES CONNECT PLATFORM - DATABASE SEEDING")
+    print("="*70)
+    print(f"\nOwner: {OWNER_USERNAME}")
+    print(f"Email: {OWNER_EMAIL}")
+    print(f"ID: {OWNER_ID}\n")
     
-    services = [
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Professional Web Development',
-            'description': 'Custom website development using modern technologies. From simple landing pages to complex web applications.',
-            'category': 'professional_services',
-            'price': 15000,
-            'currency': 'PHP',
-            'price_type': 'fixed',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5809,
-            'longitude': 124.3842,
-            'provider_id': users[3]['id'],  # service_client
-            'provider_name': 'service_provider',
-            'duration': '1-2 weeks',
-            'requirements': 'Project requirements discussion, content preparation',
-            'is_active': True,
-            'created_at': datetime.utcnow().isoformat(),
-            'rating': 4.7,
-            'review_count': 6
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Home Cleaning Services',
-            'description': 'Professional home cleaning services for houses and apartments. Deep cleaning, regular maintenance, and move-in/move-out cleaning.',
-            'category': 'home_services',
-            'price': 500,
-            'currency': 'PHP',
-            'price_type': 'hourly',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5820,
-            'longitude': 124.3830,
-            'provider_id': users[3]['id'],  # service_client
-            'provider_name': 'service_provider',
-            'duration': '2-4 hours',
-            'requirements': 'Access to property, cleaning supplies provided',
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=2)).isoformat(),
-            'rating': 4.5,
-            'review_count': 4
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'title': 'Tutoring Services',
-            'description': 'Personalized tutoring in mathematics, science, and English for elementary and high school students.',
-            'category': 'education_training',
-            'price': 300,
-            'currency': 'PHP',
-            'price_type': 'hourly',
-            'location': 'Virac, Catanduanes',
-            'latitude': 13.5810,
-            'longitude': 124.3840,
-            'provider_id': users[3]['id'],  # service_client
-            'provider_name': 'service_provider',
-            'duration': '1-2 hours per session',
-            'requirements': 'Study materials, quiet learning environment',
-            'is_active': True,
-            'created_at': (datetime.utcnow() - timedelta(days=5)).isoformat(),
-            'rating': 4.9,
-            'review_count': 8
-        }
-    ]
+    # Create Flask app context
+    app = create_app()
     
-    with db.session() as session:
-        for service_data in services:
-            safe_run(session, """
-                CREATE (s:Service $service_data)
-            """, {'service_data': service_data})
+    with app.app_context():
+        try:
+            db = get_neo4j_db()
             
-            # Create relationship with provider
-            safe_run(session, """
-                MATCH (u:User {id: $provider_id}), (s:Service {id: $service_id})
-                CREATE (u)-[:PROVIDES]->(s)
-            """, {
-                'provider_id': service_data['provider_id'],
-                'service_id': service_data['id']
-            })
-    
-    print(f"Created {len(services)} demo services")
-    return services
-
-def create_demo_reviews(db, users, businesses, services):
-    """Create demo reviews"""
-    print("Creating demo reviews...")
-    
-    reviews = [
-        # Business reviews
-        {
-            'id': str(uuid.uuid4()),
-            'rating': 5,
-            'comment': 'Excellent service! The team at Virac IT Solutions delivered our website on time and exceeded our expectations.',
-            'user_id': users[1]['id'],  # job_seeker
-            'user_name': 'job_seeker',
-            'target_id': businesses[0]['id'],
-            'target_type': 'business',
-            'created_at': (datetime.utcnow() - timedelta(days=10)).isoformat()
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'rating': 4,
-            'comment': 'Great food and atmosphere. The seafood is always fresh and the staff are very accommodating.',
-            'user_id': users[1]['id'],  # job_seeker
-            'user_name': 'job_seeker',
-            'target_id': businesses[1]['id'],
-            'target_type': 'business',
-            'created_at': (datetime.utcnow() - timedelta(days=8)).isoformat()
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'rating': 5,
-            'comment': 'Professional and caring healthcare providers. The facility is clean and well-equipped.',
-            'user_id': users[3]['id'],  # service_client
-            'user_name': 'service_provider',
-            'target_id': businesses[2]['id'],
-            'target_type': 'business',
-            'created_at': (datetime.utcnow() - timedelta(days=6)).isoformat()
-        },
-        # Service reviews
-        {
-            'id': str(uuid.uuid4()),
-            'rating': 5,
-            'comment': 'Outstanding web development work. Very professional and responsive to our needs.',
-            'user_id': users[2]['id'],  # business_owner
-            'user_name': 'business_owner',
-            'target_id': services[0]['id'],
-            'target_type': 'service',
-            'created_at': (datetime.utcnow() - timedelta(days=12)).isoformat()
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'rating': 4,
-            'comment': 'Thorough cleaning service. The house was spotless after they finished.',
-            'user_id': users[1]['id'],  # job_seeker
-            'user_name': 'job_seeker',
-            'target_id': services[1]['id'],
-            'target_type': 'service',
-            'created_at': (datetime.utcnow() - timedelta(days=7)).isoformat()
-        }
-    ]
-    
-    with db.session() as session:
-        for review_data in reviews:
-            safe_run(session, """
-                CREATE (r:Review $review_data)
-            """, {'review_data': review_data})
+            # Generate businesses
+            print("📊 Generating 30 businesses with complete credentials...")
+            businesses = generate_businesses(OWNER_ID)
             
-            # Create relationships
-            if review_data['target_type'] == 'business':
-                safe_run(session, """
-                    MATCH (u:User {id: $user_id}), (r:Review {id: $review_id}), (b:Business {id: $target_id})
-                    CREATE (u)-[:REVIEWS]->(r)-[:FOR_BUSINESS]->(b)
-                """, {
-                    'user_id': review_data['user_id'],
-                    'review_id': review_data['id'],
-                    'target_id': review_data['target_id']
-                })
-            else:  # service
-                safe_run(session, """
-                    MATCH (u:User {id: $user_id}), (r:Review {id: $review_id}), (s:Service {id: $target_id})
-                    CREATE (u)-[:REVIEWS]->(r)-[:FOR_SERVICE]->(s)
-                """, {
-                    'user_id': review_data['user_id'],
-                    'review_id': review_data['id'],
-                    'target_id': review_data['target_id']
-                })
-    
-    print(f"Created {len(reviews)} demo reviews")
-    return reviews
-
-def create_demo_notifications(db, users):
-    """Create demo notifications"""
-    print("Creating demo notifications...")
-    
-    notifications = [
-        {
-            'id': str(uuid.uuid4()),
-            'user_id': users[2]['id'],  # business_owner
-            'type': 'business_verified',
-            'title': 'Business Verified',
-            'message': 'Your business Virac IT Solutions has been verified and is now live on the platform.',
-            'data': {'business_id': 'virac-it-solutions-id'},
-            'is_read': False,
-            'created_at': (datetime.utcnow() - timedelta(days=1)).isoformat()
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'user_id': users[2]['id'],  # business_owner
-            'type': 'new_job_application',
-            'title': 'New Job Application',
-            'message': 'You have received a new application for Senior Software Developer position.',
-            'data': {'job_id': 'senior-dev-job-id', 'applicant_id': 'applicant-id'},
-            'is_read': False,
-            'created_at': (datetime.utcnow() - timedelta(hours=2)).isoformat()
-        },
-        {
-            'id': str(uuid.uuid4()),
-            'user_id': users[1]['id'],  # job_seeker
-            'type': 'job_application_received',
-            'title': 'Application Received',
-            'message': 'Your application for the Restaurant Manager position has been received.',
-            'data': {'job_id': 'restaurant-manager-job-id', 'business_id': 'coastal-restaurant-id'},
-            'is_read': True,
-            'created_at': (datetime.utcnow() - timedelta(days=3)).isoformat()
-        }
-    ]
-    
-    with db.session() as session:
-        for notification_data in notifications:
-            safe_run(session, """
-                CREATE (n:Notification $notification_data)
-            """, {'notification_data': notification_data})
-    
-    print(f"Created {len(notifications)} demo notifications")
-    return notifications
-
-def main():
-    """Main seeding function"""
-    print("Starting Catanduanes Connect seeding...")
-    
-    # Initialize database connection
-    db = Neo4jConnection(
-        uri=os.getenv('NEO4J_URI', 'bolt://localhost:7687'),
-        user=os.getenv('NEO4J_USER', 'neo4j'),
-        password=os.getenv('NEO4J_PASSWORD', 'password')
-    )
-    
-    try:
-        # Create demo data
-        users = create_demo_users(db)
-        businesses = create_demo_businesses(db, users)
-        jobs = create_demo_jobs(db, businesses)
-        services = create_demo_services(db, users)
-        reviews = create_demo_reviews(db, users, businesses, services)
-        notifications = create_demo_notifications(db, users)
-        
-        print("\nSeeding completed successfully!")
-        print("\nDemo Accounts:")
-        print("- Admin: admin@example.com / Password123!")
-        print("- Job Seeker: job_seeker@example.com / Password123!")
-        print("- Business Owner: business_owner@example.com / Password123!")
-        print("- Service Client: service_client@example.com / Password123!")
-        
-        print(f"\nCreated:")
-        print(f"- {len(users)} users")
-        print(f"- {len(businesses)} businesses")
-        print(f"- {len(jobs)} jobs")
-        print(f"- {len(services)} services")
-        print(f"- {len(reviews)} reviews")
-        print(f"- {len(notifications)} notifications")
-        
-    except Exception as e:
-        print(f"Error during seeding: {e}")
-        raise
-    finally:
-        db.close()
+            total_jobs = 0
+            total_created_businesses = 0
+            total_created_jobs = 0
+            
+            # Create businesses and jobs
+            with db.session() as session:
+                for i, business in enumerate(businesses, 1):
+                    try:
+                        # Create business node
+                        create_business_query = """
+                            CREATE (b:Business {
+                                id: $id,
+                                name: $name,
+                                category: $category,
+                                description: $description,
+                                address: $address,
+                                phone: $phone,
+                                email: $email,
+                                website: $website,
+                                owner_id: $owner_id,
+                                is_active: $is_active,
+                                is_verified: $is_verified,
+                                verification_status: $verification_status,
+                                employee_count: $employee_count,
+                                established_year: $established_year,
+                                rating: $rating,
+                                reviews_count: $reviews_count,
+                                latitude: $latitude,
+                                longitude: $longitude,
+                                created_at: $created_at,
+                                updated_at: $updated_at,
+                                business_hours: $business_hours,
+                                permit_number: $permit_number,
+                                is_hiring: $is_hiring
+                            })
+                            RETURN b.id as id
+                        """
+                        
+                        result = safe_run(session, create_business_query, business)
+                        if result:
+                            total_created_businesses += 1
+                        
+                        # Create relationship to owner
+                        owner_rel_query = """
+                            MATCH (b:Business {id: $business_id})
+                            MATCH (u:User {id: $owner_id})
+                            CREATE (u)-[:OWNS]->(b)
+                        """
+                        safe_run(session, owner_rel_query, {
+                            "business_id": business["id"],
+                            "owner_id": OWNER_ID
+                        })
+                        
+                        # Generate and create jobs for this business
+                        print(f"  ✓ Business {i}/30: {business['name']}")
+                        print(f"    └─ Creating 30 jobs for this business...")
+                        
+                        jobs = generate_jobs(business["id"], business["name"])
+                        
+                        created_jobs = 0
+                        for job in jobs:
+                            create_job_query = """
+                                CREATE (j:Job {
+                                    id: $id,
+                                    title: $title,
+                                    description: $description,
+                                    business_id: $business_id,
+                                    business_name: $business_name,
+                                    category: $category,
+                                    location: $location,
+                                    employment_type: $employment_type,
+                                    salary_min: $salary_min,
+                                    salary_max: $salary_max,
+                                    salary_currency: $salary_currency,
+                                    required_skills: $required_skills,
+                                    experience_required: $experience_required,
+                                    education_level: $education_level,
+                                    posted_date: $posted_date,
+                                    deadline: $deadline,
+                                    applications_count: $applications_count,
+                                    views_count: $views_count,
+                                    is_active: $is_active,
+                                    is_filled: $is_filled,
+                                    status: $status,
+                                    created_at: $created_at,
+                                    updated_at: $updated_at,
+                                    benefits: $benefits,
+                                    job_description: $job_description
+                                })
+                                RETURN j.id as id
+                            """
+                            
+                            job_result = safe_run(session, create_job_query, job)
+                            if job_result:
+                                created_jobs += 1
+                            
+                            # Create relationship from business to job
+                            job_rel_query = """
+                                MATCH (b:Business {id: $business_id})
+                                MATCH (j:Job {id: $job_id})
+                                CREATE (b)-[:POSTS]->(j)
+                            """
+                            safe_run(session, job_rel_query, {
+                                "business_id": business["id"],
+                                "job_id": job["id"]
+                            })
+                        
+                        total_created_jobs += created_jobs
+                        print(f"    └─ {created_jobs} jobs created successfully\n")
+                        
+                    except Exception as e:
+                        print(f"  ✗ Error processing business {i}: {e}\n")
+                        continue
+            
+            # Print summary
+            print("\n" + "="*70)
+            print("✅ SEEDING COMPLETED SUCCESSFULLY!")
+            print("="*70)
+            print(f"\n📈 Database Statistics:")
+            print(f"   • Businesses Created: {total_created_businesses}/30")
+            print(f"   • Total Jobs Created: {total_created_jobs}")
+            print(f"   • Average Jobs per Business: {total_created_jobs // max(total_created_businesses, 1)}")
+            print(f"   • Owner: {OWNER_USERNAME} ({OWNER_EMAIL})")
+            print(f"   • Owner ID: {OWNER_ID}")
+            print("\n" + "="*70)
+            print("\n✨ Your database is now populated with realistic Catanduanes business data!")
+            print("📍 You can now test the application with real businesses and job listings.")
+            print("🔗 All businesses and jobs are linked to user 'ren'.\n")
+            
+        except Exception as e:
+            print(f"\n❌ Error during seeding: {e}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
 
 if __name__ == "__main__":
-    main()
+    seed_database()
