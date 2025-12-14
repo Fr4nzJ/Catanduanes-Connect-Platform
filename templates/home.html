@@ -3,8 +3,173 @@
 {% block title %}Home - Catanduanes Connect{% endblock %}
 
 {% block content %}
+<style>
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    /* AI Bubble Styles */
+    .ai-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 40;
+    }
+
+    .ai-bubble-button {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .ai-bubble-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-popup {
+        position: fixed;
+        bottom: 9rem;
+        right: 1.5rem;
+        width: 420px;
+        max-height: 600px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        z-index: 41;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+
+    .ai-popup.show {
+        display: flex;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-popup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ai-popup-body {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .ai-commands {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .ai-command-btn {
+        background: #f0f4ff;
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 13px;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .ai-command-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateX(4px);
+    }
+
+    .ai-popup-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
 <!-- Hero Section -->
 <section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-24">
+    <!-- AI Bubble -->
+    <div class="ai-bubble">
+        <button class="ai-bubble-button" id="ai-bubble-btn" title="AI Home Assistant">
+            <span style="font-size: 28px;">✨</span>
+        </button>
+        <div class="ai-popup" id="ai-popup">
+            <div class="ai-popup-header">
+                <div class="flex items-center gap-2">
+                    <span style="font-size: 20px;">🤖</span>
+                    <span class="font-bold" id="ai-header-text">Home Assistant</span>
+                </div>
+                <button class="ai-popup-close" id="ai-popup-close">
+                    <span style="font-size: 24px;">✕</span>
+                </button>
+            </div>
+            <div class="ai-popup-body">
+                <p class="text-gray-700 font-semibold mb-4" id="ai-helper-text">Explore Catanduanes Connect</p>
+                <div class="ai-commands">
+                    <button class="ai-command-btn" onclick="getHomeFeaturedJobs()">
+                        <span style="font-size: 16px; margin-right: 8px;">💼</span>
+                        <span id="btn-jobs">Browse jobs</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getHomeTopBusinesses()">
+                        <span style="font-size: 16px; margin-right: 8px;">🏪</span>
+                        <span id="btn-businesses">Discover businesses</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getHomePlatformStats()">
+                        <span style="font-size: 16px; margin-right: 8px;">📊</span>
+                        <span id="btn-stats">Platform statistics</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getHomeRecommendations()">
+                        <span style="font-size: 16px; margin-right: 8px;">⭐</span>
+                        <span id="btn-trending">Trending today</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getHomeAboutInfo()">
+                        <span style="font-size: 16px; margin-right: 8px;">ℹ️</span>
+                        <span id="btn-about">Learn about us</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center">
             <h1 class="text-5xl md:text-7xl font-bold mb-6">
@@ -301,8 +466,102 @@ function displayFeaturedBusinesses(businesses) {
 
 <!-- Real-time Stats Script -->
 <script src="{{ url_for('static', filename='js/realtime-stats.js') }}"></script>
+
+<!-- AI Bubble Translation and Functionality -->
 <script>
+const translations = {
+    en: {
+        'ai-header-text': 'Home Assistant',
+        'ai-helper-text': 'Explore Catanduanes Connect',
+        'btn-jobs': 'Browse jobs',
+        'btn-businesses': 'Discover businesses',
+        'btn-stats': 'Platform statistics',
+        'btn-trending': 'Trending today',
+        'btn-about': 'Learn about us'
+    },
+    tl: {
+        'ai-header-text': 'Home Assistant',
+        'ai-helper-text': 'Tuklasin ang Catanduanes Connect',
+        'btn-jobs': 'Tuklasin ang mga trabaho',
+        'btn-businesses': 'Tuklasin ang negosyo',
+        'btn-stats': 'Mga istatistika ng platform',
+        'btn-trending': 'Uso ngayon',
+        'btn-about': 'Alamin ang amin'
+    },
+    bcl: {
+        'ai-header-text': 'Home Assistant',
+        'ai-helper-text': 'Tukaran an Catanduanes Connect',
+        'btn-jobs': 'Tukaran an mga trabaho',
+        'btn-businesses': 'Tukaran an negosyo',
+        'btn-stats': 'Mga estadistika ng platform',
+        'btn-trending': 'Uso sa ngayon',
+        'btn-about': 'Makilala kami'
+    }
+};
+
+function updateLanguage() {
+    const currentLang = localStorage.getItem('language') || 'en';
+    const translation = translations[currentLang] || translations.en;
+    
+    for (const [key, value] of Object.entries(translation)) {
+        const element = document.getElementById(key);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+}
+
+function getHomeFeaturedJobs() {
+    window.location.href = "{{ url_for('jobs.list_jobs') }}";
+}
+
+function getHomeTopBusinesses() {
+    window.location.href = "{{ url_for('businesses.list_businesses') }}";
+}
+
+function getHomePlatformStats() {
+    alert(document.getElementById('stats-jobs').textContent + ' Jobs | ' + 
+          document.getElementById('stats-businesses').textContent + ' Businesses');
+}
+
+function getHomeRecommendations() {
+    window.location.href = "{{ url_for('businesses.list_businesses') }}";
+}
+
+function getHomeAboutInfo() {
+    window.location.href = "{{ url_for('main.about') }}";
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    updateLanguage();
+    
+    // Listen for language changes
+    window.addEventListener('languageChange', updateLanguage);
+    
+    // AI Bubble Toggle
+    const aiBtn = document.getElementById('ai-bubble-btn');
+    const aiPopup = document.getElementById('ai-popup');
+    const aiClose = document.getElementById('ai-popup-close');
+    
+    if (aiBtn) {
+        aiBtn.addEventListener('click', () => {
+            aiPopup.classList.toggle('show');
+        });
+    }
+    
+    if (aiClose) {
+        aiClose.addEventListener('click', () => {
+            aiPopup.classList.remove('show');
+        });
+    }
+    
+    // Close popup when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ai-bubble')) {
+            aiPopup.classList.remove('show');
+        }
+    });
+    
     // Initialize real-time stats for homepage
     window.REALTIME_STATS_CONFIG = {
         type: 'homepage',

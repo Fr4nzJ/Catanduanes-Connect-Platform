@@ -3,7 +3,173 @@
 {% block title %}About - Catanduanes Connect{% endblock %}
 
 {% block content %}
+<style>
+    /* Hide the base.html chat elements on this page */
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    /* AI Bubble Styles */
+    .ai-bubble {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 40;
+    }
+
+    .ai-bubble-button {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        border: none;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        color: white;
+    }
+
+    .ai-bubble-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6);
+    }
+
+    .ai-popup {
+        position: fixed;
+        bottom: 9rem;
+        right: 1.5rem;
+        width: 420px;
+        max-height: 600px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        display: none;
+        flex-direction: column;
+        z-index: 41;
+        overflow: hidden;
+        animation: slideUp 0.3s ease;
+    }
+
+    .ai-popup.show {
+        display: flex;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .ai-popup-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .ai-popup-body {
+        padding: 20px;
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .ai-commands {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .ai-command-btn {
+        background: #f0f4ff;
+        border: 2px solid #e0e7ff;
+        border-radius: 12px;
+        padding: 12px 16px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 13px;
+        font-weight: 500;
+        color: #2d3748;
+    }
+
+    .ai-command-btn:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+        transform: translateX(4px);
+    }
+
+    .ai-popup-close {
+        background: none;
+        border: none;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
 <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- AI Bubble -->
+    <div class="ai-bubble">
+        <button class="ai-bubble-button" id="ai-bubble-btn" title="AI About Assistant">
+            <span style="font-size: 28px;">✨</span>
+        </button>
+        <div class="ai-popup" id="ai-popup">
+            <div class="ai-popup-header">
+                <div class="flex items-center gap-2">
+                    <span style="font-size: 20px;">🤖</span>
+                    <span class="font-bold" id="ai-header-text">About Assistant</span>
+                </div>
+                <button class="ai-popup-close" id="ai-popup-close">
+                    <span style="font-size: 24px;">✕</span>
+                </button>
+            </div>
+            <div class="ai-popup-body">
+                <p class="text-gray-700 font-semibold mb-4" id="ai-helper-text">Learn more about our platform</p>
+                <div class="ai-commands">
+                    <button class="ai-command-btn" onclick="getAboutMission()">
+                        <span style="font-size: 16px; margin-right: 8px;">🎯</span>
+                        <span id="btn-mission">Our mission</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getAboutVision()">
+                        <span style="font-size: 16px; margin-right: 8px;">👁️</span>
+                        <span id="btn-vision">Our vision</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getAboutFeatures()">
+                        <span style="font-size: 16px; margin-right: 8px;">⭐</span>
+                        <span id="btn-features">Key features</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getAboutTeam()">
+                        <span style="font-size: 16px; margin-right: 8px;">👥</span>
+                        <span id="btn-team">Meet the team</span>
+                    </button>
+                    <button class="ai-command-btn" onclick="getAboutContact()">
+                        <span style="font-size: 16px; margin-right: 8px;">📧</span>
+                        <span id="btn-contact">Contact us</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Hero Section -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-600">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
@@ -261,3 +427,111 @@
     </div>
 </div>
 {% endblock %}
+
+<script>
+const aboutTranslations = {
+    en: {
+        'ai-header-text': 'About Assistant',
+        'ai-helper-text': 'Learn more about our platform',
+        'btn-mission': 'Our mission',
+        'btn-vision': 'Our vision',
+        'btn-features': 'Key features',
+        'btn-team': 'Meet the team',
+        'btn-contact': 'Contact us'
+    },
+    tl: {
+        'ai-header-text': 'About Assistant',
+        'ai-helper-text': 'Matuto pa tungkol sa aming platform',
+        'btn-mission': 'Ang aming misyon',
+        'btn-vision': 'Ang aming pangitain',
+        'btn-features': 'Mga pangunahing feature',
+        'btn-team': 'Kilalanin ang aming koponan',
+        'btn-contact': 'Makipag-ugnayan sa amin'
+    },
+    bcl: {
+        'ai-header-text': 'About Assistant',
+        'ai-helper-text': 'Makilala pa ang aming platform',
+        'btn-mission': 'Ang aming misyon',
+        'btn-vision': 'Ang aming pangitain',
+        'btn-features': 'Mga pangunahing feature',
+        'btn-team': 'Kilalanin ang aming koponan',
+        'btn-contact': 'Makipag-ugnayan sa amin'
+    }
+};
+
+function updateAboutLanguage() {
+    const currentLang = localStorage.getItem('language') || 'en';
+    const translation = aboutTranslations[currentLang] || aboutTranslations.en;
+    
+    for (const [key, value] of Object.entries(translation)) {
+        const element = document.getElementById(key);
+        if (element) {
+            element.textContent = value;
+        }
+    }
+}
+
+function getAboutMission() {
+    document.querySelector('html').scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function getAboutVision() {
+    const visionSection = document.querySelector('[id*="vision"]');
+    if (visionSection) {
+        visionSection.scrollIntoView({behavior: 'smooth'});
+    }
+}
+
+function getAboutFeatures() {
+    const featuresSection = document.querySelector('h2');
+    if (featuresSection && featuresSection.textContent.includes('We Offer')) {
+        featuresSection.scrollIntoView({behavior: 'smooth'});
+    }
+}
+
+function getAboutTeam() {
+    alert('Our dedicated team is committed to connecting communities and creating opportunities in Catanduanes.');
+}
+
+function getAboutContact() {
+    const contactSection = document.querySelector('h2');
+    const allH2s = document.querySelectorAll('h2');
+    for (let h2 of allH2s) {
+        if (h2.textContent.includes('Get In Touch') || h2.textContent.includes('Contact')) {
+            h2.scrollIntoView({behavior: 'smooth'});
+            break;
+        }
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateAboutLanguage();
+    
+    // Listen for language changes
+    window.addEventListener('languageChange', updateAboutLanguage);
+    
+    // AI Bubble Toggle
+    const aiBtn = document.getElementById('ai-bubble-btn');
+    const aiPopup = document.getElementById('ai-popup');
+    const aiClose = document.getElementById('ai-popup-close');
+    
+    if (aiBtn) {
+        aiBtn.addEventListener('click', () => {
+            aiPopup.classList.toggle('show');
+        });
+    }
+    
+    if (aiClose) {
+        aiClose.addEventListener('click', () => {
+            aiPopup.classList.remove('show');
+        });
+    }
+    
+    // Close popup when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ai-bubble')) {
+            aiPopup.classList.remove('show');
+        }
+    });
+});
+</script>
