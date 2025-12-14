@@ -63,18 +63,14 @@
     }
 }
 
-/* Touch-friendly targets (48px minimum) */
-button:not([class*="hidden"]), a:not([class*="hidden"]) {
+/* Touch-friendly targets (48px minimum) - exclude navigation */
+button:not([data-desktop-nav] *):not([class*="hidden"]), 
+a:not([data-desktop-nav] *):not([class*="hidden"]) {
     min-height: 44px;
     min-width: 44px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-}
-
-/* Respect Tailwind display utilities */
-[class*="hidden"] {
-    display: none !important;
 }
 
 /* Better spacing for mobile */
