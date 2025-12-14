@@ -479,7 +479,8 @@ def apply_job(job_id):
                     'cv_filename': f"{application_id}.{file_ext}"
                 }
                 
-                send_email_task(
+                from tasks import send_email_task_wrapper
+                send_email_task_wrapper(
                     to=owner_email,
                     subject=f'New Job Application: {job_result[0]["j"]["title"]} - {current_user.username}',
                     template='emails/job_application_notification.html',
@@ -958,7 +959,8 @@ def accept_applicant(application_id):
         
         # Send email notification
         try:
-            send_email_task(
+            from tasks import send_email_task_wrapper
+            send_email_task_wrapper(
                 to=applicant_email,
                 subject=f'Your Application for {job_title} - Accepted',
                 template='email/application_accepted.html',
@@ -1002,7 +1004,8 @@ def reject_applicant(application_id):
         
         # Send email notification
         try:
-            send_email_task(
+            from tasks import send_email_task_wrapper
+            send_email_task_wrapper(
                 to=applicant_email,
                 subject=f'Your Application for {job_title} - Not Selected',
                 template='email/application_rejected.html',

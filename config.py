@@ -15,12 +15,9 @@ class Config:
     # Simple cache instead of Redis
     CACHE_TYPE = 'SimpleCache'
     
-    # Email Configuration
-    MAIL_SERVER = 'smtp.gmail.com'
-    MAIL_PORT = 587
-    MAIL_USE_TLS = True
-    MAIL_USERNAME = os.environ.get('GMAIL_USER')
-    MAIL_PASSWORD = os.environ.get('GMAIL_PASSWORD')
+    # Email Configuration - SendGrid
+    SENDGRID_API_KEY = os.environ.get('SENDGRID_API_KEY')
+    SENDGRID_FROM_EMAIL = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@catandianesconnect.com')
     ADMIN_EMAILS = os.environ.get('ADMIN_EMAILS', '').split(',')
     
     # Google OAuth

@@ -203,7 +203,8 @@ def signup():
                 else:
                     # Send verification email
                     current_app.logger.info(f"Sending verification code to {email}")
-                    success = send_email_task(
+                    from tasks import send_email_task_wrapper
+                    success = send_email_task_wrapper(
                         to=email,
                         subject='Your Catanduanes Connect verification code',
                         template='email/verify_code.html',
@@ -301,7 +302,8 @@ def reset_password():
                 
                 # Send reset email
                 reset_url = url_for('auth.reset_password_confirm', token=reset_token, _external=True)
-                send_email_task(
+                from tasks import send_email_task_wrapper
+                send_email_task_wrapper(
                     to=email,
                     subject='Password Reset Request',
                     template='email/reset.html',
@@ -865,7 +867,8 @@ def resend_otp():
             flash('A new code has been sent to your phone.', 'info')
         else:
             current_app.logger.info(f"Resending email verification code to {current_user.email}")
-            success = send_email_task(
+            from tasks import send_email_task_wrapper
+            success = send_email_task_wrapper(
                 to=current_user.email,
                 subject='Your new verification code',
                 template='email/verify_code.html',

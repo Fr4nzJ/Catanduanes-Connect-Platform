@@ -59,7 +59,8 @@ def verify_email():
         save_email_otp(current_user.id, code)
         
         try:
-            send_email_task(
+            from tasks import send_email_task_wrapper
+            send_email_task_wrapper(
                 to=current_user.email,
                 subject='Verify your Catanduanes Connect Account',
                 template='email/verification_code.html',
@@ -117,7 +118,8 @@ def resend_verification_code():
     save_email_otp(current_user.id, code)
     
     try:
-        send_email_task(
+        from tasks import send_email_task_wrapper
+        send_email_task_wrapper(
             to=current_user.email,
             subject='Your Catanduanes Connect Verification Code',
             template='email/verification_code.html',

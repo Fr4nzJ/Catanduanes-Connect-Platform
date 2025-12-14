@@ -4,10 +4,9 @@ import threading
 from flask import current_app
 from datetime import datetime
 import requests
-import smtplib
 import uuid
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail, Email, To, HtmlContent
 from jinja2 import Environment, FileSystemLoader
 from celery import Celery, shared_task
 
@@ -22,6 +21,37 @@ broker_url = (os.environ.get('CELERY_BROKER_URL') or
 celery.conf.broker_url = broker_url
 celery.conf.result_backend = broker_url
 
+def render_email_template(template_path, context=None):
+    """Render a Jinja2 template to HTML for email"""
+    try:
+        env = Environment(loader=FileSystemLoader('templates'))
+        template = env.get_template(template_path)
+        return template.render(context or {})
+    except Exception as e:
+        logging.error(f"Failed to render email template {template_path}: {e}")
+        return None
+
+def send_email_task_wrapper(to, subject, template=None, context=None, html_content=None):
+    """
+    Wrapper that accepts either template-based or direct HTML emails.
+    Maintains backward compatibility with existing code.
+    """
+    # If html_content is provided directly, use it
+    if html_content:
+        return send_email_task(to, subject, html_content)
+    
+    # Otherwise, render template to HTML
+    if template:
+        html_content = render_email_template(template, context)
+        if html_content:
+            return send_email_task(to, subject, html_content)
+        else:
+            logging.error(f"Failed to render template {template} for email to {to}")
+            return False
+    
+    logging.error(f"No html_content or template provided for email to {to}")
+    return False
+
 def run_async(fn):
     """Decorator to run a function asynchronously"""
     def wrapper(*args, **kwargs):
@@ -32,79 +62,51 @@ def run_async(fn):
     return wrapper
 
 @shared_task(bind=True, max_retries=3)
-def send_email_task_async(self, to, subject, template, context=None, attachments=None):
-    """Send email asynchronously using Celery"""
+def send_email_task_async(self, to, subject, html_content):
+    """Send email asynchronously using SendGrid"""
     try:
-        # Get config from environment (Celery runs outside app context)
-        mail_username = os.environ.get('GMAIL_USER')
-        mail_password = os.environ.get('GMAIL_PASSWORD')
-        mail_server = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-        mail_port = int(os.environ.get('MAIL_PORT', 587))
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
         
-        if not mail_username or not mail_password:
-            logging.error("Gmail credentials not configured")
-            return False
+        message = Mail(
+            from_email=Email(os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@catandianesconnect.com')),
+            to_emails=To(to),
+            subject=subject,
+            html_content=HtmlContent(html_content)
+        )
         
-        # Create message
-        msg = MIMEMultipart()
-        msg['From'] = mail_username
-        msg['To'] = to
-        msg['Subject'] = subject
-        
-        # Render template
-        env = Environment(loader=FileSystemLoader('templates'))
-        template_obj = env.get_template(template)
-        html_content = template_obj.render(context or {})
-        
-        # Attach HTML content
-        msg.attach(MIMEText(html_content, 'html'))
-        
-        # Handle attachments
-        if attachments:
-            for attachment in attachments:
-                with open(attachment['path'], 'rb') as f:
-                    part = MIMEText(f.read(), attachment['type'])
-                    part.add_header('Content-Disposition', 
-                                  f'attachment; filename={attachment["filename"]}')
-                    msg.attach(part)
-        
-        # Send email with timeout
-        logging.info(f"Attempting to send email to {to} via {mail_server}:{mail_port}")
-        with smtplib.SMTP(mail_server, mail_port, timeout=10) as server:
-            server.starttls()
-            server.login(mail_username, mail_password)
-            server.send_message(msg)
-            logging.info(f"Email sent successfully to {to}")
-            return True
+        response = sg.send(message)
+        logging.info(f"Email sent to {to} via SendGrid. Status: {response.status_code}")
+        return True
             
     except Exception as exc:
         logging.error(f"Failed to send email to {to}: {exc}")
         # Retry with exponential backoff (max 3 times)
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
-def send_email_task(to, subject, template, context=None, attachments=None):
-    """Wrapper to send email via Celery with fallback to async thread"""
+def send_email_task(to, subject, html_content):
+    """Wrapper to send email via Celery with fallback to direct SendGrid"""
     try:
         # Try to send task asynchronously via Celery
-        send_email_task_async.delay(to, subject, template, context, attachments)
+        send_email_task_async.delay(to, subject, html_content)
         logging.info(f"Email task queued for {to}")
         return True
     except Exception as e:
         logging.error(f"Failed to queue email task via Celery: {e}")
-        # Fallback to threaded email sending (non-blocking)
-        logging.info(f"Falling back to threaded email sending for {to}")
+        # Fallback to direct SendGrid API call
+        logging.info(f"Falling back to direct SendGrid send for {to}")
         try:
-            @run_async
-            def send_sync_email():
-                try:
-                    send_email_task_async(to, subject, template, context, attachments)
-                except Exception as sync_error:
-                    logging.error(f"Threaded email send failed for {to}: {sync_error}")
-            
-            send_sync_email()
+            sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+            message = Mail(
+                from_email=Email(os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@catandianesconnect.com')),
+                to_emails=To(to),
+                subject=subject,
+                html_content=HtmlContent(html_content)
+            )
+            response = sg.send(message)
+            logging.info(f"Email sent directly via SendGrid to {to}. Status: {response.status_code}")
             return True
-        except Exception as thread_error:
-            logging.error(f"Failed to start email thread for {to}: {thread_error}")
+        except Exception as direct_error:
+            logging.error(f"Direct SendGrid email failed for {to}: {direct_error}")
             return False
 
 @run_async
@@ -275,7 +277,7 @@ def generate_analytics_report_task():
             }
             
             # Send report to admin
-            send_email_task(
+            send_email_task_wrapper(
                 to=current_app.config['ADMIN_EMAIL'],
                 subject=f'Daily Analytics Report - {report["date"]}',
                 template='email/analytics_report.html',
@@ -359,7 +361,7 @@ def send_weekly_digest_task():
             
             # Send digest to each user
             for user in users:
-                send_email_task(
+                send_email_task_wrapper(
                     to=user['u.email'],
                     subject='Weekly Digest - Catanduanes Connect',
                     template='email/weekly_digest.html',
