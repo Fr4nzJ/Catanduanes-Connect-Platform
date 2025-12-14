@@ -54,24 +54,22 @@
                 </div>
                 
                 <!-- Desktop Navigation -->
-                <div class="hidden md:block">
-                    <div class="ml-10 flex items-baseline space-x-4">
-                        <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Home
-                        </a>
-                        <a href="{{ url_for('jobs.list_jobs') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Jobs
-                        </a>
-                        <a href="{{ url_for('businesses.list_businesses') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Businesses
-                        </a>
-                        <a href="{{ url_for('chat.user_chat_view') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            Chat
-                        </a>
-                        <a href="{{ url_for('about') }}" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                            About
-                        </a>
-                    </div>
+                <div class="hidden md:flex md:items-center ml-10">
+                    <a href="{{ url_for('home') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Home
+                    </a>
+                    <a href="{{ url_for('jobs.list_jobs') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Jobs
+                    </a>
+                    <a href="{{ url_for('businesses.list_businesses') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Businesses
+                    </a>
+                    <a href="{{ url_for('chat.user_chat_view') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        Chat
+                    </a>
+                    <a href="{{ url_for('about') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                        About
+                    </a>
                 </div>
                 
                 <!-- User Menu -->
