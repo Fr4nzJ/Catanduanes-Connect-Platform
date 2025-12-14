@@ -181,22 +181,39 @@ def seed_database():
     
     # Retry connection with exponential backoff
     max_retries = 5
+    driver = None
     for attempt in range(max_retries):
         try:
-            driver = GraphDatabase.driver(uri, auth=(username, password), max_connection_lifetime=30 * 60)
+            driver = GraphDatabase.driver(
+                uri, 
+                auth=(username, password),
+                max_connection_lifetime=30 * 60
+            )
+            # Verify connection
+            with driver.session(database="neo4j") as test_session:
+                test_session.run("RETURN 1")
             print(f"Connected to Neo4j (attempt {attempt + 1})")
             break
         except Exception as e:
+            if driver:
+                try:
+                    driver.close()
+                except:
+                    pass
             if attempt < max_retries - 1:
                 wait = 2 ** attempt
-                print(f"Connection attempt {attempt + 1} failed. Retrying in {wait}s...")
+                print(f"Connection attempt {attempt + 1} failed: {str(e)[:50]}. Retrying in {wait}s...")
                 time.sleep(wait)
             else:
-                print(f"Failed to connect to Neo4j after {max_retries} attempts")
+                print(f"Failed to connect to Neo4j after {max_retries} attempts: {e}")
                 return
     
+    if not driver:
+        print("No driver created")
+        return
+    
     try:
-        with driver.session() as session:
+        with driver.session(database="neo4j") as session:
             
             # Generate businesses
             print("Generating 30 businesses with complete credentials...")
