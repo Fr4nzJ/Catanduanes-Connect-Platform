@@ -351,7 +351,6 @@ def recommend_jobs_by_role():
     except Exception as e:
         logger.error(f"Error recommending jobs by role: {str(e)}")
         return jsonify({'status': 'error', 'message': str(e)}), 500
-        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 @gemini_bp.route('/recommend-jobs-by-salary', methods=['POST'])
