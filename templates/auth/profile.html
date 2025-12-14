@@ -42,7 +42,7 @@
 
       <!-- Salary Expectation Update Form -->
       <form method="POST" action="{{ url_for('auth.update_salary_expectation') }}" class="mt-8 max-w-md">
-        {{ csrf_token() }}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-4">
           <label for="salary_expectation" class="block text-sm font-medium text-gray-700 mb-2">
             Desired Monthly Salary (₱)
