@@ -26,7 +26,9 @@ def render_email_template(template_path, context=None):
     try:
         env = Environment(loader=FileSystemLoader('templates'))
         template = env.get_template(template_path)
-        return template.render(context or {})
+        html = template.render(context or {})
+        logging.info(f"Template rendered: {template_path}, HTML length: {len(html)}")
+        return html
     except Exception as e:
         logging.error(f"Failed to render email template {template_path}: {e}")
         return None
@@ -65,10 +67,16 @@ def run_async(fn):
 def send_email_task_async(self, to, subject, html_content):
     """Send email asynchronously using SendGrid"""
     try:
-        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        api_key = os.environ.get('SENDGRID_API_KEY')
+        from_email = os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@catandianesconnect.com')
+        
+        logging.info(f"SendGrid config - From: {from_email}, API Key exists: {bool(api_key)}")
+        logging.info(f"HTML Content length: {len(html_content) if html_content else 0}")
+        
+        sg = SendGridAPIClient(api_key)
         
         message = Mail(
-            from_email=Email(os.environ.get('SENDGRID_FROM_EMAIL', 'noreply@catandianesconnect.com')),
+            from_email=Email(from_email),
             to_emails=To(to),
             subject=subject,
             html_content=HtmlContent(html_content)
