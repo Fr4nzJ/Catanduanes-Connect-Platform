@@ -769,6 +769,7 @@
             if (!response.ok) throw new Error('Failed to get recommendations');
             
             const data = await response.json();
+            console.log('Salary recommendation response:', data);
             displayRecommendations(data.recommended_jobs || []);
         } catch (error) {
             console.error('Error:', error);
@@ -779,6 +780,10 @@
     function displayRecommendations(recommendedJobIds) {
         const recommendedSection = document.getElementById('recommended-section');
         const recommendedJobsContainer = document.getElementById('recommended-jobs');
+
+        console.log('Recommended Job IDs from backend:', recommendedJobIds);
+        console.log('All available jobs:', allJobsData);
+        console.log('All job IDs:', allJobsData.map(j => j.id));
 
         if (!recommendedJobIds || recommendedJobIds.length === 0) {
             recommendedJobsContainer.innerHTML = `
@@ -792,6 +797,8 @@
 
         // Filter jobs based on recommended IDs
         const recommendedJobs = allJobsData.filter(job => recommendedJobIds.includes(job.id));
+        
+        console.log('Filtered recommended jobs:', recommendedJobs);
 
         // Create job cards
         const jobsHTML = recommendedJobs.map(job => `
