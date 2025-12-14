@@ -268,8 +268,6 @@ def job_detail(job_id):
         job = Job(**job_data)
         
         business_data = _node_to_dict(record['b'])
-        business_data['rating'] = record['avg_rating'] or 0.0
-        business_data['review_count'] = record['review_count'] or 0
         business = Business(**business_data)
         
         # Check if user has applied
