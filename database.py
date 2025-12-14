@@ -35,7 +35,7 @@ class Neo4jConnection:
         self.password = password
         self.database = database
         self.driver = None
-        self.connect()
+        # Connection will be established on first use
         
     def connect(self):
         """Establish connection to Neo4j"""
@@ -126,9 +126,12 @@ def init_neo4j(app):
                 app.config['NEO4J_PASSWORD'],
                 app.config['NEO4J_DATABASE']
             )
-        # 2. test the connection
-        g.neo4j_db.ensure_connection()
-        logger.info("Successfully initialized Neo4j connection")
+        # 2. test the connection (optional for startup)
+        try:
+            g.neo4j_db.ensure_connection()
+            logger.info("Successfully initialized Neo4j connection")
+        except Exception as e:
+            logger.warning(f"Neo4j connection failed during initialization: {e}. App will continue without Neo4j.")
 
     @app.teardown_appcontext
     def close_neo4j(error):

@@ -261,8 +261,8 @@ def create_app(config_name='default'):
 
 
 # Create Flask app instance
-app = create_app(os.getenv('FLASK_ENV', 'development'))
+app = create_app(os.getenv('FLASK_ENV') or ('production' if 'PORT' in os.environ else 'development'))
 
 # Run the development server if this file is run directly
 if __name__ == '__main__':
-    app.run(debug=False, use_reloader=False, host='127.0.0.1', port=int(os.getenv('PORT', 5000)))
+    app.run(debug=False, use_reloader=False, host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
