@@ -10,6 +10,7 @@ import sys
 import uuid
 from datetime import datetime, timedelta, timezone
 import random
+import time
 from dotenv import load_dotenv
 from neo4j import GraphDatabase
 
@@ -150,14 +151,19 @@ def generate_jobs(business_id, business_name):
     
     return jobs
 
-def safe_run(session, query, params=None):
-    """Execute a Cypher query safely"""
-    try:
-        result = session.run(query, params or {})
-        return result.data()
-    except Exception as e:
-        print(f"Error executing query: {e}")
-        return None
+def safe_run(session, query, params=None, max_retries=3):
+    """Execute a Cypher query safely with retry logic"""
+    for attempt in range(max_retries):
+        try:
+            result = session.run(query, params or {})
+            return result.data()
+        except Exception as e:
+            if attempt < max_retries - 1:
+                print(f"Query attempt {attempt + 1} failed: {str(e)[:50]}... Retrying...")
+                time.sleep(2 ** attempt)  # Exponential backoff
+            else:
+                print(f"Query failed after {max_retries} attempts: {e}")
+                return None
 
 def seed_database():
     """Main seed function"""
@@ -173,7 +179,21 @@ def seed_database():
     username = os.getenv('NEO4J_USERNAME', 'neo4j')
     password = os.getenv('NEO4J_PASSWORD', '')
     
-    driver = GraphDatabase.driver(uri, auth=(username, password))
+    # Retry connection with exponential backoff
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            driver = GraphDatabase.driver(uri, auth=(username, password), max_connection_lifetime=30 * 60)
+            print(f"Connected to Neo4j (attempt {attempt + 1})")
+            break
+        except Exception as e:
+            if attempt < max_retries - 1:
+                wait = 2 ** attempt
+                print(f"Connection attempt {attempt + 1} failed. Retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                print(f"Failed to connect to Neo4j after {max_retries} attempts")
+                return
     
     try:
         with driver.session() as session:
