@@ -38,3 +38,4 @@ google-api-core>=2.25.2
 google-api-python-client>=2.184.0
 google-auth-oauthlib>=1.2.0
 celery>=5.3.4
+redis>=5.0.0

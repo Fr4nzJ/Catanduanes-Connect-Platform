@@ -83,14 +83,21 @@ def send_email_task_async(self, to, subject, template, context=None, attachments
         raise self.retry(exc=exc, countdown=60 * (2 ** self.request.retries))
 
 def send_email_task(to, subject, template, context=None, attachments=None):
-    """Wrapper to send email via Celery"""
+    """Wrapper to send email via Celery with fallback to sync"""
     try:
-        # Send task asynchronously
+        # Try to send task asynchronously via Celery
         send_email_task_async.delay(to, subject, template, context, attachments)
+        logging.info(f"Email task queued for {to}")
         return True
     except Exception as e:
-        logging.error(f"Failed to queue email task: {e}")
-        return False
+        logging.error(f"Failed to queue email task via Celery: {e}")
+        # Fallback to synchronous email sending
+        logging.info(f"Falling back to synchronous email sending for {to}")
+        try:
+            return send_email_task_async(to, subject, template, context, attachments)
+        except Exception as sync_error:
+            logging.error(f"Synchronous email send also failed for {to}: {sync_error}")
+            return False
 
 @run_async
 def create_notification_task(user_id=None, type='general', title='', message='', data=None):
