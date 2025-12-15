@@ -54,22 +54,13 @@
                 </div>
                 
                 <!-- Desktop Navigation -->
-                <div  class="hidden md:block md:items-center ml-10">
-                    <a href="{{ url_for('home') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                        Home
-                    </a>
-                    <a href="{{ url_for('jobs.list_jobs') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                        Jobs
-                    </a>
-                    <a href="{{ url_for('businesses.list_businesses') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                        Businesses
-                    </a>
-                    <a href="{{ url_for('chat.user_chat_view') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                        Chat
-                    </a>
-                    <a href="{{ url_for('about') }}" style="display: inline-block;" class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">
-                        About
-                    </a>
+                <!-- Desktop Navigation -->
+                <div class="hidden md:block md:items-center ml-10">
+                <a href="{{ url_for('home') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Home</a>
+                <a href="{{ url_for('jobs.list_jobs') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Jobs</a>
+                <a href="{{ url_for('businesses.list_businesses') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Businesses</a>
+                <a href="{{ url_for('chat.user_chat_view') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Chat</a>
+                <a href="{{ url_for('about') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">About</a>
                 </div>
                 
                 <!-- User Menu -->
