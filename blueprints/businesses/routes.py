@@ -465,10 +465,12 @@ def business_detail(business_id):
         # Get reviews
         reviews = safe_run(session, """
             MATCH (u:User)-[:REVIEWS]->(review:Review)-[:FOR_BUSINESS]->(b:Business {id: $business_id})
-            RETURN review as r, u.username as reviewer_name
+            RETURN review as r, review.reviewer_name as reviewer_name
             ORDER BY review.created_at DESC
             LIMIT 10
         """, {'business_id': business_id})
+        
+        logger.info(f"Found {len(reviews) if reviews else 0} reviews for business {business_id}")
         
         review_list = []
         for review_record in reviews:
@@ -654,7 +656,10 @@ def add_review(business_id):
             })
             
             if not create_result:
+                logger.error(f"Failed to create review for business {business_id}")
                 return jsonify({'error': 'Failed to create review'}), 500
+            
+            logger.info(f"Review created successfully: {review_id} for business {business_id} by user {current_user.id}")
             
             # Update business rating
             update_result = safe_run(session, """
@@ -664,6 +669,8 @@ def add_review(business_id):
                     b.review_count = review_count
                 RETURN b.rating as new_rating, b.review_count as new_count
             """, {'business_id': business_id})
+            
+            logger.info(f"Updated business rating for {business_id}")
             
             # Create notification for business owner
             owner_result = safe_run(session, """
