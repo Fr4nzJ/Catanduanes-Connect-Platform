@@ -714,26 +714,35 @@ def dashboard():
     # ---------- 1.  OWNER-SPECIFIC STATS ----------
     with db.session() as session:
         stats = safe_run(session, """
+            MATCH (u:User {id: $uid})
+            
             // total businesses owned
-            MATCH (u:User {id: $uid})-[:OWNS]->(b:Business)
-            WITH count(b) AS total_businesses
-
-            // active jobs (jobs whose parent business is owned by user)
+            OPTIONAL MATCH (u)-[:OWNS]->(b:Business)
+            WITH u, count(DISTINCT b) AS business_count
+            
+            // total jobs posted (active jobs from owned businesses)
             OPTIONAL MATCH (u)-[:OWNS]->(b2:Business)<-[:POSTED_BY]-(j:Job)
             WHERE j.is_active = true
-            WITH total_businesses, count(DISTINCT j) AS active_jobs
-
-            // total services offered by the user
-            OPTIONAL MATCH (u)-[:PROVIDES]->(s:Service)
-            WITH total_businesses, active_jobs, count(DISTINCT s) AS total_services
-
-            // pending verifications (businesses awaiting admin approval)
-            OPTIONAL MATCH (u)-[:OWNS]->(b3:Business)
-            WHERE b3.is_verified = false
-            RETURN total_businesses,
-                   active_jobs,
-                   total_services,
-                   count(DISTINCT b3) AS pending_verifications
+            WITH u, business_count, count(DISTINCT j) AS job_count
+            
+            // filled jobs (jobs with filled status)
+            OPTIONAL MATCH (u)-[:OWNS]->(b3:Business)<-[:POSTED_BY]-(j2:Job)
+            WHERE j2.status = 'filled'
+            WITH u, business_count, job_count, count(DISTINCT j2) AS filled_jobs
+            
+            // total applicants (applications to user's jobs)
+            OPTIONAL MATCH (u)-[:OWNS]->(b4:Business)<-[:POSTED_BY]-(j3:Job)<-[:FOR_JOB]-(a:JobApplication)
+            WITH u, business_count, job_count, filled_jobs, count(DISTINCT a) AS application_count
+            
+            // pending applicants (applications with pending status)
+            OPTIONAL MATCH (u)-[:OWNS]->(b5:Business)<-[:POSTED_BY]-(j4:Job)<-[:FOR_JOB]-(a2:JobApplication)
+            WHERE a2.status = 'pending'
+            
+            RETURN business_count,
+                   job_count,
+                   filled_jobs,
+                   application_count,
+                   count(DISTINCT a2) AS pending_applicants
         """, {"uid": current_user.id})[0]
 
     # ---------- 2.  BUSINESS & APPLICATION LISTS (your original queries) ----------
