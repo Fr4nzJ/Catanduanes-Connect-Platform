@@ -348,11 +348,11 @@ async function loadHomepageStats() {
         const response = await fetch('/api/homepage/stats');
         const stats = await response.json();
         
-        // Animate counters
-        animateCounter('stats-jobs', stats.jobs);
-        animateCounter('stats-businesses', stats.businesses);
-        animateCounter('stats-services', stats.services);
-        animateCounter('stats-users', stats.users);
+        // Animate counters - extract numeric values
+        animateCounter('stats-jobs', stats.jobs && stats.jobs.total ? stats.jobs.total : 0);
+        animateCounter('stats-businesses', stats.businesses && stats.businesses.total ? stats.businesses.total : 0);
+        animateCounter('stats-services', stats.services && stats.services.total ? stats.services.total : 0);
+        animateCounter('stats-users', stats.users && stats.users.total ? stats.users.total : 0);
     } catch (error) {
         console.error('Failed to load stats:', error);
     }
@@ -376,8 +376,14 @@ async function loadFeaturedContent() {
 
 function animateCounter(elementId, target) {
     const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    // Ensure target is a valid number
+    target = parseInt(target) || 0;
+    if (target < 0) target = 0;
+    
     let current = 0;
-    const increment = target / 50;
+    const increment = Math.max(1, target / 50);
     
     const timer = setInterval(() => {
         current += increment;
