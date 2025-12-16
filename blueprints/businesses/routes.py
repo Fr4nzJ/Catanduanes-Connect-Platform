@@ -750,12 +750,9 @@ def dashboard():
         businesses = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             OPTIONAL MATCH (b)<-[:FOR_BUSINESS]-(r:Review)
+            WITH b, avg(r.rating) as avg_rating, count(DISTINCT r) as review_count
             OPTIONAL MATCH (b)<-[:POSTED_BY]-(j:Job {is_active: true})
-            WITH b, 
-                 avg(r.rating) as avg_rating, 
-                 count(DISTINCT r) as review_count, 
-                 count(DISTINCT j) as jobs_count
-            RETURN b, avg_rating, review_count, jobs_count
+            RETURN b, avg_rating, review_count, count(DISTINCT j) as jobs_count
             ORDER BY b.created_at DESC
         """, {"user_id": current_user.id})
 
