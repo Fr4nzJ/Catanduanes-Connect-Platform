@@ -2,46 +2,6 @@
 
 {% block title %}{{ business.name }} - Catanduanes Connect{% endblock %}
 
-{% block styles %}
-<style>
-    /* Fix z-index layering for map and modals */
-    #business-map {
-        z-index: 1 !important;
-        position: relative !important;
-    }
-    
-    #business-map.leaflet-container {
-        z-index: 1 !important;
-    }
-    
-    /* Ensure modals appear above everything */
-    #review-modal, #contact-modal {
-        z-index: 9999 !important;
-        position: fixed !important;
-    }
-    
-    /* Modal background overlay */
-    #review-modal, #contact-modal {
-        background-color: rgba(0, 0, 0, 0.5) !important;
-    }
-    
-    /* Modal content box should stay on top */
-    #review-modal > div, #contact-modal > div {
-        z-index: 10000 !important;
-        position: relative !important;
-    }
-    
-    /* Prevent map controls from appearing above modals */
-    .leaflet-control {
-        z-index: 2 !important;
-    }
-    
-    .leaflet-pane {
-        z-index: 1 !important;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
@@ -296,7 +256,7 @@
 </div>
 
 <!-- Review Modal -->
-<div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="review-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[9999] flex items-center justify-center p-4">
     <div class="bg-white rounded-lg max-w-md w-full">
         <div class="p-6">
             <div class="flex items-center justify-between mb-4">
@@ -342,7 +302,7 @@
 </div>
 
 <!-- Contact Modal -->
-<div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+<div id="contact-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-[9999] flex items-center justify-center p-4">
     <div class="bg-white rounded-lg max-w-md w-full">
         <div class="p-6">
             <div class="flex items-center justify-between mb-4">
