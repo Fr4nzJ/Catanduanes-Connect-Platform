@@ -7,15 +7,37 @@
     /* Fix z-index layering for map and modals */
     #business-map {
         z-index: 1 !important;
+        position: relative !important;
     }
     
+    #business-map.leaflet-container {
+        z-index: 1 !important;
+    }
+    
+    /* Ensure modals appear above everything */
     #review-modal, #contact-modal {
-        z-index: 50 !important;
+        z-index: 9999 !important;
+        position: fixed !important;
     }
     
-    /* Ensure map controls don't overlap modals */
+    /* Modal background overlay */
+    #review-modal, #contact-modal {
+        background-color: rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    /* Modal content box should stay on top */
+    #review-modal > div, #contact-modal > div {
+        z-index: 10000 !important;
+        position: relative !important;
+    }
+    
+    /* Prevent map controls from appearing above modals */
     .leaflet-control {
         z-index: 2 !important;
+    }
+    
+    .leaflet-pane {
+        z-index: 1 !important;
     }
 </style>
 {% endblock %}
