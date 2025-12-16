@@ -782,9 +782,10 @@ def dashboard():
         ]
 
     # ---------- 3.  DEBUG LOGGING ----------
-    app.logger.info(f"Dashboard - Stats: {stats}")
+    from flask import current_app
+    current_app.logger.info(f"Dashboard - Stats: {stats}")
     for i, b in enumerate(business_list):
-        app.logger.info(f"Business {i}: name={b.name}, jobs_count={getattr(b, 'jobs_count', 'MISSING')}, reviews_count={getattr(b, 'reviews_count', 'MISSING')}, rating={getattr(b, 'rating', 'MISSING')}")
+        current_app.logger.info(f"Business {i}: name={b.name}, jobs_count={getattr(b, 'jobs_count', 'MISSING')}, reviews_count={getattr(b, 'reviews_count', 'MISSING')}, rating={getattr(b, 'rating', 'MISSING')}")
 
     # ---------- 4.  RENDER ----------
     return render_template(
