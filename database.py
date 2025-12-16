@@ -168,7 +168,20 @@ def _node_to_dict(node) -> Optional[Dict[str, Any]]:
     """Convert Neo4j node to dictionary with attribute access support"""
     if not node:
         return None
-    result = AttrDict(node)
+    
+    # Convert Neo4j node to dict, handling DateTime objects
+    node_dict = dict(node)
+    
+    # Convert DateTime objects to ISO format strings for JSON serialization
+    from datetime import datetime
+    from neo4j.time import DateTime, Date, Time
+    
+    for key, value in node_dict.items():
+        if isinstance(value, (DateTime, Date, Time, datetime)):
+            # Convert to ISO format string
+            node_dict[key] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
+    
+    result = AttrDict(node_dict)
     # IMPORTANT: Use the 'id' property from the node data, NOT node.id (which is Neo4j's internal ID)
     # Only set node.id if the 'id' property doesn't already exist in the node data
     if 'id' not in result:
