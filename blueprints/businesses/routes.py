@@ -635,6 +635,7 @@ def add_review(business_id):
                     id: $review_id,
                     rating: $rating,
                     comment: $comment,
+                    reviewer_name: $reviewer_name,
                     created_at: $created_at,
                     updated_at: $created_at
                 })
@@ -646,6 +647,7 @@ def add_review(business_id):
                 'review_id': review_id,
                 'rating': rating,
                 'comment': comment,
+                'reviewer_name': current_user.username,
                 'created_at': created_at,
                 'user_id': current_user.id,
                 'business_id': business_id
