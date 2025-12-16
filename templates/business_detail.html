@@ -427,27 +427,40 @@ function resetReviewForm() {
 
 function submitReview(event) {
     event.preventDefault();
-    if (currentRating === 0) { alert('Please select a rating'); return; }
-
-    fetch(`/businesses/{{ business.id }}/review`, {
+    
+    if (currentRating === 0) {
+        alert('Please select a rating');
+        return;
+    }
+    
+    const formData = new FormData(event.target);
+    const data = {
+        rating: currentRating,
+        comment: formData.get('comment'),
+        csrf_token: formData.get('csrf_token')
+    };
+    
+    fetch('/businesses/{{ business.id }}/review', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRFToken': document.querySelector('[name=csrf_token]').value
+            'X-CSRFToken': formData.get('csrf_token')
         },
-        body: JSON.stringify({
-            rating: currentRating,
-            comment: document.getElementById('review-comment').value
-        })
+        body: JSON.stringify(data)
     })
-    .then(r => r.json())
-    .then(res => {
-        if (res.error) throw new Error(res.error);   // will be caught below
-        alert('Review submitted!');
-        location.reload();
+    .then(response => response.json())
+    .then(result => {
+        if (result.error) {
+            alert(result.error);
+        } else {
+            alert('Review submitted successfully!');
+            closeReviewModal();
+            location.reload();
+        }
     })
-    .catch(err => {
-        alert(err.message || 'Failed to submit review. Please try again.');
+    .catch(error => {
+        console.error('Error submitting review:', error);
+        alert('Failed to submit review. Please try again.');
     });
 }
 

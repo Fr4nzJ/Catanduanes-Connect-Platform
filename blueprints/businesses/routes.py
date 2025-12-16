@@ -161,7 +161,7 @@ def list_businesses():
         business = Business(**business_data)
         logger.info(f"Created Business object: ID={business.id}, Name={business.name}")
         business_list.append(business)
-        # Also store as dict for feature (JSON serializable)
+        # Also store as dict for map feature (JSON serializable)
         business_dicts.append(business_data)
         
     # Calculate pagination values
@@ -938,14 +938,3 @@ def api_map_points():
         'type': 'FeatureCollection',
         'features': features
     }
-
-@businesses_bp.route('/<business_id>/contact', methods=['POST'])
-@login_required
-def contact_business(business_id):
-    """Send a contact message to the business owner."""
-    data = request.get_json(silent=True) or {}
-    if not data.get('message'):
-        return jsonify({'error': 'Message is required'}), 400
-
-    # TODO: save to DB / e-mail / notification
-    return jsonify({'success': True, 'message': 'Message sent'}), 200
