@@ -205,7 +205,9 @@ def create_app(config_name='default'):
     # Register main routes
     @app.route("/")
     def home():
-        return render_template("home.html")
+        from blueprints.admin.management_routes import get_realtime_stats
+        stats = get_realtime_stats()
+        return render_template("home.html", stats=stats)
 
     @app.route("/about")
     def about():
