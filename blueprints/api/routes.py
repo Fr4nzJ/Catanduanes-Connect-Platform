@@ -172,3 +172,121 @@ def get_business_markers():
             'error': 'Failed to fetch business locations',
             'markers': []
         })
+
+
+# ============================================================================
+# NOTIFICATION ENDPOINTS
+# ============================================================================
+
+@api_bp.route('/notifications')
+@login_required
+def get_notifications():
+    """Get all notifications for the current user"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Query notifications for current user, ordered by newest first
+            result = safe_run(session, """
+                MATCH (n:Notification)
+                WHERE n.user_id = $user_id
+                RETURN n
+                ORDER BY n.created_at DESC
+                LIMIT 50
+            """, {'user_id': current_user.id})
+            
+            notifications = []
+            if result:
+                for record in result:
+                    node_data = dict(record['n'])
+                    notifications.append({
+                        'id': node_data.get('id'),
+                        'type': node_data.get('type'),
+                        'title': node_data.get('title'),
+                        'message': node_data.get('message'),
+                        'data': node_data.get('data', {}),
+                        'is_read': node_data.get('is_read', False),
+                        'created_at': node_data.get('created_at')
+                    })
+            
+            return jsonify({
+                'success': True,
+                'notifications': notifications,
+                'unread_count': len([n for n in notifications if not n['is_read']])
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error fetching notifications: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to fetch notifications',
+            'notifications': []
+        }), 500
+
+
+@api_bp.route('/notifications/<notification_id>/read', methods=['POST'])
+@login_required
+def mark_notification_as_read(notification_id):
+    """Mark a notification as read"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Update notification to mark as read
+            query = """
+                MATCH (n:Notification)
+                WHERE n.id = $notification_id AND n.user_id = $user_id
+                SET n.is_read = true
+                RETURN n
+            """
+            
+            result = safe_run(session, query, {
+                'notification_id': notification_id,
+                'user_id': current_user.id
+            })
+            
+            if result:
+                return jsonify({
+                    'success': True,
+                    'message': 'Notification marked as read'
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Notification not found'
+                }), 404
+    except Exception as e:
+        current_app.logger.error(f"Error marking notification as read: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update notification'
+        }), 500
+
+
+@api_bp.route('/notifications/mark-all-read', methods=['POST'])
+@login_required
+def mark_all_notifications_as_read():
+    """Mark all notifications as read for current user"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Update all unread notifications for current user
+            query = """
+                MATCH (n:Notification)
+                WHERE n.user_id = $user_id AND n.is_read = false
+                SET n.is_read = true
+                RETURN COUNT(n) as updated_count
+            """
+            
+            result = safe_run(session, query, {'user_id': current_user.id})
+            
+            updated_count = result[0]['updated_count'] if result else 0
+            
+            return jsonify({
+                'success': True,
+                'message': f'{updated_count} notifications marked as read',
+                'updated_count': updated_count
+            })
+    except Exception as e:
+        current_app.logger.error(f"Error marking all notifications as read: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': 'Failed to update notifications'
+        }), 500

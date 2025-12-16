@@ -16,6 +16,9 @@ function initializeApp() {
     // Load notifications
     loadNotifications();
     
+    // Auto-refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+    
     // Initialize tooltips and popovers
     initializeTooltips();
     
@@ -59,8 +62,10 @@ function loadNotifications() {
     fetch('/api/notifications')
         .then(response => response.json())
         .then(data => {
-            notifications = data.notifications || [];
-            updateNotificationUI();
+            if (data.success) {
+                notifications = data.notifications || [];
+                updateNotificationUI();
+            }
         })
         .catch(error => console.error('Failed to load notifications:', error));
 }
@@ -81,17 +86,31 @@ function updateNotificationUI() {
     
     if (notificationsList) {
         if (notifications.length === 0) {
-            notificationsList.innerHTML = '<div class="p-4 text-center text-gray-500">No notifications</div>';
+            notificationsList.innerHTML = `
+                <div class="p-8 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-3 block opacity-30"></i>
+                    <p class="font-medium">No notifications</p>
+                    <p class="text-sm">You're all caught up!</p>
+                </div>
+            `;
         } else {
             notificationsList.innerHTML = notifications.map(notification => `
-                <div class="p-3 border-b hover:bg-gray-50 ${notification.is_read ? 'opacity-60' : ''}">
-                    <div class="flex items-start">
+                <div class="notification-item p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${!notification.is_read ? 'bg-blue-50' : ''}" 
+                     onclick="markNotificationAsRead('${notification.id}')">
+                    <div class="flex items-start gap-3">
                         <div class="flex-1">
-                            <p class="text-sm font-medium text-gray-900">${notification.title}</p>
-                            <p class="text-sm text-gray-600">${notification.message}</p>
-                            <p class="text-xs text-gray-400 mt-1">${formatTimeAgo(notification.created_at)}</p>
+                            <div class="flex items-center gap-2">
+                                <p class="text-sm font-semibold text-gray-900">${escapeHtml(notification.title)}</p>
+                                ${!notification.is_read ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">New</span>' : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">${escapeHtml(notification.message)}</p>
+                            <p class="text-xs text-gray-400 mt-2">
+                                <i class="fas fa-clock mr-1"></i>${formatTimeAgo(notification.created_at)}
+                            </p>
                         </div>
-                        ${!notification.is_read ? '<div class="w-2 h-2 bg-blue-600 rounded-full ml-2 mt-2"></div>' : ''}
+                        <div class="flex-shrink-0">
+                            ${!notification.is_read ? '<div class="w-2.5 h-2.5 bg-blue-600 rounded-full mt-2"></div>' : ''}
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -114,6 +133,31 @@ function markNotificationAsRead(notificationId) {
             }
         })
         .catch(error => console.error('Failed to mark notification as read:', error));
+}
+
+function markAllNotificationsAsRead() {
+    fetch('/api/notifications/mark-all-read', {
+        method: 'POST'
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                notifications.forEach(n => n.is_read = true);
+                updateNotificationUI();
+            }
+        })
+        .catch(error => console.error('Failed to mark all notifications as read:', error));
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }
 
 // Utility functions

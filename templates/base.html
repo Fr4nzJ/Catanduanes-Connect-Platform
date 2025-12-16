@@ -81,19 +81,32 @@
                     <!-- Notifications -->
                     {% if current_user.is_authenticated %}
                     <div class="relative" x-data="{ open: false }">
-                        <button @click="open = !open" class="p-2 text-gray-600 hover:text-blue-600 relative">
+                        <button @click="open = !open" class="p-2 text-gray-600 hover:text-blue-600 relative transition-colors">
                             <i class="fas fa-bell text-lg"></i>
-                            <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                            <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden font-bold animate-pulse">0</span>
                         </button>
                         
                         <!-- Notifications Dropdown -->
                         <div x-show="open" @click.away="open = false" 
-                             class="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50">
-                            <div class="py-2 px-4 border-b">
-                                <h3 class="text-sm font-medium text-gray-900">Notifications</h3>
+                             class="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-xl ring-1 ring-black ring-opacity-5 z-50 overflow-hidden">
+                            <div class="py-3 px-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-indigo-50">
+                                <h3 class="text-sm font-semibold text-gray-900">
+                                    <i class="fas fa-bell text-blue-600 mr-2"></i>Notifications
+                                </h3>
+                                <button onclick="markAllNotificationsAsRead()" class="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors" title="Mark all as read">
+                                    <i class="fas fa-check-double mr-1"></i>Mark all read
+                                </button>
                             </div>
                             <div id="notifications-list" class="max-h-96 overflow-y-auto">
-                                <!-- Notifications will be loaded here -->
+                                <div class="p-4 text-center text-gray-500">
+                                    <i class="fas fa-spinner-third animate-spin text-lg mb-2 block"></i>
+                                    Loading notifications...
+                                </div>
+                            </div>
+                            <div class="py-2 px-4 border-t border-gray-200 text-center">
+                                <a href="{{ url_for('dashboard.notifications') if current_user.role == 'job_seeker' else url_for('businesses.notifications') if current_user.role == 'business_owner' else '#' }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors">
+                                    View All Notifications
+                                </a>
                             </div>
                         </div>
                     </div>
