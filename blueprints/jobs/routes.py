@@ -1364,6 +1364,7 @@ def api_search_jobs():
     query = request.args.get('q', '').strip()
     category = request.args.get('category', '').strip()
     limit = request.args.get('limit', 10, type=int)
+    use_ai = request.args.get('ai', 'false').lower() == 'true'
     
     db = get_neo4j_db()
     with db.session() as session:
@@ -1374,8 +1375,38 @@ def api_search_jobs():
         params = {'limit': limit}
         
         if query:
-            cypher_query += " AND (j.title CONTAINS $query OR j.description CONTAINS $query)"
-            params['query'] = query
+            # Use semantic AI search if enabled and query is provided
+            if use_ai and query:
+                try:
+                    from gemini_client import get_gemini_response
+                    
+                    # Use AI to understand search intent and expand keywords
+                    expansion_prompt = f"""The user is searching for jobs with this query: "{query}"
+                    
+Generate 3-5 alternative job titles, skills, or keywords that are semantically similar to what they might be looking for.
+Return only the keywords/titles, one per line, without numbering or extra formatting.
+
+Example:
+If query is "code" - return variations like: programmer, developer, software engineer, coding, backend
+If query is "sales" - return variations like: business development, sales representative, account executive, selling"""
+                    
+                    keywords_response = get_gemini_response(expansion_prompt)
+                    expanded_keywords = [k.strip() for k in keywords_response.split('\n') if k.strip()]
+                    
+                    # Build search with both original and expanded keywords
+                    search_conditions = [query] + expanded_keywords
+                    or_conditions = " OR ".join([f"(j.title CONTAINS '{kw}' OR j.description CONTAINS '{kw}')" for kw in search_conditions[:5]])
+                    cypher_query += f" AND ({or_conditions})"
+                    
+                    logger.info(f"AI-enhanced search for: {query}, expanded keywords: {expanded_keywords}")
+                except Exception as e:
+                    logger.warning(f"AI search expansion failed, falling back to basic search: {e}")
+                    cypher_query += " AND (j.title CONTAINS $query OR j.description CONTAINS $query)"
+                    params['query'] = query
+            else:
+                # Regular text search
+                cypher_query += " AND (j.title CONTAINS $query OR j.description CONTAINS $query)"
+                params['query'] = query
         
         if category:
             cypher_query += " AND j.category = $category"
@@ -1396,6 +1427,182 @@ def api_search_jobs():
             jobs.append(job_data)
     
     return jsonify(jobs)
+
+
+@jobs_bp.route('/api/ai-search')
+@login_required_optional
+def ai_search_jobs():
+    """AI-powered semantic job search that understands intent and synonyms"""
+    
+    query = request.args.get('q', '').strip()
+    category = request.args.get('category', '').strip()
+    limit = request.args.get('limit', 12, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'error': 'Search query too short'}), 400
+    
+    try:
+        from gemini_client import get_gemini_response
+        
+        logger.info(f"Starting AI semantic search for: {query}")
+        
+        # Step 1: Use Gemini to understand user intent and generate search variations
+        intent_prompt = f"""The user is searching for jobs with this query: "{query}"
+
+Analyze what they're looking for and return a JSON object with:
+1. "primary_keywords": list of main keywords they're searching for
+2. "related_keywords": list of related/synonymous terms (e.g., if they search "design", include "UI/UX", "graphic design", "web design")
+3. "job_titles": list of job titles that match this search intent
+4. "skills": list of skills that typically go with these jobs
+5. "categories": list of likely job categories
+
+Return ONLY valid JSON, no markdown or extra text.
+
+Example for "coding":
+{{"primary_keywords": ["coding", "code"], "related_keywords": ["programming", "developer", "software"], "job_titles": ["Software Developer", "Programmer", "Backend Developer"], "skills": ["Python", "JavaScript", "Java"], "categories": ["IT", "Software Development"]}}"""
+        
+        intent_response = get_gemini_response(intent_prompt)
+        
+        # Parse the intent response
+        try:
+            import json
+            # Clean response if it has markdown
+            if '```json' in intent_response:
+                intent_response = intent_response.split('```json')[1].split('```')[0]
+            elif '```' in intent_response:
+                intent_response = intent_response.split('```')[1].split('```')[0]
+            
+            intent_data = json.loads(intent_response.strip())
+            logger.info(f"Parsed intent data: {intent_data}")
+        except Exception as parse_error:
+            logger.warning(f"Failed to parse intent response: {parse_error}, using fallback")
+            intent_data = {
+                'primary_keywords': [query],
+                'related_keywords': [],
+                'job_titles': [query],
+                'skills': [],
+                'categories': []
+            }
+        
+        # Step 2: Query database with expanded search terms
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Build search with all keywords
+            all_keywords = intent_data.get('primary_keywords', []) + intent_data.get('related_keywords', []) + intent_data.get('job_titles', [])
+            all_keywords = list(set([k.lower().strip() for k in all_keywords if k]))[:10]  # Limit to 10 unique keywords
+            
+            search_conditions = []
+            for kw in all_keywords:
+                search_conditions.append(f"(j.title ICONTAINS '{kw}' OR j.description ICONTAINS '{kw}')")
+            
+            where_clause = " OR ".join(search_conditions) if search_conditions else "1=1"
+            
+            cypher_query = f"""
+                MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                WHERE j.is_active = true AND ({where_clause})
+            """
+            
+            if category:
+                cypher_query += " AND j.category = $category"
+            
+            cypher_query += f"""
+                RETURN j, b.name as business_name, 
+                    (CASE 
+                        WHEN j.title ICONTAINS '{query}' THEN 3
+                        ELSE 1
+                    END) as relevance_score
+                ORDER BY relevance_score DESC, j.created_at DESC
+                LIMIT {limit}
+            """
+            
+            params = {}
+            if category:
+                params['category'] = category
+            
+            try:
+                results = safe_run(session, cypher_query, params)
+            except Exception as query_error:
+                # Fallback to simpler query if complex one fails
+                logger.warning(f"Complex query failed, using simple search: {query_error}")
+                cypher_query = """
+                    MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                    WHERE j.is_active = true AND (j.title ICONTAINS $query OR j.description ICONTAINS $query)
+                """
+                if category:
+                    cypher_query += " AND j.category = $category"
+                
+                cypher_query += f"""
+                    RETURN j, b.name as business_name
+                    ORDER BY j.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+            
+            jobs = []
+            for record in results:
+                job_data = _node_to_dict(record['j'])
+                job_data['business_name'] = record['business_name']
+                jobs.append(job_data)
+        
+        logger.info(f"AI search found {len(jobs)} results for: {query}")
+        
+        return jsonify({
+            'success': True,
+            'query': query,
+            'count': len(jobs),
+            'search_intent': intent_data,
+            'jobs': jobs
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in AI search: {str(e)}", exc_info=True)
+        # Fallback to regular search
+        try:
+            db = get_neo4j_db()
+            with db.session() as session:
+                cypher_query = """
+                    MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                    WHERE j.is_active = true AND (j.title CONTAINS $query OR j.description CONTAINS $query)
+                """
+                if category:
+                    cypher_query += " AND j.category = $category"
+                
+                cypher_query += f"""
+                    RETURN j, b.name as business_name
+                    ORDER BY j.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+                
+                jobs = []
+                for record in results:
+                    job_data = _node_to_dict(record['j'])
+                    job_data['business_name'] = record['business_name']
+                    jobs.append(job_data)
+            
+            return jsonify({
+                'success': True,
+                'query': query,
+                'count': len(jobs),
+                'jobs': jobs,
+                'note': 'Search fell back to basic mode'
+            })
+        except Exception as fallback_error:
+            logger.error(f"Fallback search also failed: {fallback_error}")
+            return jsonify({
+                'success': False,
+                'error': 'Search temporarily unavailable. Please try again.'
+            }), 500
 
 # ============================================================================
 # HELPER FUNCTIONS

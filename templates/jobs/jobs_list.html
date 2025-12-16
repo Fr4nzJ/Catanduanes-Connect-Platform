@@ -275,10 +275,24 @@
             <form method="GET" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div class="md:col-span-2">
-                        <label for="q" class="block text-sm font-bold text-gray-700 mb-2">Search</label>
-                        <input type="text" name="q" id="q" value="{{ search_query }}"
-                               placeholder="Job title or keyword"
-                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                        <label for="q" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-sparkles text-yellow-500 mr-1"></i>Smart Search (AI-Powered)
+                        </label>
+                        <div class="relative">
+                            <input type="text" name="q" id="q" value="{{ search_query }}"
+                                   placeholder="e.g., 'coding', 'design work', 'virtual jobs', 'high paying positions'..."
+                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
+                                   onkeyup="handleAISearchSuggestions(event)">
+                            <div id="ai-search-suggestions" class="absolute top-full left-0 right-0 mt-1 bg-white border-2 border-blue-300 rounded-lg shadow-lg z-20 max-h-48 overflow-y-auto hidden">
+                                <div style="padding: 8px;">
+                                    <small style="color: #6b7280;">💡 Click a suggestion or press Enter to search with AI</small>
+                                    <div id="suggestions-list"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <small class="text-gray-500 mt-1 block">
+                            🤖 Uses Gemini AI to understand related job titles and keywords
+                        </small>
                     </div>
                     
                     <div>
@@ -335,8 +349,8 @@
                     </div>
                     
                     <div class="flex items-end space-x-2">
-                        <button type="button" onclick="handleJobSearchWithLocation()" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
-                            <i class="fas fa-search mr-2"></i>Search with AI
+                        <button type="button" onclick="performAISearch(document.getElementById('q').value)" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-sparkles mr-2"></i>Search with AI
                         </button>
                         <button type="submit" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
                             <i class="fas fa-search mr-2"></i>Search
@@ -1001,5 +1015,202 @@
             }
         );
     });
+
+    /**
+     * Handle AI-powered search suggestions
+     */
+    async function handleAISearchSuggestions(event) {
+        const searchInput = event.target;
+        const query = searchInput.value.trim();
+        const suggestionsBox = document.getElementById('ai-search-suggestions');
+        const suggestionsList = document.getElementById('suggestions-list');
+
+        if (!query || query.length < 2) {
+            suggestionsBox.classList.add('hidden');
+            return;
+        }
+
+        // Show loading indicator
+        suggestionsList.innerHTML = `
+            <div style="padding: 8px; text-center; color: #667eea;">
+                <i class="fas fa-spinner fa-spin mr-2"></i>Analyzing with AI...
+            </div>
+        `;
+        suggestionsBox.classList.remove('hidden');
+
+        try {
+            const response = await fetch(`/jobs/api/ai-search?q=${encodeURIComponent(query)}&limit=5`);
+            const data = await response.json();
+
+            if (data.success && data.search_intent) {
+                const intent = data.search_intent;
+                let suggestions = [];
+
+                // Combine primary and related keywords
+                if (intent.primary_keywords) suggestions.push(...intent.primary_keywords);
+                if (intent.related_keywords) suggestions.push(...intent.related_keywords.slice(0, 3));
+                if (intent.job_titles) suggestions.push(...intent.job_titles.slice(0, 2));
+
+                // Remove duplicates
+                suggestions = [...new Set(suggestions.map(s => s.toLowerCase()))].slice(0, 8);
+
+                // Display suggestions
+                if (suggestions.length > 0) {
+                    suggestionsList.innerHTML = suggestions.map(suggestion => `
+                        <div style="padding: 10px 8px; border-bottom: 1px solid #e5e7eb; cursor: pointer; color: #374151; font-size: 14px;"
+                             onclick="selectAISuggestion('${suggestion.replace(/'/g, "\\'")}')">
+                            <i class="fas fa-search text-blue-500 mr-2"></i>${suggestion}
+                        </div>
+                    `).join('');
+                } else {
+                    suggestionsList.innerHTML = '<div style="padding: 8px; color: #6b7280;">No suggestions found</div>';
+                }
+
+                // Handle Enter key
+                searchInput.onkeypress = (e) => {
+                    if (e.key === 'Enter') {
+                        performAISearch(query);
+                    }
+                };
+            } else {
+                suggestionsList.innerHTML = '<div style="padding: 8px; color: #6b7280;">Could not fetch suggestions</div>';
+            }
+        } catch (error) {
+            console.error('Error fetching AI suggestions:', error);
+            suggestionsList.innerHTML = `
+                <div style="padding: 8px; color: #dc2626;">
+                    <i class="fas fa-exclamation-circle mr-2"></i>Error loading suggestions
+                </div>
+            `;
+        }
+    }
+
+    /**
+     * Select a suggestion and update search
+     */
+    function selectAISuggestion(suggestion) {
+        document.getElementById('q').value = suggestion;
+        document.getElementById('ai-search-suggestions').classList.add('hidden');
+        performAISearch(suggestion);
+    }
+
+    /**
+     * Perform AI-powered search
+     */
+    async function performAISearch(query) {
+        if (!query || query.length < 2) {
+            alert('Please enter a search query');
+            return;
+        }
+
+        // Show loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'ai-search-loading';
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+        loadingOverlay.innerHTML = `
+            <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="font-size: 48px; margin-bottom: 20px; animation: bounce 0.6s infinite;">🔍</div>
+                <p style="color: #667eea; font-weight: bold; font-size: 18px; margin-bottom: 10px;">Searching with Gemini AI</p>
+                <p style="color: #6b7280; font-size: 14px;">Understanding related keywords and job titles...</p>
+            </div>
+            <style>
+                @keyframes bounce {
+                    0%, 100% { transform: translateY(0); }
+                    50% { transform: translateY(-10px); }
+                }
+            </style>
+        `;
+        document.body.appendChild(loadingOverlay);
+
+        try {
+            const response = await fetch(`/jobs/api/ai-search?q=${encodeURIComponent(query)}`);
+            const data = await response.json();
+
+            loadingOverlay.remove();
+
+            if (data.success) {
+                // Rebuild jobs display
+                const jobsContainer = document.querySelector('[data-jobs-container]');
+                
+                if (data.jobs && data.jobs.length > 0) {
+                    jobsContainer.innerHTML = data.jobs.map(job => `
+                        <a href="/jobs/${job.id}" class="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-105 overflow-hidden group">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-gray-900 mb-1 line-clamp-2">${job.title}</h3>
+                                        <p class="text-sm text-gray-600"><i class="fas fa-building mr-1"></i>${job.business_name}</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-600 text-sm line-clamp-2 mb-4">${job.description || 'No description'}</p>
+                                <div class="flex flex-wrap gap-2 mb-4">
+                                    ${job.category ? `<span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">${job.category}</span>` : ''}
+                                    ${job.type ? `<span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">${job.type}</span>` : ''}
+                                </div>
+                                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                                    <div class="text-sm">
+                                        ${job.salary_min || job.salary_max ? `<span class="font-bold text-gray-900">₱${job.salary_min || '0'} - ₱${job.salary_max || 'TBD'}</span>` : '<span class="text-gray-500">Salary TBD</span>'}
+                                    </div>
+                                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                                        View Details
+                                    </button>
+                                </div>
+                            </div>
+                        </a>
+                    `).join('');
+
+                    // Show AI search info
+                    const infoBox = document.createElement('div');
+                    infoBox.style.cssText = `
+                        background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+                        border-left: 4px solid #667eea;
+                        padding: 16px;
+                        margin-bottom: 24px;
+                        border-radius: 8px;
+                        color: #667eea;
+                        font-size: 14px;
+                    `;
+                    infoBox.innerHTML = `
+                        <strong><i class="fas fa-star text-yellow-500 mr-2"></i>AI Search Results:</strong><br/>
+                        Found <strong>${data.jobs.length}</strong> jobs matching "${query}" and related keywords.<br/>
+                        <small style="color: #6b7280; display: block; margin-top: 8px;">
+                            🤖 Search understood: 
+                            ${data.search_intent.primary_keywords ? data.search_intent.primary_keywords.join(', ') : query}
+                        </small>
+                    `;
+                    jobsContainer.parentElement.insertBefore(infoBox, jobsContainer);
+                } else {
+                    jobsContainer.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4 inline-block"></i>
+                            <p class="text-gray-600 text-lg">No jobs found matching "${query}"</p>
+                            <p class="text-gray-500 text-sm mt-2">Try searching with different keywords or filters</p>
+                        </div>
+                    `;
+                }
+
+                // Scroll to results
+                jobsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                alert('Search failed: ' + (data.error || 'Unknown error'));
+            }
+        } catch (error) {
+            loadingOverlay.remove();
+            console.error('Error in AI search:', error);
+            alert('An error occurred during search. Please try again.');
+        }
+    }
+
 </script>
 {% endblock %}
