@@ -6,7 +6,83 @@ from .realtime import get_platform_stats, get_business_owner_stats, get_job_seek
 
 @api_bp.route('/homepage/featured-jobs')
 def featured_jobs():
-    return jsonify({"jobs": []})  # Temporarily return empty list
+    """Get featured jobs for homepage"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            result = safe_run(session, """
+                MATCH (j:Job)
+                WHERE j.is_featured = true
+                LIMIT 6
+                RETURN j.id AS id,
+                       j.title AS title,
+                       j.description AS description,
+                       j.location AS location,
+                       j.salary_range AS salary_range,
+                       j.employment_type AS type
+            """)
+            
+            jobs = []
+            if result:
+                for record in result:
+                    # Query for business name
+                    business = safe_run(session, """
+                        MATCH (b:Business)-[:HAS_JOB]->(j:Job)
+                        WHERE j.id = $job_id
+                        RETURN b.name AS name
+                    """, {"job_id": record['id']})
+                    
+                    business_name = business[0]['name'] if business else "Unknown Business"
+                    
+                    jobs.append({
+                        'id': record['id'],
+                        'title': record['title'],
+                        'description': record['description'],
+                        'location': record['location'],
+                        'salary_range': record['salary_range'],
+                        'type': record['type'],
+                        'business_name': business_name
+                    })
+            
+            return jsonify(jobs)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching featured jobs: {str(e)}")
+        return jsonify([])
+
+@api_bp.route('/homepage/featured-businesses')
+def featured_businesses():
+    """Get featured businesses for homepage"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            result = safe_run(session, """
+                MATCH (b:Business)
+                WHERE b.is_featured = true
+                LIMIT 6
+                RETURN b.id AS id,
+                       b.name AS name,
+                       b.description AS description,
+                       b.address AS address,
+                       b.category AS category,
+                       b.rating AS rating
+            """)
+            
+            businesses = []
+            if result:
+                for record in result:
+                    businesses.append({
+                        'id': record['id'],
+                        'name': record['name'],
+                        'description': record['description'],
+                        'address': record['address'],
+                        'category': record['category'],
+                        'rating': record['rating']
+                    })
+            
+            return jsonify(businesses)
+    except Exception as e:
+        current_app.logger.error(f"Error fetching featured businesses: {str(e)}")
+        return jsonify([])
 
 @api_bp.route('/homepage/stats')
 def homepage_stats():
