@@ -193,36 +193,32 @@
 
 <!-- Quick Stats -->
 <section class="py-16 bg-gradient-to-br from-blue-50 to-indigo-100">
-    <div class="max-w-7xl  px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 place-items-center">
-            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent mb-3" id="stats-jobs">
-                    <div>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.jobs.total }}</p>
-                        <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
-                        </div>
-                </div>
-                <div class="text-gray-700 font-semibold">Active Jobs</div>
-                <div class="text-sm text-gray-500 mt-1">
-                    <i class="fas fa-briefcase mr-1"></i>Opportunities
-                </div>
-            </div>
-            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-indigo-600 bg-clip-text text-transparent mb-3" id="stats-businesses">
-                    <div>
-                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.businesses.total }}</p>
-                        <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
-                        </div>
-                </div>
-                <div class="text-gray-700 font-semibold">Businesses</div>
-                <div class="text-sm text-gray-500 mt-1">
-                    <i class="fas fa-store mr-1"></i>Local Shops
-                </div>
-            </div>
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex flex-wrap justify-center gap-6">
+      <!-- Card 1 -->
+      <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-72">
+        <div class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent mb-3" id="stats-jobs">
+          <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.jobs.total }}</p>
         </div>
-    </div>
-</section>
+        <div class="text-gray-700 font-semibold">Active Jobs</div>
+        <div class="text-sm text-gray-500 mt-1">
+          <i class="fas fa-briefcase mr-1"></i>Opportunities
+        </div>
+      </div>
 
+      <!-- Card 2 -->
+      <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300 w-72">
+        <div class="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-indigo-600 bg-clip-text text-transparent mb-3" id="stats-businesses">
+          <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.businesses.total }}</p>
+        </div>
+        <div class="text-gray-700 font-semibold">Businesses</div>
+        <div class="text-sm text-gray-500 mt-1">
+          <i class="fas fa-store mr-1"></i>Local Shops
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 <!-- Featured Jobs -->
 <section class="py-20 bg-gradient-to-br from-blue-50 to-indigo-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
