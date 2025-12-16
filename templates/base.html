@@ -73,6 +73,7 @@
                     <a href="{{ url_for('jobs.list_jobs') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Jobs</a>
                     <a href="{{ url_for('businesses.list_businesses') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Businesses</a>
                     <a href="{{ url_for('chat.user_chat_view') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Chat</a>
+                    <a href="{{ url_for('reviews.list_reviews') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">Reviews</a>
                     <a href="{{ url_for('about') }}" class="inline-block text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors">About</a>
                 </div>
                 
@@ -193,6 +194,9 @@
                 </a>
                 <a href="{{ url_for('chat.user_chat_view') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     Chat
+                </a>
+                <a href="{{ url_for('reviews.list_reviews') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
+                    Reviews
                 </a>
                 <a href="{{ url_for('about') }}" class="block px-3 py-2 text-base font-medium text-gray-600 hover:text-blue-600">
                     About

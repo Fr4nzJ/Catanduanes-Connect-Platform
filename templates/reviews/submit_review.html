@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Review - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<style>
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    .form-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+    }
+
+    .form-title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #1f2937;
+        margin-bottom: 8px;
+        text-align: center;
+    }
+
+    .form-subtitle {
+        color: #6b7280;
+        text-align: center;
+        margin-bottom: 32px;
+        font-size: 14px;
+    }
+
+    .form-group {
+        margin-bottom: 28px;
+    }
+
+    .form-label {
+        display: block;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 12px;
+        font-size: 15px;
+    }
+
+    .rating-group {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+    }
+
+    .star-input {
+        cursor: pointer;
+        font-size: 40px;
+        color: #d1d5db;
+        transition: all 0.2s;
+        line-height: 1;
+    }
+
+    .star-input:hover,
+    .star-input.active {
+        color: #fbbf24;
+        transform: scale(1.2);
+    }
+
+    .rating-value {
+        display: inline-block;
+        margin-top: 8px;
+        padding: 4px 12px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        font-size: 14px;
+        color: #4b5563;
+        font-weight: 500;
+    }
+
+    .rating-value.active {
+        background: #fbbf24;
+        color: white;
+    }
+
+    textarea {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-family: inherit;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #1f2937;
+        resize: vertical;
+        min-height: 200px;
+        transition: all 0.2s;
+    }
+
+    textarea:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .char-count {
+        font-size: 12px;
+        color: #9ca3af;
+        margin-top: 8px;
+        text-align: right;
+    }
+
+    .char-count.warn {
+        color: #f97316;
+    }
+
+    .char-count.error {
+        color: #ef4444;
+    }
+
+    .form-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+    }
+
+    .btn {
+        flex: 1;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .btn-cancel {
+        background: #f3f4f6;
+        color: #4b5563;
+        border: 1px solid #d1d5db;
+    }
+
+    .btn-cancel:hover {
+        background: #e5e7eb;
+    }
+
+    .info-box {
+        background: #f0f9ff;
+        border-left: 4px solid #3b82f6;
+        padding: 16px;
+        border-radius: 6px;
+        margin-bottom: 32px;
+        font-size: 14px;
+        color: #1e40af;
+        line-height: 1.6;
+    }
+
+    .info-box strong {
+        color: #1e3a8a;
+    }
+
+    .error-message {
+        color: #ef4444;
+        font-size: 14px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .success-message {
+        color: #10b981;
+        font-size: 14px;
+        margin-top: 4px;
+        display: none;
+    }
+
+    .hints {
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        margin-top: 24px;
+        font-size: 13px;
+        color: #6b7280;
+        line-height: 1.6;
+    }
+
+    .hints h4 {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+
+    .hints ul {
+        list-style-position: inside;
+        margin-left: 4px;
+    }
+
+    .hints li {
+        margin-bottom: 4px;
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Share Your Feedback</h1>
+            <p class="text-blue-100">Help us improve Catanduanes Connect</p>
+        </div>
+    </div>
+</section>
+
+<!-- Form Section -->
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Admin Warning -->
+        {% if current_user.role == 'admin' %}
+        <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
+            <p class="text-yellow-800">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Notice:</strong> As an admin, you cannot submit reviews about the system.
+            </p>
+            <a href="{{ url_for('reviews.list_reviews') }}" class="text-yellow-700 hover:text-yellow-900 font-semibold mt-2 inline-block">
+                ← View all reviews instead
+            </a>
+        </div>
+        {% else %}
+
+        <div class="form-container">
+            <h2 class="form-title">Write a Review</h2>
+            <p class="form-subtitle">Tell us what you think about Catanduanes Connect</p>
+
+            <div class="info-box">
+                <strong>📝 Tips for a great review:</strong><br>
+                Be honest and constructive. Your feedback helps us improve the platform for everyone.
+            </div>
+
+            <form id="reviewForm" method="POST" action="{{ url_for('reviews.submit_review') }}">
+                <!-- Rating Section -->
+                <div class="form-group">
+                    <label class="form-label">How would you rate Catanduanes Connect?</label>
+                    <div class="text-center">
+                        <div class="rating-group" id="ratingGroup">
+                            <span class="star-input" data-rating="1" title="Poor">★</span>
+                            <span class="star-input" data-rating="2" title="Fair">★</span>
+                            <span class="star-input" data-rating="3" title="Good">★</span>
+                            <span class="star-input" data-rating="4" title="Very Good">★</span>
+                            <span class="star-input" data-rating="5" title="Excellent">★</span>
+                        </div>
+                        <input type="hidden" id="rating" name="rating" value="0">
+                        <div class="rating-value" id="ratingValue" style="display: none;">
+                            <span id="ratingText">Select a rating</span>
+                        </div>
+                        <div class="error-message" id="ratingError">Please select a rating</div>
+                    </div>
+                </div>
+
+                <!-- Comment Section -->
+                <div class="form-group">
+                    <label class="form-label">Your Comment</label>
+                    <textarea 
+                        id="comment" 
+                        name="comment" 
+                        placeholder="Share your experience with Catanduanes Connect. What worked well? What could be improved?"
+                        required></textarea>
+                    <div class="char-count" id="charCount">0 / 1000 characters</div>
+                    <div class="error-message" id="commentError"></div>
+                </div>
+
+                <!-- Helper Text -->
+                <div class="hints">
+                    <h4>Guidelines for your review:</h4>
+                    <ul>
+                        <li>Minimum 10 characters, maximum 1000 characters</li>
+                        <li>Be specific about what you liked or didn't like</li>
+                        <li>Avoid spam, profanity, or personal attacks</li>
+                        <li>Focus on your experience with the platform</li>
+                    </ul>
+                </div>
+
+                <!-- Form Buttons -->
+                <div class="form-buttons">
+                    <a href="{{ url_for('reviews.list_reviews') }}" class="btn btn-cancel">
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-submit" id="submitBtn">
+                        <i class="fas fa-paper-plane mr-2"></i>Submit Review
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Rating selection
+const ratingStars = document.querySelectorAll('.star-input');
+const ratingInput = document.getElementById('rating');
+const ratingValue = document.getElementById('ratingValue');
+const ratingText = document.getElementById('ratingText');
+
+const ratingTexts = {
+    1: '⭐ Poor - Needs significant improvement',
+    2: '⭐⭐ Fair - Some issues',
+    3: '⭐⭐⭐ Good - Satisfied overall',
+    4: '⭐⭐⭐⭐ Very Good - Great experience',
+    5: '⭐⭐⭐⭐⭐ Excellent - Highly impressed'
+};
+
+ratingStars.forEach(star => {
+    star.addEventListener('click', function() {
+        const rating = this.getAttribute('data-rating');
+        ratingInput.value = rating;
+
+        // Update stars display
+        ratingStars.forEach(s => {
+            if (s.getAttribute('data-rating') <= rating) {
+                s.classList.add('active');
+            } else {
+                s.classList.remove('active');
+            }
+        });
+
+        // Show rating value
+        ratingValue.style.display = 'inline-block';
+        ratingText.textContent = ratingTexts[rating];
+        document.getElementById('ratingError').style.display = 'none';
+    });
+
+    star.addEventListener('mouseover', function() {
+        const rating = this.getAttribute('data-rating');
+        ratingStars.forEach(s => {
+            if (s.getAttribute('data-rating') <= rating) {
+                s.style.color = '#fbbf24';
+            } else {
+                s.style.color = '#d1d5db';
+            }
+        });
+    });
+});
+
+document.getElementById('ratingGroup').addEventListener('mouseout', function() {
+    const currentRating = ratingInput.value;
+    ratingStars.forEach(s => {
+        if (s.getAttribute('data-rating') <= currentRating && currentRating !== '0') {
+            s.style.color = '#fbbf24';
+        } else {
+            s.style.color = '#d1d5db';
+        }
+    });
+});
+
+// Comment character counter
+const commentInput = document.getElementById('comment');
+const charCount = document.getElementById('charCount');
+const commentError = document.getElementById('commentError');
+
+commentInput.addEventListener('input', function() {
+    const length = this.value.length;
+    charCount.textContent = `${length} / 1000 characters`;
+
+    if (length > 900) {
+        charCount.classList.add('warn');
+    } else {
+        charCount.classList.remove('warn');
+    }
+
+    if (length > 1000) {
+        charCount.classList.add('error');
+    } else {
+        charCount.classList.remove('error');
+    }
+});
+
+// Form submission
+document.getElementById('reviewForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const rating = ratingInput.value;
+    const comment = commentInput.value.trim();
+    let valid = true;
+
+    // Validate rating
+    if (rating === '0' || rating === '') {
+        document.getElementById('ratingError').style.display = 'block';
+        valid = false;
+    } else {
+        document.getElementById('ratingError').style.display = 'none';
+    }
+
+    // Validate comment
+    if (comment.length < 10) {
+        commentError.textContent = 'Comment must be at least 10 characters';
+        commentError.style.display = 'block';
+        valid = false;
+    } else if (comment.length > 1000) {
+        commentError.textContent = 'Comment must not exceed 1000 characters';
+        commentError.style.display = 'block';
+        valid = false;
+    } else {
+        commentError.style.display = 'none';
+    }
+
+    if (valid) {
+        document.getElementById('submitBtn').disabled = true;
+        this.submit();
+    }
+});
+</script>
+{% endblock %}

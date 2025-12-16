@@ -1,0 +1,444 @@
+{% extends "base.html" %}
+
+{% block title %}System Reviews - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<style>
+    .fixed.bottom-6.right-6.z-50 {
+        display: none !important;
+    }
+
+    #chat-modal {
+        display: none !important;
+    }
+
+    .star-rating {
+        display: inline-flex;
+        gap: 2px;
+        font-size: 20px;
+    }
+
+    .star {
+        color: #ddd;
+        cursor: pointer;
+        transition: color 0.2s;
+    }
+
+    .star.active {
+        color: #fbbf24;
+    }
+
+    .review-card {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .review-card:hover {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: start;
+        margin-bottom: 16px;
+    }
+
+    .review-author {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .review-username {
+        font-weight: 600;
+        color: #1f2937;
+        font-size: 16px;
+    }
+
+    .review-date {
+        color: #6b7280;
+        font-size: 14px;
+    }
+
+    .review-rating {
+        color: #fbbf24;
+        font-size: 14px;
+        font-weight: 500;
+    }
+
+    .review-comment {
+        color: #4b5563;
+        line-height: 1.6;
+        margin-bottom: 16px;
+        font-size: 15px;
+    }
+
+    .review-actions {
+        display: flex;
+        gap: 12px;
+        border-top: 1px solid #e5e7eb;
+        padding-top: 12px;
+    }
+
+    .helpful-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #f3f4f6;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.2s;
+        color: #4b5563;
+    }
+
+    .helpful-btn:hover {
+        background: #e5e7eb;
+        color: #1f2937;
+    }
+
+    .helpful-count {
+        font-size: 12px;
+        color: #6b7280;
+        margin-left: 4px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+    }
+
+    .empty-icon {
+        font-size: 64px;
+        margin-bottom: 16px;
+    }
+
+    .empty-text {
+        color: #6b7280;
+        font-size: 18px;
+        margin-bottom: 24px;
+    }
+
+    .stats-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+        padding: 32px;
+        margin-bottom: 32px;
+        text-align: center;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 24px;
+        margin-top: 24px;
+    }
+
+    .stat-item {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 16px;
+        border-radius: 8px;
+        backdrop-filter: blur(10px);
+    }
+
+    .stat-value {
+        font-size: 32px;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+
+    .stat-label {
+        font-size: 12px;
+        opacity: 0.9;
+    }
+
+    .sort-controls {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+
+    .sort-btn {
+        padding: 8px 16px;
+        border: 2px solid #d1d5db;
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: all 0.2s;
+        color: #4b5563;
+    }
+
+    .sort-btn.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .sort-btn:hover {
+        border-color: #667eea;
+    }
+
+    .delete-btn {
+        padding: 6px 12px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 12px;
+        transition: all 0.2s;
+    }
+
+    .delete-btn:hover {
+        background: #dc2626;
+    }
+</style>
+
+<!-- Hero Section -->
+<section class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">System Reviews</h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto mb-8 text-blue-100">
+                Share your feedback and help us improve Catanduanes Connect
+            </p>
+            {% if current_user.is_authenticated and current_user.role != 'admin' %}
+            <a href="{{ url_for('reviews.submit_review') }}" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-star mr-2"></i>Write a Review
+            </a>
+            {% elif not current_user.is_authenticated %}
+            <a href="{{ url_for('auth.login', next=url_for('reviews.submit_review')) }}" class="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-300 transform hover:scale-105">
+                <i class="fas fa-sign-in-alt mr-2"></i>Login to Write a Review
+            </a>
+            {% else %}
+            <span class="text-blue-100">
+                <i class="fas fa-info-circle mr-2"></i>Admins cannot submit reviews
+            </span>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<!-- Main Content -->
+<div class="min-h-screen bg-gray-50 py-12">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Statistics Section -->
+        <div class="stats-section" id="stats-container">
+            <div>
+                <h2 class="text-2xl font-bold mb-4">Review Statistics</h2>
+                <div class="inline-flex items-center gap-4">
+                    <div>
+                        <span class="text-4xl font-bold" id="avg-rating">0</span>
+                        <span class="text-xl">/ 5</span>
+                    </div>
+                    <div class="star-rating" id="avg-stars"></div>
+                </div>
+            </div>
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="total-reviews">0</div>
+                    <div class="stat-label">Total Reviews</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="five-stars">0</div>
+                    <div class="stat-label">5 Stars</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="four-stars">0</div>
+                    <div class="stat-label">4 Stars</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="three-stars">0</div>
+                    <div class="stat-label">3 Stars</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sort Controls -->
+        <div class="sort-controls">
+            <a href="{{ url_for('reviews.list_reviews', sort='recent', page=1) }}" 
+               class="sort-btn {% if sort_by == 'recent' %}active{% endif %}">
+                <i class="fas fa-clock mr-2"></i>Most Recent
+            </a>
+            <a href="{{ url_for('reviews.list_reviews', sort='highest_rated', page=1) }}" 
+               class="sort-btn {% if sort_by == 'highest_rated' %}active{% endif %}">
+                <i class="fas fa-star mr-2"></i>Highest Rated
+            </a>
+            <a href="{{ url_for('reviews.list_reviews', sort='helpful', page=1) }}" 
+               class="sort-btn {% if sort_by == 'helpful' %}active{% endif %}">
+                <i class="fas fa-thumbs-up mr-2"></i>Most Helpful
+            </a>
+        </div>
+
+        <!-- Reviews List -->
+        {% if reviews %}
+            <div id="reviews-container">
+                {% for review in reviews %}
+                <div class="review-card" data-review-id="{{ review.id }}">
+                    <div class="review-header">
+                        <div class="review-author">
+                            <div>
+                                <div class="review-username">
+                                    <i class="fas fa-user-circle mr-2" style="color: #667eea;"></i>{{ review.username }}
+                                </div>
+                                <div class="review-date">{{ review.created_at|datetime }}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="review-rating">
+                                {% for i in range(review.rating) %}
+                                    <i class="fas fa-star"></i>
+                                {% endfor %}
+                                {% for i in range(5 - review.rating) %}
+                                    <i class="fas fa-star" style="color: #d1d5db;"></i>
+                                {% endfor %}
+                                <span class="ml-2">{{ review.rating }}/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="review-comment">{{ review.comment }}</p>
+
+                    <div class="review-actions">
+                        <button class="helpful-btn" onclick="markHelpful('{{ review.id }}', event)">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span>Helpful</span>
+                            <span class="helpful-count" id="helpful-{{ review.id }}">{{ review.helpful_count or 0 }}</span>
+                        </button>
+
+                        {% if current_user.is_authenticated and (current_user.id == review.user_id or current_user.role == 'admin') %}
+                        <form method="POST" action="{{ url_for('reviews.delete_review', review_id=review.id) }}" style="display: inline;">
+                            <button type="submit" class="delete-btn" onclick="return confirm('Are you sure you want to delete this review?')">
+                                <i class="fas fa-trash mr-1"></i>Delete
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if total_pages > 1 %}
+            <div class="flex justify-center items-center gap-2 mt-12">
+                {% if page > 1 %}
+                <a href="{{ url_for('reviews.list_reviews', page=page-1, sort=sort_by) }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                    ← Previous
+                </a>
+                {% endif %}
+
+                {% for p in range(max(1, page-2), min(total_pages+1, page+3)) %}
+                    {% if p == page %}
+                    <span class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium">{{ p }}</span>
+                    {% else %}
+                    <a href="{{ url_for('reviews.list_reviews', page=p, sort=sort_by) }}" 
+                       class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                        {{ p }}
+                    </a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page < total_pages %}
+                <a href="{{ url_for('reviews.list_reviews', page=page+1, sort=sort_by) }}" 
+                   class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium">
+                    Next →
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">📝</div>
+                <div class="empty-text">No reviews yet</div>
+                {% if current_user.is_authenticated and current_user.role != 'admin' %}
+                <a href="{{ url_for('reviews.submit_review') }}" 
+                   class="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all">
+                    <i class="fas fa-plus mr-2"></i>Be the first to review
+                </a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// Load statistics
+async function loadStats() {
+    try {
+        const response = await fetch('{{ url_for("reviews.get_reviews_stats") }}');
+        const data = await response.json();
+        
+        document.getElementById('total-reviews').textContent = data.total_reviews;
+        document.getElementById('avg-rating').textContent = data.average_rating;
+        document.getElementById('five-stars').textContent = data.five_stars;
+        document.getElementById('four-stars').textContent = data.four_stars;
+        document.getElementById('three-stars').textContent = data.three_stars;
+        
+        // Render average rating stars
+        const starsContainer = document.getElementById('avg-stars');
+        const avgRating = Math.round(data.average_rating);
+        for (let i = 0; i < 5; i++) {
+            const star = document.createElement('span');
+            star.className = 'star' + (i < avgRating ? ' active' : '');
+            star.innerHTML = '★';
+            starsContainer.appendChild(star);
+        }
+    } catch (error) {
+        console.error('Error loading stats:', error);
+    }
+}
+
+// Mark review as helpful
+async function markHelpful(reviewId, event) {
+    event.preventDefault();
+    
+    {% if not current_user.is_authenticated %}
+        window.location.href = '{{ url_for("auth.login") }}';
+        return;
+    {% endif %}
+
+    try {
+        const response = await fetch(`{{ url_for('reviews.mark_helpful', review_id='') }}${reviewId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            const btn = event.target.closest('.helpful-btn');
+            const count = btn.querySelector('.helpful-count');
+            count.textContent = data.helpful_count;
+            btn.style.background = '#10b981';
+            btn.style.color = 'white';
+            btn.style.borderColor = '#10b981';
+            btn.disabled = true;
+        } else {
+            alert(data.message || 'Error marking as helpful');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred');
+    }
+}
+
+// Load stats on page load
+document.addEventListener('DOMContentLoaded', loadStats);
+</script>
+{% endblock %}

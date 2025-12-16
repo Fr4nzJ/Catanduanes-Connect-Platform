@@ -168,6 +168,7 @@ def create_app(config_name='default'):
     from blueprints.api.routes import api_bp
     from blueprints.api.location_search import location_search_bp
     from blueprints.gemini.routes import gemini_bp
+    from blueprints.reviews.routes import reviews_bp
     
     # Register blueprints
     app.register_blueprint(admin_bp)  # URL prefix is already set in the blueprint
@@ -180,6 +181,7 @@ def create_app(config_name='default'):
     app.register_blueprint(verification_bp, url_prefix="/verify")
     app.register_blueprint(chat_bp, url_prefix="/chat")
     app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
+    app.register_blueprint(reviews_bp, url_prefix="/reviews")
     csrf.exempt(chatbot_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
     app.register_blueprint(location_search_bp, url_prefix="/api/location")
