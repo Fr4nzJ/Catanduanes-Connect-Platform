@@ -441,7 +441,7 @@ def business_detail(business_id):
         # Now get the full details
         result = safe_run(session, """
             MATCH (b:Business {id: $business_id})
-            OPTIONAL MATCH (b)<-[r:FOR_BUSINESS]-(review:Review)
+            OPTIONAL MATCH (u:User)-[:REVIEWS]->(review:Review)-[:FOR_BUSINESS]->(b)
             OPTIONAL MATCH (j:Job)-[:POSTED_BY]->(b)
             WHERE j.is_active = true
             WITH b, avg(review.rating) as avg_rating, count(DISTINCT review) as review_count,
@@ -464,7 +464,7 @@ def business_detail(business_id):
         
         # Get reviews
         reviews = safe_run(session, """
-            MATCH (b:Business {id: $business_id})<-[r:FOR_BUSINESS]-(review:Review)<-[:REVIEWS]-(u:User)
+            MATCH (u:User)-[:REVIEWS]->(review:Review)-[:FOR_BUSINESS]->(b:Business {id: $business_id})
             RETURN review as r, u.username as reviewer_name
             ORDER BY review.created_at DESC
             LIMIT 10
