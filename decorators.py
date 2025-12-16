@@ -11,7 +11,7 @@ def role_required(*roles: str) -> Callable:
         @login_required
         def wrapper(*args, **kwargs):
             if not current_user.is_authenticated:
-                return redirect(url_for('auth_routes.login', next=request.url))
+                return redirect(url_for('auth.login', next=request.url))
             
             if current_user.role not in roles:
                 flash('You do not have permission to access this page.', 'error')
@@ -35,7 +35,7 @@ def verified_required(func: Callable) -> Callable:
     def wrapper(*args, **kwargs):
         if not current_user.is_verified:
             flash('Please verify your email address to continue.', 'warning')
-            return redirect(url_for('auth_routes.verify_email'))
+            return redirect(url_for('auth.verify_email'))
         return func(*args, **kwargs)
     return wrapper
 
