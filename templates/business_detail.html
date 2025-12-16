@@ -2,6 +2,24 @@
 
 {% block title %}{{ business.name }} - Catanduanes Connect{% endblock %}
 
+{% block styles %}
+<style>
+    /* Fix z-index layering for map and modals */
+    #business-map {
+        z-index: 1 !important;
+    }
+    
+    #review-modal, #contact-modal {
+        z-index: 50 !important;
+    }
+    
+    /* Ensure map controls don't overlap modals */
+    .leaflet-control {
+        z-index: 2 !important;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gray-50">
     <!-- Header -->
