@@ -781,7 +781,12 @@ def dashboard():
             for rec in applications
         ]
 
-    # ---------- 3.  RENDER ----------
+    # ---------- 3.  DEBUG LOGGING ----------
+    app.logger.info(f"Dashboard - Stats: {stats}")
+    for i, b in enumerate(business_list):
+        app.logger.info(f"Business {i}: name={b.name}, jobs_count={getattr(b, 'jobs_count', 'MISSING')}, reviews_count={getattr(b, 'reviews_count', 'MISSING')}, rating={getattr(b, 'rating', 'MISSING')}")
+
+    # ---------- 4.  RENDER ----------
     return render_template(
         "business/business_owner_dashboard.html",
         stats=stats,                 # ← template now finds {{ stats.total_businesses }} etc.
