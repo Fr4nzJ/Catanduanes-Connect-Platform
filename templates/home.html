@@ -196,7 +196,12 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent mb-3" id="stats-jobs">0</div>
+                <div class="text-4xl font-bold bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent mb-3" id="stats-jobs">
+                    <div>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.jobs.total }}</p>
+                        <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
+                        </div>
+                </div>
                 <div class="text-gray-700 font-semibold">Active Jobs</div>
                 <div class="text-sm text-gray-500 mt-1">
                     <i class="fas fa-briefcase mr-1"></i>Opportunities
