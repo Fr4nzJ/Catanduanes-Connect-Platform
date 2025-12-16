@@ -580,61 +580,86 @@ def create_business():
 @verified_required
 def add_review(business_id):
     """Add review to business"""
-    form = ReviewForm()
-    
-    if form.validate_on_submit():
+    try:
+        # Get JSON data from request
+        data = request.get_json() or {}
+        
+        # Validate required fields
+        rating = data.get('rating')
+        comment = data.get('comment', '').strip()
+        
+        if not rating or not comment:
+            return jsonify({'error': 'Rating and comment are required'}), 400
+        
+        try:
+            rating = int(rating)
+            if rating < 1 or rating > 5:
+                return jsonify({'error': 'Rating must be between 1 and 5'}), 400
+        except (ValueError, TypeError):
+            return jsonify({'error': 'Invalid rating value'}), 400
+        
+        if len(comment) < 10:
+            return jsonify({'error': 'Comment must be at least 10 characters long'}), 400
+        
+        if len(comment) > 500:
+            return jsonify({'error': 'Comment must not exceed 500 characters'}), 400
+        
         db = get_neo4j_db()
         with db.session() as session:
             # Check if business exists
-            business = safe_run(session, """
+            business_result = safe_run(session, """
                 MATCH (b:Business {id: $business_id})
-                RETURN b
+                RETURN b.id as business_id
             """, {'business_id': business_id})
             
-            if not business:
-                flash('Business not found.', 'error')
-                return redirect(url_for('businesses.list_businesses'))
+            if not business_result:
+                return jsonify({'error': 'Business not found'}), 404
             
-            # Check if user has already reviewed
-            existing = safe_run(session, """
-                MATCH (u:User {id: $user_id})-[r:REVIEWS]->(b:Business {id: $business_id})
-                RETURN r
+            # Check if user has already reviewed this business
+            existing_review = safe_run(session, """
+                MATCH (u:User {id: $user_id})-[:REVIEWS]->(r:Review)-[:FOR_BUSINESS]->(b:Business {id: $business_id})
+                RETURN r.id as review_id
             """, {'user_id': current_user.id, 'business_id': business_id})
             
-            if existing:
-                flash('You have already reviewed this business.', 'error')
-                return redirect(url_for('businesses.business_detail', business_id=business_id))
+            if existing_review:
+                return jsonify({'error': 'You have already reviewed this business'}), 409
             
             # Create review
             review_id = str(uuid.uuid4())
-            review_data = {
-                'id': review_id,
-                'rating': form.rating.data,
-                'comment': form.comment.data,
-                'user_id': current_user.id,
-                'user_name': current_user.username,
-                'target_id': business_id,
-                'target_type': 'business',
-                'created_at': datetime.utcnow().isoformat()
-            }
+            created_at = datetime.utcnow().isoformat()
             
-            safe_run(session, """
-                CREATE (r:Review $review_data)
+            # Create the review node and relationships
+            create_result = safe_run(session, """
+                CREATE (r:Review {
+                    id: $review_id,
+                    rating: $rating,
+                    comment: $comment,
+                    created_at: $created_at,
+                    updated_at: $created_at
+                })
                 WITH r
                 MATCH (u:User {id: $user_id}), (b:Business {id: $business_id})
                 CREATE (u)-[:REVIEWS]->(r)-[:FOR_BUSINESS]->(b)
+                RETURN r.id as review_id
             """, {
-                'review_data': review_data,
+                'review_id': review_id,
+                'rating': rating,
+                'comment': comment,
+                'created_at': created_at,
                 'user_id': current_user.id,
                 'business_id': business_id
             })
             
+            if not create_result:
+                return jsonify({'error': 'Failed to create review'}), 500
+            
             # Update business rating
-            safe_run(session, """
+            update_result = safe_run(session, """
                 MATCH (b:Business {id: $business_id})<-[:REVIEWS]-(r:Review)
                 WITH b, avg(r.rating) as avg_rating, count(r) as review_count
-                SET b.rating = avg_rating,
+                SET b.rating = ROUND(avg_rating * 10) / 10,
                     b.review_count = review_count
+                RETURN b.rating as new_rating, b.review_count as new_count
             """, {'business_id': business_id})
             
             # Create notification for business owner
@@ -643,23 +668,31 @@ def add_review(business_id):
                 RETURN owner.id as owner_id
             """, {'business_id': business_id})
             
-            if owner_result:
-                create_notification_task(
-                    user_id=owner_result[0]['owner_id'],
-                    type='new_review',
-                    title='New Review',
-                    message=f'{current_user.username} left a review for your business',
-                    data={
-                        'review_id': review_id,
-                        'business_id': business_id,
-                        'rating': form.rating.data
-                    }
-                )
+            if owner_result and owner_result[0]['owner_id']:
+                try:
+                    create_notification_task(
+                        user_id=owner_result[0]['owner_id'],
+                        type='new_review',
+                        title='New Review',
+                        message=f'{current_user.username} left a {rating}/5 review for your business',
+                        data={
+                            'review_id': review_id,
+                            'business_id': business_id,
+                            'rating': rating
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to create notification: {str(e)}")
         
-        flash('Review added successfully!', 'success')
-        return redirect(url_for('businesses.business_detail', business_id=business_id))
+        return jsonify({
+            'success': True,
+            'message': 'Review submitted successfully!',
+            'review_id': review_id
+        }), 201
     
-    return render_template('business/businesses_review.html', form=form, business_id=business_id)
+    except Exception as e:
+        logger.error(f"Error adding review: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to submit review. Please try again.'}), 500
 
 @businesses_bp.route('/dashboard')
 @login_required
