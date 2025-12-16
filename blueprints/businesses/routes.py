@@ -579,7 +579,12 @@ def create_business():
 @login_required
 @verified_required
 def add_review(business_id):
-    """Add review to business"""
+    """Add review to business (AJAX/JSON only, always returns JSON)"""
+    # Always return JSON for AJAX requests, even for auth/verification errors
+    if not current_user.is_authenticated:
+        return jsonify({'error': 'Authentication required'}), 401
+    if not getattr(current_user, 'is_verified', True):
+        return jsonify({'error': 'Email verification required'}), 403
     try:
         # Get JSON data from request
         data = request.get_json() or {}
@@ -689,7 +694,6 @@ def add_review(business_id):
             'message': 'Review submitted successfully!',
             'review_id': review_id
         }), 201
-    
     except Exception as e:
         logger.error(f"Error adding review: {str(e)}", exc_info=True)
         return jsonify({'error': 'Failed to submit review. Please try again.'}), 500
