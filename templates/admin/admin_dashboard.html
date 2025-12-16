@@ -252,19 +252,15 @@
                     <div class="space-y-3">
                         <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-100">
                             <span class="text-sm font-semibold text-gray-900">Job Seekers</span>
-                            <span class="font-bold text-lg text-blue-600">{{ stats.job_seekers or 0 }}</span>
+                            <span class="font-bold text-lg text-blue-600">{{ (stats.users.total - stats.users.business_owners) or 0 }}</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-100">
                             <span class="text-sm font-semibold text-gray-900">Business Owners</span>
-                            <span class="font-bold text-lg text-green-600">{{ stats.business_owners or 0 }}</span>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-100">
-                            <span class="text-sm font-semibold text-gray-900">Service Providers</span>
-                            <span class="font-bold text-lg text-purple-600">{{ stats.service_providers or 0 }}</span>
+                            <span class="font-bold text-lg text-green-600">{{ stats.users.business_owners or 0 }}</span>
                         </div>
                         <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg border border-yellow-100">
                             <span class="text-sm font-semibold text-gray-900">Verified Users</span>
-                            <span class="font-bold text-lg text-yellow-600">{{ stats.verified_users or 0 }}</span>
+                            <span class="font-bold text-lg text-yellow-600">{{ stats.users.verified or 0 }}</span>
                         </div>
                     </div>
                 </div>
