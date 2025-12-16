@@ -464,18 +464,19 @@ def business_detail(business_id):
         
         # Get reviews
         reviews = safe_run(session, """
-            MATCH (u:User)-[:REVIEWS]->(review:Review)-[:FOR_BUSINESS]->(b:Business {id: $business_id})
-            RETURN review as r, review.reviewer_name as reviewer_name
-            ORDER BY review.created_at DESC
+            MATCH (u:User)-[:REVIEWS]->(r:Review)-[:FOR_BUSINESS]->(b:Business {id: $business_id})
+            RETURN r           AS review_node,
+                   u.username  AS reviewer_name
+            ORDER BY r.created_at DESC
             LIMIT 10
         """, {'business_id': business_id})
         
         logger.info(f"Found {len(reviews) if reviews else 0} reviews for business {business_id}")
         
         review_list = []
-        for review_record in reviews:
-            review_data = _node_to_dict(review_record['r'])
-            review_data['reviewer_name'] = review_record['reviewer_name']
+        for rec in reviews:
+            review_data = _node_to_dict(rec['review_node'])
+            review_data['reviewer_name'] = rec['reviewer_name']
             review_list.append(Review(**review_data))
         
         # Get jobs
