@@ -30,6 +30,20 @@ logging.basicConfig(
     ]
 )
 
+# Add custom filter to prevent large base64/image data from being logged
+class SanitizeLogsFilter(logging.Filter):
+    """Filter to sanitize large data (base64, images) from logs"""
+    def filter(self, record):
+        if record.msg and isinstance(record.msg, str):
+            # Truncate very long strings that look like base64/image data
+            if 'profilePictureBase64' in record.msg or 'datimage' in record.msg:
+                record.msg = record.msg[:200] + '...[truncated]' if len(record.msg) > 200 else record.msg
+        return True
+
+# Apply filter to all loggers
+for handler in logging.root.handlers:
+    handler.addFilter(SanitizeLogsFilter())
+
 # Initialize extensions
 login_manager = LoginManager()
 babel = Babel()
@@ -58,7 +72,6 @@ def load_user(user_id):
     """Load user from Neo4j for Flask-Login with enhanced role validation"""
     logger = logging.getLogger('user_loader')
 
-    # ----  DEBUG  (temporary)  ----
     logger.info(f"load_user: looking for id={user_id!r}  type={type(user_id)}")
 
     if not user_id:
@@ -77,8 +90,6 @@ def load_user(user_id):
                 """,
                 {"user_id": user_id}
             )
-
-            logger.info(f"load_user: safe_run returned {result}")   # <- DEBUG
 
             if not result:
                 logger.warning(f"No user found with ID {user_id}")
