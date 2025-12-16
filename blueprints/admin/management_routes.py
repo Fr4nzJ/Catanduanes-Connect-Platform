@@ -87,21 +87,30 @@ def get_realtime_stats():
                 }
             
             # Verification stats
-            verification_result = safe_run(session, """
-                MATCH (v:Verification)
-                RETURN 
-                    count(*) as total,
-                    sum(case when v.verification_status = 'approved' then 1 else 0 end) as approved,
-                    sum(case when v.verification_status = 'pending' then 1 else 0 end) as pending,
-                    sum(case when v.verification_status = 'rejected' then 1 else 0 end) as rejected
-            """)
-            if verification_result:
-                verification_data = verification_result[0]
-                stats['verifications'] = {
+            try:
+                verification_result = safe_run(session, """
+                    MATCH (v:Verification)
+                    RETURN 
+                        count(*) as total,
+                        sum(case when v.verification_status = 'approved' then 1 else 0 end) as approved,
+                        sum(case when v.verification_status = 'pending' then 1 else 0 end) as pending,
+                        sum(case when v.verification_status = 'rejected' then 1 else 0 end) as rejected
+                """)
+                if verification_result:
+                    verification_data = verification_result[0]
+                    stats['verifications'] = {
                     'total': verification_data.get('total') or 0,
                     'approved': verification_data.get('approved') or 0,
                     'pending': verification_data.get('pending') or 0,
                     'rejected': verification_data.get('rejected') or 0
+                }
+            except Exception:
+                # Verification nodes don't exist in this system
+                stats['verifications'] = {
+                    'total': 0,
+                    'approved': 0,
+                    'pending': 0,
+                    'rejected': 0
                 }
     
     except Exception as e:
@@ -1066,14 +1075,23 @@ def reports_analytics():
         """)
         
         # Get verification statistics
-        verification_stats = safe_run(session, """
-            MATCH (v:Verification)
-            RETURN 
-                count(*) as total_verifications,
-                sum(case when v.status = 'approved' then 1 else 0 end) as approved_verifications,
-                sum(case when v.status = 'pending' then 1 else 0 end) as pending_verifications,
-                sum(case when v.status = 'rejected' then 1 else 0 end) as rejected_verifications
-        """)[0] if safe_run(session, "MATCH (v:Verification) RETURN count(*) as count")[0]['count'] > 0 else None
+        try:
+            verification_result = safe_run(session, "MATCH (v:Verification) RETURN count(*) as count")
+            has_verifications = verification_result and verification_result[0]['count'] > 0
+            if has_verifications:
+                verification_stats = safe_run(session, """
+                    MATCH (v:Verification)
+                    RETURN 
+                        count(*) as total_verifications,
+                        sum(case when v.status = 'approved' then 1 else 0 end) as approved_verifications,
+                        sum(case when v.status = 'pending' then 1 else 0 end) as pending_verifications,
+                        sum(case when v.status = 'rejected' then 1 else 0 end) as rejected_verifications
+                """)[0]
+            else:
+                verification_stats = None
+        except Exception:
+            # Verification nodes don't exist in this system
+            verification_stats = None
         
         # Build context dictionary
         context = {

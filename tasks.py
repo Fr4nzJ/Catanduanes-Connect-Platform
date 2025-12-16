@@ -252,12 +252,15 @@ def generate_analytics_report_task():
                 RETURN count(j) as count
             """)[0]['count']
             
-            # New services
-            new_services = safe_run(session, """
-                MATCH (s:Service)
-                WHERE s.created_at >= datetime() - duration('P1D')
-                RETURN count(s) as count
-            """)[0]['count']
+            # New services (Service nodes may not exist in this system)
+            try:
+                new_services = safe_run(session, """
+                    MATCH (s:Service)
+                    WHERE s.created_at >= datetime() - duration('P1D')
+                    RETURN count(s) as count
+                """)[0]['count']
+            except Exception:
+                new_services = 0
             
             # Job applications
             applications = safe_run(session, """

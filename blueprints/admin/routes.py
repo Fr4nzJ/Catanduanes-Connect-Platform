@@ -262,67 +262,90 @@ def verification_review():
     
     db = get_neo4j_db()
     with db.session() as session:
-        # Build query based on status filter
-        query = """
-            MATCH (v:Verification)
-            MATCH (u:User)-[:SUBMITTED]->(v)
-            WHERE v.status = $status
-        """
+        # Check if Verification nodes exist in the system
+        try:
+            check_result = safe_run(session, "MATCH (v:Verification) RETURN count(v) as count LIMIT 1")
+            verification_exists = check_result and check_result[0]['count'] > 0 if check_result else False
+        except Exception:
+            verification_exists = False
         
-        # Get total count
-        count_query = query + " RETURN count(v) as total"
-        count_result = safe_run(session, count_query, {'status': status})
-        total = count_result[0]['total'] if count_result else 0
-        
-        # Get pending count for badge
-        pending_count = None
-        if status != 'pending':
-            pending_result = safe_run(session, """
-                MATCH (v:Verification {status: 'pending'})
-                RETURN count(v) as count
-            """)
-            pending_count = pending_result[0]['count'] if pending_result else 0
-        
-        # Get verifications for current page with user info and documents
-        query += """
-            RETURN v, u,
-                [(v)-[:HAS_DOCUMENT]->(d:Document) | d] as documents
-            ORDER BY v.created_at DESC
-            SKIP $skip
-            LIMIT $limit
-        """
-        params = {
-            'status': status,
-            'skip': (page - 1) * per_page,
-            'limit': per_page
-        }
-        
-        verifications_result = safe_run(session, query, params)
+        # Initialize default values
+        total = 0
         verifications = []
-        
-        if verifications_result:
-            for record in verifications_result:
-                verification_data = {
-                    'v': _node_to_dict(record['v']),
-                    'u': _node_to_dict(record['u']),
-                    'user_type': record['v'].get('user_type', 'user'),
-                    'documents': [_node_to_dict(doc) for doc in record['documents']]
-                }
-                verifications.append(verification_data)
-        
-        # Calculate pagination
-        total_pages = (total + per_page - 1) // per_page
+        pending_count = None
         pagination = {
             'page': page,
-            'pages': total_pages,
-            'total': total,
-            'has_prev': page > 1,
-            'has_next': page < total_pages,
-            'start': (page - 1) * per_page + 1,
-            'end': min(page * per_page, total),
-            'prev_num': page - 1,
-            'next_num': page + 1
+            'pages': 0,
+            'total': 0,
+            'has_prev': False,
+            'has_next': False,
+            'start': 0,
+            'end': 0,
+            'prev_num': 0,
+            'next_num': 0
         }
+        
+        if verification_exists:
+            # Build query based on status filter
+            query = """
+                MATCH (v:Verification)
+                MATCH (u:User)-[:SUBMITTED]->(v)
+                WHERE v.status = $status
+            """
+            
+            # Get total count
+            count_query = query + " RETURN count(v) as total"
+            count_result = safe_run(session, count_query, {'status': status})
+            total = count_result[0]['total'] if count_result else 0
+            
+            # Get pending count for badge
+            if status != 'pending':
+                pending_result = safe_run(session, """
+                    MATCH (v:Verification {status: 'pending'})
+                    RETURN count(v) as count
+                """)
+                pending_count = pending_result[0]['count'] if pending_result else 0
+            
+            # Get verifications for current page with user info and documents
+            query += """
+                RETURN v, u,
+                    [(v)-[:HAS_DOCUMENT]->(d:Document) | d] as documents
+                ORDER BY v.created_at DESC
+                SKIP $skip
+                LIMIT $limit
+            """
+            params = {
+                'status': status,
+                'skip': (page - 1) * per_page,
+                'limit': per_page
+            }
+            
+            verifications_result = safe_run(session, query, params)
+            verifications = []
+            
+            if verifications_result:
+                for record in verifications_result:
+                    verification_data = {
+                        'v': _node_to_dict(record['v']),
+                        'u': _node_to_dict(record['u']),
+                        'user_type': record['v'].get('user_type', 'user'),
+                        'documents': [_node_to_dict(doc) for doc in record['documents']]
+                    }
+                    verifications.append(verification_data)
+            
+            # Calculate pagination
+            total_pages = (total + per_page - 1) // per_page
+            pagination = {
+                'page': page,
+                'pages': total_pages,
+                'total': total,
+                'has_prev': page > 1,
+                'has_next': page < total_pages,
+                'start': (page - 1) * per_page + 1,
+                'end': min(page * per_page, total),
+                'prev_num': page - 1,
+                'next_num': page + 1
+            }
         
     return render_template('admin/verification_review.html',
                          verifications=verifications,
@@ -885,80 +908,19 @@ def jobs():
 @login_required
 @admin_required
 def services():
-    """Service management interface"""
-    page = request.args.get('page', 1, type=int)
-    per_page = 20
-    search = request.args.get('search', '')
-    status_filter = request.args.get('status', '')
-    category_filter = request.args.get('category', '')
-    
-    db = get_neo4j_db()
-    
-    with db.session() as session:
-        # Build query based on filters
-        query = """
-            MATCH (s:Service)
-            WHERE 1=1
-        """
-        params = {}
-        
-        if search:
-            query += " AND (s.title CONTAINS $search OR s.description CONTAINS $search)"
-            params['search'] = search
-            
-        if status_filter:
-            if status_filter == 'active':
-                query += " AND s.is_active = true"
-            elif status_filter == 'inactive':
-                query += " AND s.is_active = false"
-        
-        if category_filter:
-            query += " AND s.category = $category"
-            params['category'] = category_filter
-        
-        # Get total count
-        count_query = query + " RETURN count(s) as total"
-        count_result = safe_run(session, count_query, params)
-        total_services = count_result[0]['total'] if count_result else 0
-        
-        # Get services for current page
-        query += """
-            OPTIONAL MATCH (u:User)-[:PROVIDES]->(s)
-            RETURN s, u.username as provider_name, u.id as provider_id
-            ORDER BY s.created_at DESC
-            SKIP $skip
-            LIMIT $limit
-        """
-        params['skip'] = (page - 1) * per_page
-        params['limit'] = per_page
-        
-        services_result = safe_run(session, query, params)
-        services = []
-        for service in services_result or []:
-            service_data = _node_to_dict(service['s'])
-            service_data['provider_name'] = service.get('provider_name', 'Unknown')
-            service_data['provider_id'] = service.get('provider_id')
-            services.append(service_data)
-        
-        # Get category distribution
-        categories_result = safe_run(session, """
-            MATCH (s:Service)
-            RETURN s.category as category, count(s) as count
-            ORDER BY count DESC
-        """)
-        category_distribution = {cat['category']: cat['count'] for cat in categories_result} if categories_result else {}
-    
-    total_pages = (total_services + per_page - 1) // per_page
-    
+    """Service management interface - Not implemented in this system"""
+    # This system does not implement Service nodes
+    # Return a message indicating the feature is not available
     return render_template('admin/services.html',
-                         services=services,
-                         total_services=total_services,
-                         page=page,
-                         total_pages=total_pages,
-                         search=search,
-                         status_filter=status_filter,
-                         category_filter=category_filter,
-                         category_distribution=category_distribution)
+                         services=[],
+                         total_services=0,
+                         page=1,
+                         total_pages=0,
+                         search='',
+                         status_filter='',
+                         category_filter='',
+                         category_distribution={},
+                         message='Service management is not implemented in this system')
 
 @admin_bp.route('/analytics')
 @login_required
@@ -1007,12 +969,15 @@ def analytics():
         """)
         
         # Service posting analytics
-        service_postings = safe_run(session, f"""
-            MATCH (s:Service)
-            WHERE s.created_at >= datetime() - duration('{time_filter}')
-            RETURN date(s.created_at) as date, count(s) as postings
-            ORDER BY date
-        """)
+        try:
+            service_postings = safe_run(session, f"""
+                MATCH (s:Service)
+                WHERE s.created_at >= datetime() - duration('{time_filter}')
+                RETURN date(s.created_at) as date, count(s) as postings
+                ORDER BY date
+            """)
+        except Exception:
+            service_postings = []
         
         # User engagement metrics
         active_users = safe_run(session, f"""
@@ -1165,7 +1130,11 @@ def system_info():
         total_users = safe_run(session, "MATCH (u:User) RETURN count(u) as total")
         total_businesses = safe_run(session, "MATCH (b:Business) RETURN count(b) as total")
         total_jobs = safe_run(session, "MATCH (j:Job) RETURN count(j) as total")
-        total_services = safe_run(session, "MATCH (s:Service) RETURN count(s) as total")
+        try:
+            service_result = safe_run(session, "MATCH (s:Service) RETURN count(s) as total")
+            total_services = service_result[0]['total'] if service_result else 0
+        except Exception:
+            total_services = 0
     
     system_info = {
         'server': {

@@ -144,38 +144,42 @@ class GeminiChat:
                                 desc = desc[:200] + "..."
                             context_parts.append(f"  Description: {desc}")
 
-                # Search for services
-                services_query = """
-                MATCH (s:Service)
-                WHERE s.is_active = true 
-                AND (toLower(s.title) CONTAINS toLower($query)
-                OR toLower(s.description) CONTAINS toLower($query))
-                """
-                
-                if location:
-                    services_query += "AND toLower(s.location) CONTAINS toLower($location) "
-                if category:
-                    services_query += "AND toLower(s.category) CONTAINS toLower($category) "
+                # Search for services (Service nodes may not exist in this system)
+                try:
+                    services_query = """
+                    MATCH (s:Service)
+                    WHERE s.is_active = true 
+                    AND (toLower(s.title) CONTAINS toLower($query)
+                    OR toLower(s.description) CONTAINS toLower($query))
+                    """
                     
-                services_query += "RETURN s LIMIT 3"
-                
-                services = session.run(services_query,
-                                     query=query,
-                                     location=location,
-                                     category=category).data()
-                
-                if services:
-                    context_parts.append("\nRelevant Services:")
-                    for service_data in services:
-                        service = service_data['s']
-                        context_parts.append(f"- {service.get('title', 'N/A')}")
-                        context_parts.append(f"  Location: {service.get('location', 'N/A')}")
-                        context_parts.append(f"  Category: {service.get('category', 'N/A')}")
-                        if service.get('description'):
-                            desc = service['description']
-                            if len(desc) > 200:
-                                desc = desc[:200] + "..."
-                            context_parts.append(f"  Description: {desc}")
+                    if location:
+                        services_query += "AND toLower(s.location) CONTAINS toLower($location) "
+                    if category:
+                        services_query += "AND toLower(s.category) CONTAINS toLower($category) "
+                        
+                    services_query += "RETURN s LIMIT 3"
+                    
+                    services = session.run(services_query,
+                                         query=query,
+                                         location=location,
+                                         category=category).data()
+                    
+                    if services:
+                        context_parts.append("\nRelevant Services:")
+                        for service_data in services:
+                            service = service_data['s']
+                            context_parts.append(f"- {service.get('title', 'N/A')}")
+                            context_parts.append(f"  Location: {service.get('location', 'N/A')}")
+                            context_parts.append(f"  Category: {service.get('category', 'N/A')}")
+                            if service.get('description'):
+                                desc = service['description']
+                                if len(desc) > 200:
+                                    desc = desc[:200] + "..."
+                                context_parts.append(f"  Description: {desc}")
+                except Exception:
+                    # Service nodes don't exist in this system, skip
+                    pass
 
                 # Search for businesses
                 businesses_query = """

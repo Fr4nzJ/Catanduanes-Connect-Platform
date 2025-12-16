@@ -32,13 +32,16 @@ def get_platform_stats():
             """)
             total_businesses = businesses_result[0]['total_businesses'] if businesses_result else 0
             
-            # Get total services
-            services_result = safe_run(session, """
-                MATCH (s:Service)
-                WHERE s.is_active = true
-                RETURN count(s) as total_services
-            """)
-            total_services = services_result[0]['total_services'] if services_result else 0
+            # Get total services (Service nodes may not exist in this system)
+            try:
+                services_result = safe_run(session, """
+                    MATCH (s:Service)
+                    WHERE s.is_active = true
+                    RETURN count(s) as total_services
+                """)
+                total_services = services_result[0]['total_services'] if services_result else 0
+            except Exception:
+                total_services = 0
             
             # Get total users
             users_result = safe_run(session, """
