@@ -193,13 +193,13 @@
         </div>
 
         <!-- Action Buttons -->
-        {% if application.status != 'accepted' and application.status != 'rejected' %}
+        {% if application.status|lower != 'accepted' and application.status|lower != 'rejected' %}
         <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
             <h3 class="text-xl font-bold text-gray-900 mb-4">Application Actions</h3>
             
             <div class="space-y-4">
                 <!-- Accept Button -->
-                {% if application.status != 'accepted' %}
+                {% if application.status|lower != 'accepted' %}
                 <form method="POST" action="{{ url_for('jobs.accept_applicant', application_id=application.id) }}" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" onclick="return confirm('Accept this application?')" 
@@ -236,15 +236,15 @@
                 <div class="flex items-center justify-between">
                     <span class="font-semibold text-gray-700">Status:</span>
                     <div>
-                        {% if interview.status == 'scheduled' %}
+                        {% if interview.status|lower == 'scheduled' %}
                         <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
                             <i class="fas fa-clock mr-1"></i>Awaiting Response
                         </span>
-                        {% elif interview.status == 'accepted' %}
+                        {% elif interview.status|lower == 'accepted' %}
                         <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
                             <i class="fas fa-check-circle mr-1"></i>Accepted
                         </span>
-                        {% elif interview.status == 'rejected' %}
+                        {% elif interview.status|lower == 'rejected' %}
                         <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
                             <i class="fas fa-times-circle mr-1"></i>Declined
                         </span>
@@ -275,7 +275,7 @@
                 </div>
 
                 <!-- Type-specific Details -->
-                {% if interview.type == 'online' %}
+                {% if interview.type|lower == 'online' %}
                     {% if interview.google_meet_link %}
                     <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600">
                         <p class="text-sm text-gray-600"><strong>Google Meet Link:</strong></p>
