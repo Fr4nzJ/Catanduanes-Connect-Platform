@@ -208,24 +208,15 @@
                 </div>
             </div>
             <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-indigo-600 bg-clip-text text-transparent mb-3" id="stats-businesses">0</div>
+                <div class="text-4xl font-bold bg-gradient-to-r from-indigo-500 to-indigo-600 bg-clip-text text-transparent mb-3" id="stats-businesses">
+                    <div>
+                        <p class="text-3xl font-bold text-gray-900 mt-2">{{ stats.business.total }}</p>
+                        <p class="text-xs text-green-600 font-bold mt-2 flex items-center">
+                        </div>
+                </div>
                 <div class="text-gray-700 font-semibold">Businesses</div>
                 <div class="text-sm text-gray-500 mt-1">
                     <i class="fas fa-store mr-1"></i>Local Shops
-                </div>
-            </div>
-            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent mb-3" id="stats-services">0</div>
-                <div class="text-gray-700 font-semibold">Services</div>
-                <div class="text-sm text-gray-500 mt-1">
-                    <i class="fas fa-concierge-bell mr-1"></i>Providers
-                </div>
-            </div>
-            <div class="text-center p-8 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:scale-105 transition-all duration-300">
-                <div class="text-4xl font-bold bg-gradient-to-r from-purple-500 to-purple-600 bg-clip-text text-transparent mb-3" id="stats-users">0</div>
-                <div class="text-gray-700 font-semibold">Community Members</div>
-                <div class="text-sm text-gray-500 mt-1">
-                    <i class="fas fa-users mr-1"></i>Growing
                 </div>
             </div>
         </div>
@@ -349,10 +340,8 @@ async function loadHomepageStats() {
         const stats = await response.json();
         
         // Animate counters - extract numeric values
-        animateCounter('stats-jobs', stats.jobs && stats.jobs.total ? stats.jobs.total : 0);
-        animateCounter('stats-businesses', stats.businesses && stats.businesses.total ? stats.businesses.total : 0);
-        animateCounter('stats-services', stats.services && stats.services.total ? stats.services.total : 0);
-        animateCounter('stats-users', stats.users && stats.users.total ? stats.users.total : 0);
+        animateCounter('stats-jobs', stats.jobs && stats.jobs.total ? stats.jobs.total : stats.jobs.total);
+        animateCounter('stats-businesses', stats.businesses && stats.businesses.total ? stats.businesses.total : stats.businesses.total);
     } catch (error) {
         console.error('Failed to load stats:', error);
     }
