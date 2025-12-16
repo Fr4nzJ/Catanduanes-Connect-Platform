@@ -34,8 +34,8 @@ def verified_required(func: Callable) -> Callable:
     @login_required
     def wrapper(*args, **kwargs):
         if not current_user.is_verified:
-            flash('Please verify your email address to continue.', 'warning')
-            return redirect(url_for('auth.verify_email'))
+            flash('Please verify your email address first. Check your email for a verification link.', 'warning')
+            return redirect(url_for('auth.login'))
         return func(*args, **kwargs)
     return wrapper
 
