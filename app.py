@@ -155,6 +155,7 @@ def create_app(config_name='default'):
     from blueprints.chat.routes import chat_bp
     from blueprints.chatbot.routes import chatbot_bp
     from blueprints.api.routes import api_bp
+    from blueprints.api.location_search import location_search_bp
     from blueprints.gemini.routes import gemini_bp
     
     # Register blueprints
@@ -170,6 +171,7 @@ def create_app(config_name='default'):
     app.register_blueprint(chatbot_bp, url_prefix="/chatbot")
     csrf.exempt(chatbot_bp)
     app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(location_search_bp, url_prefix="/api/location")
     app.register_blueprint(gemini_bp, url_prefix="/gemini")
     
     @app.template_filter('datetime')
