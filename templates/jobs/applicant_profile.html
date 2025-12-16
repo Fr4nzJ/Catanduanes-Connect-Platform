@@ -199,6 +199,7 @@
             
             <div class="space-y-4">
                 <!-- Accept Button -->
+                {% if application.status != 'accepted' %}
                 <form method="POST" action="{{ url_for('jobs.accept_applicant', application_id=application.id) }}" class="inline-block">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" onclick="return confirm('Accept this application?')" 
@@ -212,6 +213,110 @@
                         class="w-full md:w-auto bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
                     <i class="fas fa-times mr-2"></i>Reject Application
                 </button>
+                {% else %}
+                <!-- Schedule Interview Button (when application is accepted) -->
+                <button onclick="showScheduleInterviewModal()" 
+                        class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    <i class="fas fa-calendar mr-2"></i>Schedule Interview
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Interview Section (if interview is scheduled) -->
+        {% if interview %}
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">
+                <i class="fas fa-calendar-check text-blue-600 mr-2"></i>Interview Details
+            </h3>
+            
+            <div class="space-y-4">
+                <!-- Interview Status -->
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-gray-700">Status:</span>
+                    <div>
+                        {% if interview.status == 'scheduled' %}
+                        <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-semibold">
+                            <i class="fas fa-clock mr-1"></i>Awaiting Response
+                        </span>
+                        {% elif interview.status == 'accepted' %}
+                        <span class="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-semibold">
+                            <i class="fas fa-check-circle mr-1"></i>Accepted
+                        </span>
+                        {% elif interview.status == 'rejected' %}
+                        <span class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-semibold">
+                            <i class="fas fa-times-circle mr-1"></i>Declined
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Interview Type -->
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-gray-700">Type:</span>
+                    <div>
+                        {% if interview.type == 'online' %}
+                        <span class="inline-flex items-center text-blue-600">
+                            <i class="fas fa-video mr-1"></i>Online (Google Meet)
+                        </span>
+                        {% else %}
+                        <span class="inline-flex items-center text-green-600">
+                            <i class="fas fa-map-marker-alt mr-1"></i>Onsite
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Date and Time -->
+                <div class="flex items-center justify-between">
+                    <span class="font-semibold text-gray-700">Date & Time:</span>
+                    <span class="text-gray-600">{{ interview.interview_datetime }}</span>
+                </div>
+
+                <!-- Type-specific Details -->
+                {% if interview.type == 'online' %}
+                    {% if interview.google_meet_link %}
+                    <div class="p-3 bg-blue-50 rounded-lg border-l-4 border-blue-600">
+                        <p class="text-sm text-gray-600"><strong>Google Meet Link:</strong></p>
+                        <a href="{{ interview.google_meet_link }}" target="_blank" class="text-blue-600 hover:text-blue-700 break-all">
+                            {{ interview.google_meet_link }}
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    {% if interview.location %}
+                    <div class="flex items-start justify-between">
+                        <span class="font-semibold text-gray-700">Location:</span>
+                        <span class="text-gray-600 text-right">{{ interview.location }}</span>
+                    </div>
+                    {% endif %}
+                    {% if interview.contact_person %}
+                    <div class="flex items-start justify-between">
+                        <span class="font-semibold text-gray-700">Contact Person:</span>
+                        <span class="text-gray-600">{{ interview.contact_person }}</span>
+                    </div>
+                    {% endif %}
+                    {% if interview.contact_phone %}
+                    <div class="flex items-start justify-between">
+                        <span class="font-semibold text-gray-700">Contact Phone:</span>
+                        <a href="tel:{{ interview.contact_phone }}" class="text-blue-600 hover:text-blue-700">{{ interview.contact_phone }}</a>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if interview.instructions %}
+                <div class="p-3 bg-amber-50 rounded-lg border-l-4 border-amber-600">
+                    <p class="text-sm text-gray-600"><strong>Instructions:</strong></p>
+                    <p class="text-gray-700 mt-1">{{ interview.instructions }}</p>
+                </div>
+                {% endif %}
+
+                {% if interview.applicant_response %}
+                <div class="text-xs text-gray-500 pt-2 border-t">
+                    <i class="fas fa-check-double mr-1"></i>Applicant responded on {{ interview.response_date }}
+                </div>
+                {% endif %}
             </div>
         </div>
         {% endif %}
@@ -228,6 +333,112 @@
                 <i class="fas fa-info-circle mr-2"></i>Chat with {{ applicant.username }} about their application for <strong>{{ application.job_title }}</strong>
             </p>
         </div>
+    </div>
+</div>
+
+<!-- Schedule Interview Modal -->
+<div id="scheduleInterviewModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 overflow-y-auto">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-2xl w-full mx-4 my-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Schedule Interview</h2>
+        <p class="text-gray-600 mb-6">Schedule an interview with <strong>{{ applicant.username }}</strong> for the position of <strong>{{ application.job_title }}</strong></p>
+        
+        <form id="scheduleInterviewForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <!-- Interview Type Selection -->
+            <div class="mb-8">
+                <label class="block text-sm font-semibold text-gray-700 mb-4">Interview Type</label>
+                <div class="space-y-3">
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="interview_type" value="online" checked 
+                               class="w-4 h-4 text-blue-600">
+                        <span class="ml-3 text-gray-700">
+                            <i class="fas fa-video mr-2 text-blue-600"></i><strong>Online Interview</strong>
+                            <p class="text-xs text-gray-500 mt-1">Via Google Meet</p>
+                        </span>
+                    </label>
+                    <label class="flex items-center cursor-pointer">
+                        <input type="radio" name="interview_type" value="onsite" 
+                               class="w-4 h-4 text-green-600">
+                        <span class="ml-3 text-gray-700">
+                            <i class="fas fa-map-marker-alt mr-2 text-green-600"></i><strong>Onsite Interview</strong>
+                            <p class="text-xs text-gray-500 mt-1">In-person at your location</p>
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Common Fields -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <!-- Interview Date -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Interview Date</label>
+                    <input type="date" name="interview_date" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                           id="interviewDate">
+                </div>
+
+                <!-- Interview Time -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Interview Time</label>
+                    <input type="time" name="interview_time" required
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Online Interview Fields -->
+            <div id="onlineFields" class="mb-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Google Meet Link</label>
+                    <input type="url" id="googleMeetLink" name="google_meet_link" placeholder="https://meet.google.com/..."
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                    <p class="text-xs text-gray-500 mt-1">Leave blank to generate link automatically or paste your existing meet link</p>
+                </div>
+            </div>
+
+            <!-- Onsite Interview Fields -->
+            <div id="onsiteFields" class="hidden space-y-6 mb-6">
+                <!-- Location -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Interview Location</label>
+                    <input type="text" id="location" name="location" placeholder="e.g., Conference Room A, Building 2"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                </div>
+
+                <!-- Contact Person -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact Person</label>
+                    <input type="text" id="contactPerson" name="contact_person" placeholder="Full name of the interviewer"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                </div>
+
+                <!-- Contact Phone -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Contact Phone</label>
+                    <input type="tel" id="contactPhone" name="contact_phone" placeholder="e.g., +63 912 345 6789"
+                           class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all">
+                </div>
+            </div>
+
+            <!-- Instructions (Common) -->
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Additional Instructions (Optional)</label>
+                <textarea id="instructions" name="instructions" rows="3" placeholder="E.g., 'Please bring your portfolio', 'Technical assessment will be included', etc."
+                          class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"></textarea>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="flex gap-3">
+                <button type="button" onclick="closeScheduleInterviewModal()" 
+                        class="flex-1 px-4 py-3 bg-gray-300 text-gray-900 rounded-lg font-semibold hover:bg-gray-400 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-calendar-check mr-2"></i>Schedule Interview
+                </button>
+            </div>
+        </form>
     </div>
 </div>
 
@@ -271,6 +482,95 @@ function closeRejectModal() {
 // Close modal when clicking outside
 document.getElementById('rejectModal')?.addEventListener('click', function(e) {
     if (e.target === this) closeRejectModal();
+});
+
+// Interview Scheduling Modal Functions
+function showScheduleInterviewModal() {
+    document.getElementById('scheduleInterviewModal').classList.remove('hidden');
+}
+
+function closeScheduleInterviewModal() {
+    document.getElementById('scheduleInterviewModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('scheduleInterviewModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeScheduleInterviewModal();
+});
+
+// Toggle onsite/online specific fields
+function toggleInterviewTypeFields() {
+    const interviewType = document.querySelector('input[name="interview_type"]:checked').value;
+    const onlineFields = document.getElementById('onlineFields');
+    const onsiteFields = document.getElementById('onsiteFields');
+    
+    if (interviewType === 'online') {
+        onlineFields.classList.remove('hidden');
+        onsiteFields.classList.add('hidden');
+        // Make online fields required
+        document.getElementById('googleMeetLink').required = true;
+        document.getElementById('location').required = false;
+        document.getElementById('contactPerson').required = false;
+        document.getElementById('contactPhone').required = false;
+    } else {
+        onlineFields.classList.add('hidden');
+        onsiteFields.classList.remove('hidden');
+        // Make onsite fields required
+        document.getElementById('googleMeetLink').required = false;
+        document.getElementById('location').required = true;
+        document.getElementById('contactPerson').required = true;
+        document.getElementById('contactPhone').required = true;
+    }
+}
+
+// Schedule interview form submission
+document.getElementById('scheduleInterviewForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const applicationId = '{{ application.id }}';
+    
+    fetch(`{{ url_for('jobs.schedule_interview', application_id='APPLICATION_ID') }}`.replace('APPLICATION_ID', applicationId), {
+        method: 'POST',
+        headers: {
+            'X-CSRF-Token': document.querySelector('input[name="csrf_token"]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Interview scheduled successfully!');
+            closeScheduleInterviewModal();
+            // Refresh the page or update UI
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to schedule interview'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while scheduling the interview');
+    });
+});
+
+// Initialize interview type fields on page load
+window.addEventListener('load', function() {
+    // Set minimum date to today
+    const dateInput = document.getElementById('interviewDate');
+    if (dateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
+    }
+    
+    const radioButtons = document.querySelectorAll('input[name="interview_type"]');
+    radioButtons.forEach(button => {
+        button.addEventListener('change', toggleInterviewTypeFields);
+    });
+    // Set initial state
+    if (radioButtons.length > 0) {
+        toggleInterviewTypeFields();
+    }
 });
 </script>
 {% endblock %}

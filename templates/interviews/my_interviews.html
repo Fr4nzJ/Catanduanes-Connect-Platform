@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}My Interview Invitations - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-b from-blue-50 to-white py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center gap-3 mb-2">
+                <i class="fas fa-calendar-check text-blue-600 text-3xl"></i>
+                <h1 class="text-4xl font-bold text-gray-900">My Interview Invitations</h1>
+            </div>
+            <p class="text-gray-600 text-lg">Manage your scheduled interviews and respond to invitations</p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="bg-white rounded-lg shadow-md mb-6 overflow-hidden">
+            <div class="flex flex-wrap border-b border-gray-200">
+                <a href="{{ url_for('jobs.my_interviews') }}" 
+                   class="px-6 py-4 font-semibold text-gray-700 border-b-2 border-blue-600 bg-blue-50">
+                    <i class="fas fa-list mr-2"></i>All Interviews
+                </a>
+            </div>
+        </div>
+
+        <!-- No Interviews State -->
+        {% if not interviews %}
+        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+                <i class="fas fa-inbox text-blue-600 text-2xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">No Interview Invitations Yet</h2>
+            <p class="text-gray-600 mb-6">You don't have any interview invitations at the moment. Keep applying to jobs!</p>
+            <a href="{{ url_for('jobs.jobs_list') }}" class="inline-flex items-center bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                <i class="fas fa-briefcase mr-2"></i>Browse Jobs
+            </a>
+        </div>
+        {% else %}
+        <!-- Interviews List -->
+        <div class="space-y-6">
+            {% for interview in interviews %}
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <!-- Interview Header -->
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 border-l-4 border-blue-600">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">{{ interview.job_title }}</h2>
+                            <p class="text-gray-600">
+                                <i class="fas fa-building mr-2"></i>
+                                <strong>{{ interview.business_name }}</strong> - Owned by {{ interview.owner_name }}
+                            </p>
+                        </div>
+                        <!-- Status Badge -->
+                        <div>
+                            {% if interview.status == 'scheduled' %}
+                            <span class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 rounded-full font-semibold">
+                                <i class="fas fa-clock mr-2"></i>Pending Response
+                            </span>
+                            {% elif interview.status == 'accepted' %}
+                            <span class="inline-flex items-center px-4 py-2 bg-green-100 text-green-800 rounded-full font-semibold">
+                                <i class="fas fa-check-circle mr-2"></i>Accepted
+                            </span>
+                            {% elif interview.status == 'rejected' %}
+                            <span class="inline-flex items-center px-4 py-2 bg-red-100 text-red-800 rounded-full font-semibold">
+                                <i class="fas fa-times-circle mr-2"></i>Rejected
+                            </span>
+                            {% elif interview.status == 'completed' %}
+                            <span class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full font-semibold">
+                                <i class="fas fa-flag-checkered mr-2"></i>Completed
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interview Details -->
+                <div class="p-6 space-y-6">
+                    <!-- Interview Type and Schedule -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Type and Schedule -->
+                        <div class="space-y-4">
+                            <!-- Interview Type -->
+                            <div class="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+                                {% if interview.interview_type == 'online' %}
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-video text-blue-600 text-xl mt-1"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Online Interview</h3>
+                                    <p class="text-sm text-gray-600 mt-1">Via Google Meet</p>
+                                </div>
+                                {% else %}
+                                <div class="flex-shrink-0">
+                                    <i class="fas fa-map-marker-alt text-green-600 text-xl mt-1"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">Onsite Interview</h3>
+                                    <p class="text-sm text-gray-600 mt-1">In-person meeting</p>
+                                </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Date and Time -->
+                            <div class="flex items-center gap-3 p-4 bg-gray-50 rounded-lg">
+                                <i class="fas fa-calendar-alt text-blue-600 text-lg"></i>
+                                <div>
+                                    <p class="text-sm text-gray-600">Date & Time</p>
+                                    <p class="font-semibold text-gray-900">
+                                        {{ interview.interview_datetime.strftime('%B %d, %Y at %I:%M %p') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interview Details (Type-specific) -->
+                        {% if interview.interview_type == 'online' %}
+                        <div class="space-y-4">
+                            <!-- Google Meet Link -->
+                            {% if interview.google_meet_link %}
+                            <div class="p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                                <p class="text-sm text-gray-600 mb-2">Google Meet Link</p>
+                                <a href="{{ interview.google_meet_link }}" target="_blank" 
+                                   class="inline-flex items-center text-blue-600 hover:text-blue-700 font-semibold break-all">
+                                    <i class="fas fa-external-link-alt mr-2"></i>
+                                    {{ interview.google_meet_link }}
+                                </a>
+                            </div>
+                            {% else %}
+                            <div class="p-4 bg-yellow-50 rounded-lg border-2 border-yellow-200">
+                                <p class="text-sm text-gray-600">
+                                    <i class="fas fa-info-circle mr-2"></i>
+                                    Meet link will be shared before the interview
+                                </p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <!-- Onsite Details -->
+                        <div class="space-y-4">
+                            <!-- Location -->
+                            {% if interview.location %}
+                            <div class="p-4 bg-green-50 rounded-lg border-2 border-green-200">
+                                <p class="text-sm text-gray-600 mb-1">Location</p>
+                                <p class="font-semibold text-gray-900">{{ interview.location }}</p>
+                            </div>
+                            {% endif %}
+
+                            <!-- Contact Person -->
+                            {% if interview.contact_person %}
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Contact Person</p>
+                                <p class="font-semibold text-gray-900">{{ interview.contact_person }}</p>
+                                {% if interview.contact_phone %}
+                                <p class="text-sm text-gray-600 mt-2">
+                                    <i class="fas fa-phone mr-1"></i>{{ interview.contact_phone }}
+                                </p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Instructions -->
+                    {% if interview.instructions %}
+                    <div class="p-4 bg-amber-50 rounded-lg border-l-4 border-amber-400">
+                        <p class="text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-lightbulb mr-2"></i>Additional Instructions
+                        </p>
+                        <p class="text-gray-600 whitespace-pre-wrap">{{ interview.instructions }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Response Section -->
+                    {% if interview.status == 'scheduled' %}
+                    <div class="border-t pt-6">
+                        <h3 class="font-semibold text-gray-900 mb-4">Respond to Interview Invitation</h3>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <!-- Accept Button -->
+                            <button onclick="acceptInterview('{{ interview.id }}')" 
+                                    class="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-check-circle"></i>Accept Interview
+                            </button>
+
+                            <!-- Reject Button -->
+                            <button onclick="showRejectReasonModal('{{ interview.id }}')" 
+                                    class="flex-1 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors flex items-center justify-center gap-2">
+                                <i class="fas fa-times-circle"></i>Reject Interview
+                            </button>
+                        </div>
+                    </div>
+                    {% elif interview.status == 'accepted' %}
+                    <div class="border-t pt-6">
+                        <div class="p-4 bg-green-50 rounded-lg border-l-4 border-green-400">
+                            <p class="text-gray-700">
+                                <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                You have accepted this interview invitation. Mark your calendar!
+                            </p>
+                            {% if interview.interview_type == 'online' and interview.google_meet_link %}
+                            <a href="{{ interview.google_meet_link }}" target="_blank" 
+                               class="inline-flex items-center mt-3 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors">
+                                <i class="fas fa-video mr-2"></i>Join Google Meet
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif interview.status == 'rejected' %}
+                    <div class="border-t pt-6">
+                        <div class="p-4 bg-red-50 rounded-lg border-l-4 border-red-400">
+                            <p class="text-gray-700">
+                                <i class="fas fa-times-circle text-red-600 mr-2"></i>
+                                You have declined this interview invitation.
+                            </p>
+                            {% if interview.rejection_reason %}
+                            <p class="text-sm text-gray-600 mt-2">
+                                <strong>Reason:</strong> {{ interview.rejection_reason }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Footer with Response Date -->
+                {% if interview.applicant_response and interview.response_date %}
+                <div class="bg-gray-50 px-6 py-3 text-sm text-gray-600 border-t">
+                    <i class="fas fa-check-double mr-2"></i>
+                    You responded on {{ interview.response_date.strftime('%B %d, %Y at %I:%M %p') }}
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Reject Reason Modal -->
+<div id="rejectReasonModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">Reject Interview</h2>
+        <p class="text-gray-600 mb-6">Are you sure you want to decline this interview invitation?</p>
+        
+        <form id="rejectForm" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-6">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Reason for Declining (Optional)</label>
+                <textarea name="rejection_reason" rows="3" placeholder="Let them know why you're declining..."
+                          class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeRejectReasonModal()" 
+                        class="flex-1 px-4 py-3 bg-gray-300 text-gray-900 rounded-lg font-semibold hover:bg-gray-400 transition-colors">
+                    Keep Interview
+                </button>
+                <button type="submit" 
+                        class="flex-1 px-4 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors">
+                    Decline
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showRejectReasonModal(interviewId) {
+    document.getElementById('rejectReasonModal').classList.remove('hidden');
+    const form = document.getElementById('rejectForm');
+    form.action = `{{ url_for('jobs.reject_interview', interview_id='ID') }}`.replace('ID', interviewId);
+}
+
+function closeRejectReasonModal() {
+    document.getElementById('rejectReasonModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('rejectReasonModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeRejectReasonModal();
+});
+
+function acceptInterview(interviewId) {
+    if (confirm('Do you accept this interview invitation?')) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `{{ url_for('jobs.accept_interview', interview_id='ID') }}`.replace('ID', interviewId);
+        
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = document.querySelector('input[name="csrf_token"]').value;
+        
+        form.appendChild(csrfInput);
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Prevent form submission if reject modal is open
+document.getElementById('rejectForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Interview declined');
+            location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to decline interview'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred');
+    });
+});
+</script>
+{% endblock %}

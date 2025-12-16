@@ -784,16 +784,10 @@ def dashboard():
             for rec in applications
         ]
 
-    # ---------- 3.  DEBUG LOGGING ----------
-    from flask import current_app
-    current_app.logger.info(f"Dashboard - Stats: {stats}")
-    for i, b in enumerate(business_list):
-        current_app.logger.info(f"Business {i}: name={b.name}, jobs_count={getattr(b, 'jobs_count', 'MISSING')}, reviews_count={getattr(b, 'reviews_count', 'MISSING')}, rating={getattr(b, 'rating', 'MISSING')}")
-
-    # ---------- 4.  RENDER ----------
+    # ---------- 3.  RENDER ----------
     return render_template(
         "business/business_owner_dashboard.html",
-        stats=stats,                 # ← template now finds {{ stats.total_businesses }} etc.
+        stats=stats,
         businesses=business_list,
         applications=application_list
     )

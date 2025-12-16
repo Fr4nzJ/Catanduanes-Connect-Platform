@@ -852,7 +852,8 @@ def view_applicant_profile(application_id):
         app_result = safe_run(session, """
             MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
             MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
-            RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name
+            OPTIONAL MATCH (a)-[:HAS_INTERVIEW]->(i:Interview)
+            RETURN a, applicant, j.id as job_id, j.title as job_title, b.name as business_name, i
         """, {'app_id': application_id, 'owner_id': current_user.id})
         
         if not app_result:
@@ -866,6 +867,11 @@ def view_applicant_profile(application_id):
         app_data['job_id'] = app_result[0]['job_id']
         app_data['job_title'] = app_result[0]['job_title']
         app_data['business_name'] = app_result[0]['business_name']
+        
+        # Get interview data if exists
+        interview_data = None
+        if app_result[0]['i']:
+            interview_data = _node_to_dict(app_result[0]['i'])
         
         # Parse resume_data if it's a string (JSON)
         resume_data = applicant_data.get('resume_data')
@@ -894,10 +900,11 @@ def view_applicant_profile(application_id):
             'location': applicant_data.get('location'),
             'bio': applicant_data.get('bio'),
             'created_at': applicant_data.get('created_at'),
-            'resume_data': resume_data
+            'resume_data': resume_data,
+            'full_name': applicant_data.get('full_name', applicant_data.get('username', 'Unknown'))
         }
     
-    return render_template('jobs/applicant_profile.html', application=app_data, applicant=applicant)
+    return render_template('jobs/applicant_profile.html', application=app_data, applicant=applicant, interview=interview_data)
 
 @jobs_bp.route('/applicant/<application_id>/download-cv')
 @login_required
@@ -1030,6 +1037,229 @@ def reject_applicant(application_id):
         
         flash('Application rejected! Applicant has been notified.', 'success')
         return redirect(url_for('jobs.view_applicant_profile', application_id=application_id))
+
+# ============================================================================
+# INTERVIEW SCHEDULING ROUTES
+# ============================================================================
+
+@jobs_bp.route('/applicant/<application_id>/schedule-interview', methods=['POST'])
+@login_required
+@role_required('business_owner')
+def schedule_interview(application_id):
+    """Schedule an interview for accepted applicant"""
+    
+    interview_type = request.form.get('interview_type')  # 'online' or 'onsite'
+    
+    if interview_type == 'online':
+        interview_date = request.form.get('interview_date')
+        interview_time = request.form.get('interview_time')
+        google_meet_link = request.form.get('google_meet_link', '')
+        instructions = request.form.get('instructions', '')
+    else:  # onsite
+        interview_date = request.form.get('interview_date')
+        interview_time = request.form.get('interview_time')
+        location = request.form.get('location')
+        contact_person = request.form.get('contact_person')
+        contact_phone = request.form.get('contact_phone')
+        instructions = request.form.get('instructions', '')
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Verify application exists and is accepted
+        verify = safe_run(session, """
+            MATCH (applicant:User)-[:APPLIED_TO]->(a:JobApplication {id: $app_id})-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business), (owner:User {id: $owner_id})-[:OWNS]->(b)
+            WHERE a.status = 'accepted'
+            RETURN applicant.id as applicant_id, applicant.email as applicant_email, 
+                   applicant.username as applicant_name, j.title as job_title
+        """, {'app_id': application_id, 'owner_id': current_user.id})
+        
+        if not verify:
+            return jsonify({'success': False, 'error': 'Application not found, unauthorized, or not accepted'}), 403
+        
+        applicant_id = verify[0]['applicant_id']
+        applicant_email = verify[0]['applicant_email']
+        applicant_name = verify[0]['applicant_name']
+        job_title = verify[0]['job_title']
+        
+        interview_id = str(uuid.uuid4())
+        interview_datetime = f"{interview_date}T{interview_time}"
+        
+        try:
+            # Create Interview node and connect to application
+            if interview_type == 'online':
+                create = safe_run(session, """
+                    MATCH (a:JobApplication {id: $app_id})
+                    MATCH (applicant:User {id: $applicant_id})
+                    CREATE (i:Interview {
+                        id: $interview_id,
+                        type: 'online',
+                        interview_datetime: $interview_datetime,
+                        google_meet_link: $google_meet_link,
+                        instructions: $instructions,
+                        status: 'scheduled',
+                        created_at: datetime(),
+                        updated_at: datetime()
+                    })
+                    CREATE (a)-[:HAS_INTERVIEW]->(i)
+                    CREATE (applicant)-[:INVITED_TO]->(i)
+                    RETURN i.id as interview_id
+                """, {
+                    'app_id': application_id,
+                    'applicant_id': applicant_id,
+                    'interview_id': interview_id,
+                    'interview_datetime': interview_datetime,
+                    'google_meet_link': google_meet_link,
+                    'instructions': instructions
+                })
+            else:  # onsite
+                create = safe_run(session, """
+                    MATCH (a:JobApplication {id: $app_id})
+                    MATCH (applicant:User {id: $applicant_id})
+                    CREATE (i:Interview {
+                        id: $interview_id,
+                        type: 'onsite',
+                        interview_datetime: $interview_datetime,
+                        location: $location,
+                        contact_person: $contact_person,
+                        contact_phone: $contact_phone,
+                        instructions: $instructions,
+                        status: 'scheduled',
+                        created_at: datetime(),
+                        updated_at: datetime()
+                    })
+                    CREATE (a)-[:HAS_INTERVIEW]->(i)
+                    CREATE (applicant)-[:INVITED_TO]->(i)
+                    RETURN i.id as interview_id
+                """, {
+                    'app_id': application_id,
+                    'applicant_id': applicant_id,
+                    'interview_id': interview_id,
+                    'interview_datetime': interview_datetime,
+                    'location': location,
+                    'contact_person': contact_person,
+                    'contact_phone': contact_phone,
+                    'instructions': instructions
+                })
+            
+            # Send email notification
+            try:
+                from tasks import send_email_task_wrapper
+                
+                if interview_type == 'online':
+                    email_template = 'email/interview_scheduled_online.html'
+                    context = {
+                        'applicant_name': applicant_name,
+                        'job_title': job_title,
+                        'interview_date': interview_date,
+                        'interview_time': interview_time,
+                        'google_meet_link': google_meet_link,
+                        'instructions': instructions
+                    }
+                else:
+                    email_template = 'email/interview_scheduled_onsite.html'
+                    context = {
+                        'applicant_name': applicant_name,
+                        'job_title': job_title,
+                        'interview_date': interview_date,
+                        'interview_time': interview_time,
+                        'location': location,
+                        'contact_person': contact_person,
+                        'contact_phone': contact_phone,
+                        'instructions': instructions
+                    }
+                
+                send_email_task_wrapper(
+                    to=applicant_email,
+                    subject=f'Interview Scheduled for {job_title}',
+                    template=email_template,
+                    context=context
+                )
+            except Exception as e:
+                logger.error(f"Failed to send interview email: {e}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Interview scheduled successfully! Applicant notified via email.',
+                'interview_id': interview_id
+            })
+        
+        except Exception as e:
+            logger.error(f"Error scheduling interview: {e}")
+            return jsonify({'success': False, 'error': str(e)}), 500
+
+@jobs_bp.route('/my-interviews')
+@login_required
+def my_interviews():
+    """View all interviews for job seeker"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        # Get all interviews for the current user
+        interviews = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:INVITED_TO]->(i:Interview)
+            MATCH (i)-[:HAS_INTERVIEW]-(a:JobApplication)-[:FOR_JOB]->(j:Job)
+            MATCH (j)-[:POSTED_BY]->(b:Business)
+            MATCH (b)<-[:OWNS]-(owner:User)
+            RETURN i, a, j, b, owner
+            ORDER BY i.interview_datetime DESC
+        """, {'user_id': current_user.id})
+        
+        interview_list = []
+        for rec in interviews:
+            interview_data = _node_to_dict(rec['i'])
+            interview_data['job_title'] = rec['j']['title']
+            interview_data['business_name'] = rec['b']['name']
+            interview_data['owner_name'] = rec['owner']['username']
+            interview_data['application_status'] = rec['a']['status']
+            interview_list.append(interview_data)
+        
+        return render_template('interviews/my_interviews.html', interviews=interview_list)
+
+@jobs_bp.route('/interview/<interview_id>/accept', methods=['POST'])
+@login_required
+def accept_interview(interview_id):
+    """Accept interview invitation"""
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:INVITED_TO]->(i:Interview {id: $interview_id})
+            SET i.status = 'accepted', i.applicant_response = 'accepted', i.response_date = datetime()
+            RETURN i.id as interview_id
+        """, {'user_id': current_user.id, 'interview_id': interview_id})
+        
+        if not result:
+            return jsonify({'success': False, 'error': 'Interview not found'}), 403
+        
+        return jsonify({
+            'success': True,
+            'message': 'Interview acceptance confirmed!'
+        })
+
+@jobs_bp.route('/interview/<interview_id>/reject', methods=['POST'])
+@login_required
+def reject_interview(interview_id):
+    """Reject interview invitation"""
+    
+    reason = request.form.get('reason', '')
+    
+    db = get_neo4j_db()
+    with db.session() as session:
+        result = safe_run(session, """
+            MATCH (u:User {id: $user_id})-[:INVITED_TO]->(i:Interview {id: $interview_id})
+            SET i.status = 'rejected', i.applicant_response = 'rejected', 
+                i.rejection_reason = $reason, i.response_date = datetime()
+            RETURN i.id as interview_id
+        """, {'user_id': current_user.id, 'interview_id': interview_id, 'reason': reason})
+        
+        if not result:
+            return jsonify({'success': False, 'error': 'Interview not found'}), 403
+        
+        return jsonify({
+            'success': True,
+            'message': 'Interview invitation declined.'
+        })
 
 @jobs_bp.route('/applicant/<application_id>/message', methods=['POST'])
 @login_required

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+        }
+        .section-title {
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            background-color: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #764ba2;
+        }
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 12px;
+            border-top: 1px solid #ddd;
+        }
+        .meet-link {
+            background-color: #e8f0fe;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #1f2937;
+            margin: 15px 0;
+        }
+        .meet-link a {
+            color: #1f2937;
+            font-weight: bold;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📹 Online Interview Scheduled</h1>
+        </div>
+
+        <div class="content">
+            <p>Hello {{ applicant_name }},</p>
+
+            <p>Great news! <strong>{{ business_name }}</strong> would like to schedule an online interview with you for the position of <strong>{{ job_title }}</strong>.</p>
+
+            <div class="section">
+                <div class="section-title">📅 Interview Details</div>
+                <p><strong>Position:</strong> {{ job_title }}</p>
+                <p><strong>Interview Type:</strong> Online (Google Meet)</p>
+                <p><strong>Date:</strong> {{ interview_date }}</p>
+                <p><strong>Time:</strong> {{ interview_time }}</p>
+            </div>
+
+            {% if google_meet_link %}
+            <div class="meet-link">
+                <div class="section-title">🔗 Google Meet Link</div>
+                <p>Join the meeting using this link:</p>
+                <p><a href="{{ google_meet_link }}" target="_blank">{{ google_meet_link }}</a></p>
+            </div>
+            {% else %}
+            <div class="section">
+                <p><strong>ℹ️ Note:</strong> The Google Meet link will be shared with you before the interview starts.</p>
+            </div>
+            {% endif %}
+
+            {% if instructions %}
+            <div class="section">
+                <div class="section-title">📝 Additional Instructions</div>
+                <p>{{ instructions }}</p>
+            </div>
+            {% endif %}
+
+            <div class="section">
+                <div class="section-title">✅ What to Do Next</div>
+                <ol>
+                    <li>Review the interview details above</li>
+                    <li>Log in to your Catanduanes Connect account</li>
+                    <li>Accept or decline the interview invitation</li>
+                    <li>Prepare for your interview</li>
+                </ol>
+            </div>
+
+            <center>
+                <a href="{{ interview_url }}" class="button">View Interview Details</a>
+            </center>
+
+            <p>If you have any questions about the interview, you can chat directly with {{ owner_name }} through the Catanduanes Connect platform.</p>
+
+            <p>Good luck with your interview!</p>
+
+            <p>Best regards,<br><strong>Catanduanes Connect Team</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; {{ year }} Catanduanes Connect. All rights reserved.</p>
+            <p>This is an automated email. Please do not reply directly to this email.</p>
+        </div>
+    </div>
+</body>
+</html>
