@@ -274,3 +274,36 @@ def service_provider():
         verification=verification_info,
         verification_status=verification_status
     )
+
+@dashboard_bp.route('/notifications')
+@login_required
+def notifications():
+    """Display notifications page for current user"""
+    db = get_neo4j_db()
+    notifications_list = []
+    unread_count = 0
+    
+    try:
+        with db.session() as session:
+            # Get all notifications for current user
+            result = safe_run(session, """
+                MATCH (n:Notification)
+                WHERE n.user_id = $user_id
+                RETURN n
+                ORDER BY n.created_at DESC
+            """, {'user_id': current_user.id})
+            
+            if result:
+                for record in result:
+                    node_data = _node_to_dict(record['n'])
+                    notifications_list.append(node_data)
+                    if not node_data.get('is_read'):
+                        unread_count += 1
+    except Exception as e:
+        logger.error(f"Error loading notifications: {str(e)}")
+    
+    return render_template('dashboard/notifications.html',
+        notifications=notifications_list,
+        unread_count=unread_count,
+        total_count=len(notifications_list)
+    )

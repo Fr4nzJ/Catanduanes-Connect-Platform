@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Notifications - Catanduanes Connect{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">Notifications</h1>
+                <p class="text-gray-600 mt-2">
+                    {% if unread_count > 0 %}
+                        You have <span class="font-semibold text-blue-600">{{ unread_count }}</span> unread notification{{ 's' if unread_count != 1 else '' }}
+                    {% else %}
+                        All caught up!
+                    {% endif %}
+                </p>
+            </div>
+            {% if unread_count > 0 %}
+            <button onclick="markAllAsRead()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                Mark All as Read
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Notifications List -->
+        <div class="space-y-4">
+            {% if notifications %}
+                {% for notification in notifications %}
+                <div class="bg-white rounded-lg shadow-sm border-l-4 {% if not notification.is_read %}border-blue-500{% else %}border-gray-300{% endif %} p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="font-semibold text-gray-900">{{ notification.title or 'Notification' }}</h3>
+                                {% if not notification.is_read %}
+                                <span class="inline-block w-2 h-2 bg-blue-600 rounded-full"></span>
+                                {% endif %}
+                            </div>
+                            <p class="text-gray-700">{{ notification.message }}</p>
+                            <p class="text-sm text-gray-500 mt-2">
+                                {% if notification.created_at %}
+                                    {{ notification.created_at | safe }}
+                                {% else %}
+                                    Just now
+                                {% endif %}
+                            </p>
+                            {% if notification.data %}
+                            <div class="mt-3 p-3 bg-gray-50 rounded">
+                                {% if notification.data.get('application_id') %}
+                                <p class="text-sm text-gray-600">Application ID: {{ notification.data.application_id }}</p>
+                                {% endif %}
+                                {% if notification.data.get('job_title') %}
+                                <p class="text-sm text-gray-600">Job: {{ notification.data.job_title }}</p>
+                                {% endif %}
+                                {% if notification.data.get('business_name') %}
+                                <p class="text-sm text-gray-600">Business: {{ notification.data.business_name }}</p>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex gap-2 ml-4">
+                            {% if not notification.is_read %}
+                            <button onclick="markAsRead('{{ notification.id }}')" class="text-gray-400 hover:text-gray-600 transition-colors" title="Mark as read">
+                                <i class="fas fa-check text-lg"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                <i class="fas fa-bell text-gray-400 text-4xl mb-4 block"></i>
+                <p class="text-gray-600 text-lg">No notifications yet</p>
+                <p class="text-gray-500 mt-2">You'll see important updates here</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Back Button -->
+        <div class="mt-8">
+            <a href="{{ url_for('dashboard.index') }}" class="inline-flex items-center text-blue-600 hover:text-blue-700 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+function markAsRead(notificationId) {
+    fetch(`{{ url_for('api.mark_notification_as_read', notification_id='') }}${notificationId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function markAllAsRead() {
+    fetch('{{ url_for("api.mark_all_notifications_as_read") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page
+            location.reload();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}
