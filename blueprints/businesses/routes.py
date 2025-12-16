@@ -750,14 +750,17 @@ def dashboard():
         businesses = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)
             OPTIONAL MATCH (b)<-[:REVIEWS]-(r:Review)
-            WITH b, avg(r.rating) as avg_rating, count(DISTINCT r) as review_count
-            RETURN b, avg_rating, review_count
+            OPTIONAL MATCH (b)<-[:POSTED_BY]-(j:Job)
+            WHERE j.is_active = true
+            WITH b, avg(r.rating) as avg_rating, count(DISTINCT r) as review_count, count(DISTINCT j) as jobs_count
+            RETURN b, avg_rating, review_count, jobs_count
             ORDER BY b.created_at DESC
         """, {"user_id": current_user.id})
 
         business_list = [
             Business(**(_node_to_dict(rec["b"]) | {"rating": rec["avg_rating"] or 0,
-                                                    "review_count": rec["review_count"] or 0}))
+                                                    "reviews_count": rec["review_count"] or 0,
+                                                    "jobs_count": rec["jobs_count"] or 0}))
             for rec in businesses
         ]
 
