@@ -700,8 +700,13 @@ def add_review(business_id):
 @login_required
 def contact_business(business_id):
     """Send a contact message to the business owner."""
+    logger.info(f"Contact endpoint called for business {business_id}")
+    logger.info(f"Request content type: {request.content_type}")
+    logger.info(f"Request data: {request.get_data()}")
+    
     try:
         data = request.get_json(silent=True) or {}
+        logger.info(f"Parsed JSON data: {data}")
         
         # Validate required fields
         name = data.get('name', '').strip()
@@ -709,7 +714,10 @@ def contact_business(business_id):
         subject = data.get('subject', '').strip()
         message = data.get('message', '').strip()
         
+        logger.info(f"Form fields - name: {name}, email: {email}, subject: {subject}")
+        
         if not all([name, email, subject, message]):
+            logger.warning("Missing required fields")
             return jsonify({'error': 'All fields are required'}), 400
         
         if len(message) < 10:
@@ -726,14 +734,20 @@ def contact_business(business_id):
                 RETURN b.id as business_id, b.name as business_name
             """, {'business_id': business_id})
             
+            logger.info(f"Business query result: {business_result}")
+            
             if not business_result or len(business_result) == 0:
+                logger.warning(f"Business not found: {business_id}")
                 return jsonify({'error': 'Business not found'}), 404
             
             business_name = business_result[0].get('business_name')
+            logger.info(f"Found business: {business_name}")
             
             # Create contact message (stored for admin/business owner review)
             message_id = str(uuid.uuid4())
             created_at = datetime.utcnow().isoformat()
+            
+            logger.info(f"Creating contact message with ID: {message_id}")
             
             safe_run(session, """
                 CREATE (m:ContactMessage {
@@ -758,16 +772,21 @@ def contact_business(business_id):
                 'created_at': created_at
             })
             
+            logger.info("Contact message created successfully")
+            
             # Get business owner and send notification
             owner_result = safe_run(session, """
                 MATCH (owner:User)-[:OWNS]->(b:Business {id: $business_id})
                 RETURN owner.id as owner_id, owner.email as owner_email
             """, {'business_id': business_id})
             
+            logger.info(f"Owner query result: {owner_result}")
+            
             if owner_result and len(owner_result) > 0 and owner_result[0].get('owner_id'):
                 try:
                     owner_email = owner_result[0].get('owner_email')
                     owner_id = owner_result[0].get('owner_id')
+                    logger.info(f"Notifying owner {owner_id} at {owner_email}")
                     
                     if owner_email:
                         # Send email to business owner
@@ -802,6 +821,7 @@ def contact_business(business_id):
                 except Exception as e:
                     logger.warning(f"Failed to send contact notification: {str(e)}")
         
+        logger.info("Contact message processed successfully")
         return jsonify({
             'success': True,
             'message': 'Message sent successfully! The business owner will contact you shortly.'
