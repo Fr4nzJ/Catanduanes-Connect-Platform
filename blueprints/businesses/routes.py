@@ -757,12 +757,13 @@ def dashboard():
             ORDER BY b.created_at DESC
         """, {"user_id": current_user.id})
 
-        business_list = [
-            Business(**(_node_to_dict(rec["b"]) | {"rating": rec["avg_rating"] or 0,
-                                                    "reviews_count": rec["review_count"] or 0,
-                                                    "jobs_count": rec["jobs_count"] or 0}))
-            for rec in businesses
-        ]
+        business_list = []
+        for rec in businesses:
+            b = Business(**_node_to_dict(rec["b"]))
+            b.rating = rec["avg_rating"] or 0
+            b.reviews_count = rec["review_count"] or 0
+            b.jobs_count = rec["jobs_count"] or 0
+            business_list.append(b)
 
         applications = safe_run(session, """
             MATCH (u:User {id: $user_id})-[:OWNS]->(b:Business)-[:POSTED_BY]->(j:Job)
