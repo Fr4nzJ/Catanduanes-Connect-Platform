@@ -576,15 +576,13 @@ def create_business():
     return render_template('business/businesses_create.html', form=form)
 
 @businesses_bp.route('/<business_id>/review', methods=['POST'])
-@login_required
-@verified_required
 def add_review(business_id):
     """Add review to business (AJAX/JSON only, always returns JSON)"""
-    # Always return JSON for AJAX requests, even for auth/verification errors
+    # Check authentication and verification, always return JSON for AJAX
     if not current_user.is_authenticated:
-        return jsonify({'error': 'Authentication required'}), 401
-    if not getattr(current_user, 'is_verified', True):
-        return jsonify({'error': 'Email verification required'}), 403
+        return jsonify({'error': 'Authentication required. Please log in.'}), 401
+    if not getattr(current_user, 'is_verified', False):
+        return jsonify({'error': 'Email verification required. Please verify your email first.'}), 403
     try:
         # Get JSON data from request
         data = request.get_json() or {}
