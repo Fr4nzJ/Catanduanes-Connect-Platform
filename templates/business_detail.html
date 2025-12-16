@@ -436,8 +436,7 @@ function submitReview(event) {
     const formData = new FormData(event.target);
     const data = {
         rating: currentRating,
-        comment: formData.get('comment'),
-        csrf_token: formData.get('csrf_token')
+        comment: formData.get('comment')
     };
     
     fetch('/businesses/{{ business.id }}/review', {
@@ -448,19 +447,15 @@ function submitReview(event) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(result => {
-        if (result.error) {
-            alert(result.error);
-        } else {
-            alert('Review submitted successfully!');
-            closeReviewModal();
-            location.reload();
-        }
+    .then(r => r.json())
+    .then(res => {
+        if (res.error) throw new Error(res.error);
+        alert(res.message || 'Review submitted successfully!');
+        closeReviewModal();
+        location.reload();
     })
-    .catch(error => {
-        console.error('Error submitting review:', error);
-        alert('Failed to submit review. Please try again.');
+    .catch(err => {
+        alert(err.message || 'Failed to submit review. Please try again.');
     });
 }
 
@@ -481,8 +476,7 @@ function submitContactForm(event) {
         name: formData.get('name'),
         email: formData.get('email'),
         subject: formData.get('subject'),
-        message: formData.get('message'),
-        csrf_token: formData.get('csrf_token')
+        message: formData.get('message')
     };
     
     fetch('/businesses/{{ business.id }}/contact', {
@@ -493,19 +487,15 @@ function submitContactForm(event) {
         },
         body: JSON.stringify(data)
     })
-    .then(response => response.json())
-    .then(result => {
-        if (result.error) {
-            alert(result.error);
-        } else {
-            alert('Message sent successfully!');
-            closeContactModal();
-            event.target.reset();
-        }
+    .then(r => r.json())
+    .then(res => {
+        if (res.error) throw new Error(res.error);
+        alert(res.message || 'Message sent successfully!');
+        closeContactModal();
+        event.target.reset();
     })
-    .catch(error => {
-        console.error('Error sending message:', error);
-        alert('Failed to send message. Please try again.');
+    .catch(err => {
+        alert(err.message || 'Failed to send message. Please try again.');
     });
 }
 

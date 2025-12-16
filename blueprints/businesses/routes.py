@@ -694,6 +694,120 @@ def add_review(business_id):
         logger.error(f"Error adding review: {str(e)}", exc_info=True)
         return jsonify({'error': 'Failed to submit review. Please try again.'}), 500
 
+@businesses_bp.route('/<business_id>/contact', methods=['POST'])
+@login_required
+def contact_business(business_id):
+    """Send a contact message to the business owner."""
+    try:
+        data = request.get_json(silent=True) or {}
+        
+        # Validate required fields
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        subject = data.get('subject', '').strip()
+        message = data.get('message', '').strip()
+        
+        if not all([name, email, subject, message]):
+            return jsonify({'error': 'All fields are required'}), 400
+        
+        if len(message) < 10:
+            return jsonify({'error': 'Message must be at least 10 characters long'}), 400
+        
+        if len(message) > 1000:
+            return jsonify({'error': 'Message must not exceed 1000 characters'}), 400
+        
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Check if business exists
+            business_result = safe_run(session, """
+                MATCH (b:Business {id: $business_id})
+                RETURN b.id as business_id, b.name as business_name
+            """, {'business_id': business_id})
+            
+            if not business_result:
+                return jsonify({'error': 'Business not found'}), 404
+            
+            business_name = business_result[0]['business_name']
+            
+            # Create contact message (stored for admin/business owner review)
+            message_id = str(uuid.uuid4())
+            created_at = datetime.utcnow().isoformat()
+            
+            save_result = safe_run(session, """
+                CREATE (m:ContactMessage {
+                    id: $message_id,
+                    sender_name: $sender_name,
+                    sender_email: $sender_email,
+                    sender_id: $sender_id,
+                    subject: $subject,
+                    message: $message,
+                    business_id: $business_id,
+                    created_at: $created_at,
+                    is_read: false
+                })
+                RETURN m.id as message_id
+            """, {
+                'message_id': message_id,
+                'sender_name': name,
+                'sender_email': email,
+                'sender_id': current_user.id if current_user.is_authenticated else None,
+                'subject': subject,
+                'message': message,
+                'business_id': business_id,
+                'created_at': created_at
+            })
+            
+            if not save_result:
+                return jsonify({'error': 'Failed to send message'}), 500
+            
+            # Get business owner and send notification
+            owner_result = safe_run(session, """
+                MATCH (owner:User)-[:OWNS]->(b:Business {id: $business_id})
+                RETURN owner.id as owner_id, owner.email as owner_email
+            """, {'business_id': business_id})
+            
+            if owner_result and owner_result[0]['owner_id']:
+                try:
+                    # Send email to business owner
+                    send_email_task.delay(
+                        to=owner_result[0]['owner_email'],
+                        subject=f'New Contact Message: {subject}',
+                        template='email/contact_message.html',
+                        context={
+                            'sender_name': name,
+                            'sender_email': email,
+                            'business_name': business_name,
+                            'subject': subject,
+                            'message': message,
+                            'message_id': message_id
+                        }
+                    )
+                    
+                    # Create notification
+                    create_notification_task(
+                        user_id=owner_result[0]['owner_id'],
+                        type='new_contact',
+                        title='New Contact Message',
+                        message=f'{name} sent you a message about {business_name}',
+                        data={
+                            'message_id': message_id,
+                            'business_id': business_id,
+                            'sender_name': name,
+                            'sender_email': email
+                        }
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send contact notification: {str(e)}")
+        
+        return jsonify({
+            'success': True,
+            'message': 'Message sent successfully! The business owner will contact you shortly.'
+        }), 201
+    
+    except Exception as e:
+        logger.error(f"Error sending contact message: {str(e)}", exc_info=True)
+        return jsonify({'error': 'Failed to send message. Please try again.'}), 500
+
 @businesses_bp.route('/dashboard')
 @login_required
 @role_required('business_owner')
