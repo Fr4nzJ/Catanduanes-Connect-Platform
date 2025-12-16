@@ -231,7 +231,8 @@
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                     
-                                    {% if job.status == 'pending' %}
+                                    <!-- Approve Button - Show if not approved -->
+                                    {% if not job.is_approved %}
                                     <form method="POST" action="{{ url_for('admin_mgmt.approve_job', job_id=job.id) }}" class="inline"
                                           onsubmit="return confirm('Approve this job?');">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -239,13 +240,17 @@
                                             <i class="fas fa-check"></i> Approve
                                         </button>
                                     </form>
+                                    {% endif %}
                                     
+                                    <!-- Reject Button - Show if not rejected -->
+                                    {% if job.status|lower != 'rejected' %}
                                     <button onclick="showRejectModal('{{ job.id }}')" class="text-red-600 hover:text-red-800 font-semibold text-sm px-2 py-1 rounded hover:bg-red-100 transition-colors">
                                         <i class="fas fa-times"></i> Reject
                                     </button>
                                     {% endif %}
                                     
-                                    {% if job.status == 'active' and not job.is_featured %}
+                                    <!-- Feature Button - Show if approved and not featured -->
+                                    {% if job.is_approved and job.is_active and not job.is_featured %}
                                     <form method="POST" action="{{ url_for('admin_mgmt.feature_job', job_id=job.id) }}" class="inline"
                                           onsubmit="return confirm('Mark as featured?');">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
