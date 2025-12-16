@@ -268,11 +268,16 @@
             </h2>
             <form method="GET" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div class="md:col-span-2">
-                        <label for="query" class="block text-sm font-bold text-gray-700 mb-2">Search</label>
+                    <div class="md:col-span-2 relative">
+                        <label for="query" class="block text-sm font-bold text-gray-700 mb-2">
+                            <i class="fas fa-wand-magic-wand text-purple-600 mr-2"></i>Smart Search (AI-Powered)
+                        </label>
                         <input type="text" name="query" id="query" value="{{ request.args.get('query', '') }}"
-                               placeholder="Business name or description"
+                               placeholder="e.g., 'restaurant', 'plumbing services', 'tech support'"
+                               oninput="handleAIBusinessSearchSuggestions(event)"
                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300">
+                        <small class="text-gray-600 mt-1 block">Uses Gemini AI to understand related business types and services</small>
+                        <div id="ai-search-suggestions" class="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto hidden"></div>
                     </div>
                     
                     <div>
@@ -334,8 +339,8 @@
                     </div>
                     
                     <div class="flex items-end space-x-2">
-                        <button type="button" onclick="handleBusinessLocationSearch()" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
-                            <i class="fas fa-search mr-2"></i>Search with AI
+                        <button type="button" onclick="performAIBusinessSearch()" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            <i class="fas fa-wand-magic-wand mr-2"></i>Search with AI
                         </button>
                         <button type="submit" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
                             <i class="fas fa-search mr-2"></i>Search
@@ -991,6 +996,218 @@
                 </div>
             `;
             recommendedSection.classList.add('show');
+        }
+    }
+
+    /**
+     * Handle AI business search suggestions as user types
+     */
+    async function handleAIBusinessSearchSuggestions(event) {
+        const query = event.target.value.trim();
+        const suggestionsBox = document.getElementById('ai-search-suggestions');
+        
+        if (!query || query.length < 2) {
+            suggestionsBox.classList.add('hidden');
+            return;
+        }
+
+        try {
+            // Get AI search intent analysis
+            const response = await fetch(`/businesses/api/ai-search?q=${encodeURIComponent(query)}&limit=5`);
+            const data = await response.json();
+            
+            if (!data.success) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            // Extract suggestions from intent data
+            const intent = data.search_intent || {};
+            const suggestions = [];
+            
+            if (intent.primary_keywords) suggestions.push(...intent.primary_keywords.slice(0, 2));
+            if (intent.related_keywords) suggestions.push(...intent.related_keywords.slice(0, 2));
+            if (intent.business_types) suggestions.push(...intent.business_types.slice(0, 2));
+
+            // Show unique suggestions
+            const uniqueSuggestions = [...new Set(suggestions)].slice(0, 5);
+            
+            if (uniqueSuggestions.length === 0) {
+                suggestionsBox.classList.add('hidden');
+                return;
+            }
+
+            // Render suggestions
+            suggestionsBox.innerHTML = `
+                <div class="p-3 space-y-2">
+                    <div class="text-xs font-semibold text-purple-600 px-2 py-1">🤖 AI Suggestions</div>
+                    ${uniqueSuggestions.map(sugg => `
+                        <div class="suggestion-item p-2 hover:bg-purple-100 rounded cursor-pointer transition-colors"
+                             onclick="selectAIBusinessSuggestion('${sugg.replace(/'/g, "\\'")}')">
+                            <div class="text-sm text-gray-800">
+                                <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>${sugg}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            suggestionsBox.classList.remove('hidden');
+        } catch (error) {
+            console.error('Error fetching AI suggestions:', error);
+            suggestionsBox.classList.add('hidden');
+        }
+    }
+
+    /**
+     * Select an AI business suggestion
+     */
+    function selectAIBusinessSuggestion(suggestion) {
+        document.getElementById('query').value = suggestion;
+        document.getElementById('ai-search-suggestions').classList.add('hidden');
+    }
+
+    /**
+     * Perform AI-powered business search
+     */
+    async function performAIBusinessSearch() {
+        const query = document.getElementById('query').value.trim();
+        const category = document.getElementById('category').value.trim();
+
+        if (!query || query.length < 2) {
+            alert('Please enter a search query (at least 2 characters)');
+            return;
+        }
+
+        // Show loading overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'ai-search-loading';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        `;
+        overlay.innerHTML = `
+            <div style="background: white; padding: 40px; border-radius: 16px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+                <div style="font-size: 48px; margin-bottom: 20px; animation: pulse 2s infinite;">🧠</div>
+                <p style="color: #667eea; font-weight: bold; font-size: 18px; margin-bottom: 8px;">AI-Powered Search</p>
+                <p style="color: #6b7280; font-size: 14px;">Understanding your search intent...</p>
+                <div style="margin-top: 20px; display: flex; justify-content: center; gap: 6px;">
+                    <div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: bounce 1.4s infinite;"></div>
+                    <div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: bounce 1.4s infinite 0.2s;"></div>
+                    <div style="width: 8px; height: 8px; background: #667eea; border-radius: 50%; animation: bounce 1.4s infinite 0.4s;"></div>
+                </div>
+            </div>
+            <style>
+                @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } }
+                @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+            </style>
+        `;
+        document.body.appendChild(overlay);
+
+        try {
+            // Call AI search API
+            const url = `/businesses/api/ai-search?q=${encodeURIComponent(query)}${category ? `&category=${encodeURIComponent(category)}` : ''}&limit=12`;
+            const response = await fetch(url);
+            const result = await response.json();
+
+            // Remove loading overlay
+            overlay.remove();
+
+            if (!result.success) {
+                alert(result.error || 'Search failed');
+                return;
+            }
+
+            // Display results with AI interpretation
+            const intent = result.search_intent || {};
+            const businesses = result.businesses || [];
+
+            // Create results container
+            const resultsHTML = `
+                <div class="mb-8 p-6 bg-gradient-to-r from-purple-50 to-indigo-50 border-l-4 border-purple-600 rounded-lg">
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">
+                                <i class="fas fa-wand-magic-wand text-purple-600 mr-2"></i>AI Search Results
+                            </h3>
+                            <p class="text-sm text-gray-700 mb-3">
+                                Found <strong>${businesses.length}</strong> businesses matching your search
+                            </p>
+                            ${intent.primary_keywords ? `
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <span class="text-xs font-semibold text-gray-600">Primary Keywords:</span>
+                                    ${intent.primary_keywords.slice(0, 3).map(kw => `
+                                        <span class="bg-white px-3 py-1 rounded-full text-sm text-purple-700 border border-purple-200">
+                                            ${kw}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                            ${intent.related_keywords && intent.related_keywords.length > 0 ? `
+                                <div class="flex flex-wrap gap-2 mt-2">
+                                    <span class="text-xs font-semibold text-gray-600">Related:</span>
+                                    ${intent.related_keywords.slice(0, 3).map(kw => `
+                                        <span class="bg-purple-100 px-3 py-1 rounded-full text-sm text-purple-700 border border-purple-200">
+                                            ${kw}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <button onclick="clearAIResults()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            // Insert results before businesses container
+            const businessesContainer = document.querySelector('[data-businesses-container]');
+            const parent = businessesContainer.parentElement;
+            
+            // Remove any existing AI results
+            const existingResults = parent.querySelector('.ai-results-container');
+            if (existingResults) existingResults.remove();
+
+            const resultsDiv = document.createElement('div');
+            resultsDiv.className = 'ai-results-container';
+            resultsDiv.innerHTML = resultsHTML;
+            parent.insertBefore(resultsDiv, businessesContainer);
+
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Update businesses grid
+            if (businesses.length === 0) {
+                businessesContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-search text-gray-300 text-4xl mb-4 block"></i>
+                        <p class="text-gray-600">No businesses found for "${query}"</p>
+                        <p class="text-sm text-gray-500 mt-2">Try adjusting your search terms</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            overlay.remove();
+            console.error('Error in AI search:', error);
+            alert('An error occurred during the AI search. Please try again.');
+        }
+    }
+
+    /**
+     * Clear AI search results
+     */
+    function clearAIResults() {
+        const resultsContainer = document.querySelector('.ai-results-container');
+        if (resultsContainer) {
+            resultsContainer.remove();
         }
     }
 

@@ -914,6 +914,179 @@ def api_search_businesses():
         'total': len(businesses)
     }
 
+@businesses_bp.route('/api/ai-search')
+@login_required_optional
+def ai_search_businesses():
+    """AI-powered semantic business search that understands intent and synonyms"""
+    
+    query = request.args.get('q', '').strip()
+    category = request.args.get('category', '').strip()
+    limit = request.args.get('limit', 12, type=int)
+    
+    if not query or len(query) < 2:
+        return jsonify({'error': 'Search query too short'}), 400
+    
+    try:
+        from gemini_client import get_gemini_response
+        
+        logger.info(f"Starting AI semantic search for businesses: {query}")
+        
+        # Step 1: Use Gemini to understand user intent and generate search variations
+        intent_prompt = f"""The user is searching for businesses with this query: "{query}"
+
+Analyze what they're looking for and return a JSON object with:
+1. "primary_keywords": list of main keywords they're searching for
+2. "related_keywords": list of related/synonymous terms (e.g., if they search "restaurant", include "food", "dining", "cafe")
+3. "business_types": list of business types/categories that match this search intent
+4. "services": list of services typically offered by such businesses
+5. "categories": list of likely business categories in Catanduanes context
+
+Return ONLY valid JSON, no markdown or extra text.
+
+Example for "restaurant":
+{{"primary_keywords": ["restaurant", "food"], "related_keywords": ["dining", "cafe", "eatery"], "business_types": ["Restaurant", "Cafe", "Food Service"], "services": ["dine-in", "takeout", "catering"], "categories": ["restaurant", "services"]}}"""
+        
+        intent_response = get_gemini_response(intent_prompt)
+        
+        # Parse the intent response
+        try:
+            import json
+            # Clean response if it has markdown
+            if '```json' in intent_response:
+                intent_response = intent_response.split('```json')[1].split('```')[0]
+            elif '```' in intent_response:
+                intent_response = intent_response.split('```')[1].split('```')[0]
+            
+            intent_data = json.loads(intent_response.strip())
+            logger.info(f"Parsed business intent data: {intent_data}")
+        except Exception as parse_error:
+            logger.warning(f"Failed to parse intent response: {parse_error}, using fallback")
+            intent_data = {
+                'primary_keywords': [query],
+                'related_keywords': [],
+                'business_types': [query],
+                'services': [],
+                'categories': []
+            }
+        
+        # Step 2: Query database with expanded search terms
+        db = get_neo4j_db()
+        with db.session() as session:
+            # Build search with all keywords
+            all_keywords = intent_data.get('primary_keywords', []) + intent_data.get('related_keywords', []) + intent_data.get('business_types', [])
+            all_keywords = list(set([k.lower().strip() for k in all_keywords if k]))[:10]  # Limit to 10 unique keywords
+            
+            search_conditions = []
+            for kw in all_keywords:
+                search_conditions.append(f"(b.name ICONTAINS '{kw}' OR b.description ICONTAINS '{kw}')")
+            
+            where_clause = " OR ".join(search_conditions) if search_conditions else "1=1"
+            
+            cypher_query = f"""
+                MATCH (b:Business)
+                WHERE b.is_active = true AND ({where_clause})
+            """
+            
+            if category:
+                cypher_query += " AND b.category = $category"
+            
+            cypher_query += f"""
+                RETURN b, 
+                    (CASE 
+                        WHEN b.name ICONTAINS '{query}' THEN 3
+                        ELSE 1
+                    END) as relevance_score
+                ORDER BY relevance_score DESC, b.rating DESC, b.created_at DESC
+                LIMIT {limit}
+            """
+            
+            params = {}
+            if category:
+                params['category'] = category
+            
+            try:
+                results = safe_run(session, cypher_query, params)
+            except Exception as query_error:
+                # Fallback to simpler query if complex one fails
+                logger.warning(f"Complex query failed, using simple search: {query_error}")
+                cypher_query = """
+                    MATCH (b:Business)
+                    WHERE b.is_active = true AND (b.name ICONTAINS $query OR b.description ICONTAINS $query)
+                """
+                if category:
+                    cypher_query += " AND b.category = $category"
+                
+                cypher_query += f"""
+                    RETURN b
+                    ORDER BY b.rating DESC, b.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+            
+            businesses = []
+            for record in results:
+                business_data = _node_to_dict(record['b'])
+                businesses.append(business_data)
+        
+        logger.info(f"AI search found {len(businesses)} results for: {query}")
+        
+        return jsonify({
+            'success': True,
+            'query': query,
+            'count': len(businesses),
+            'search_intent': intent_data,
+            'businesses': businesses
+        })
+    
+    except Exception as e:
+        logger.error(f"Error in AI business search: {str(e)}", exc_info=True)
+        # Fallback to regular search
+        try:
+            db = get_neo4j_db()
+            with db.session() as session:
+                cypher_query = """
+                    MATCH (b:Business)
+                    WHERE b.is_active = true AND (b.name CONTAINS $query OR b.description CONTAINS $query)
+                """
+                if category:
+                    cypher_query += " AND b.category = $category"
+                
+                cypher_query += f"""
+                    RETURN b
+                    ORDER BY b.rating DESC, b.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+                
+                businesses = []
+                for record in results:
+                    business_data = _node_to_dict(record['b'])
+                    businesses.append(business_data)
+            
+            return jsonify({
+                'success': True,
+                'query': query,
+                'count': len(businesses),
+                'businesses': businesses,
+                'note': 'Search fell back to basic mode'
+            })
+        except Exception as fallback_error:
+            logger.error(f"Fallback business search also failed: {fallback_error}")
+            return jsonify({
+                'success': False,
+                'error': 'Search temporarily unavailable. Please try again.'
+            }), 500
+
 @businesses_bp.route('/api/map/points')
 @json_response
 def api_map_points():
