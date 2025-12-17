@@ -1611,6 +1611,37 @@ Example for "coding":
         
         logger.info(f"AI search found {len(jobs)} results for: {query}")
         
+        # Fallback: if AI search returns no results, try manual substring search
+        if len(jobs) == 0:
+            logger.info(f"AI search returned 0 results for '{query}', falling back to manual search")
+            with db.session() as session:
+                cypher_query = """
+                    MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                    WHERE j.is_active = true AND (toLower(j.title) CONTAINS toLower($query) OR toLower(j.description) CONTAINS toLower($query))
+                """
+                if category:
+                    cypher_query += " AND j.category = $category"
+                
+                cypher_query += f"""
+                    RETURN j, b.name as business_name
+                    ORDER BY j.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+                
+                jobs = []
+                for record in results:
+                    job_data = _node_to_dict(record['j'])
+                    job_data['business_name'] = record['business_name']
+                    jobs.append(job_data)
+                
+                logger.info(f"Manual fallback search found {len(jobs)} results for: {query}")
+        
         return jsonify({
             'success': True,
             'query': query,

@@ -1132,6 +1132,36 @@ Example for "restaurant":
         
         logger.info(f"AI search found {len(businesses)} results for: {query}")
         
+        # Fallback: if AI search returns no results, try manual substring search
+        if len(businesses) == 0:
+            logger.info(f"AI search returned 0 results for '{query}', falling back to manual search")
+            with db.session() as session:
+                cypher_query = """
+                    MATCH (b:Business)
+                    WHERE b.is_active = true AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))
+                """
+                if category:
+                    cypher_query += " AND b.category = $category"
+                
+                cypher_query += f"""
+                    RETURN b
+                    ORDER BY b.rating DESC, b.created_at DESC
+                    LIMIT {limit}
+                """
+                
+                params = {'query': query}
+                if category:
+                    params['category'] = category
+                
+                results = safe_run(session, cypher_query, params)
+                
+                businesses = []
+                for record in results:
+                    business_data = _node_to_dict(record['b'])
+                    businesses.append(business_data)
+                
+                logger.info(f"Manual fallback search found {len(businesses)} results for: {query}")
+        
         return jsonify({
             'success': True,
             'query': query,
