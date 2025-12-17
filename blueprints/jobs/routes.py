@@ -1359,7 +1359,7 @@ def get_map_markers():
 
 @jobs_bp.route('/api/search')
 def api_search_jobs():
-    """API endpoint for job search (autocomplete support)"""
+    """API endpoint for job search with AI-assisted fallback"""
     
     query = request.args.get('q', '').strip()
     category = request.args.get('category', '').strip()
@@ -1367,6 +1367,7 @@ def api_search_jobs():
     
     db = get_neo4j_db()
     with db.session() as session:
+        # Step 1: Try manual search first (case-insensitive)
         cypher_query = """
             MATCH (j:Job)-[:POSTED_BY]->(b:Business)
             WHERE j.is_active = true
@@ -1374,7 +1375,6 @@ def api_search_jobs():
         params = {'limit': limit}
         
         if query:
-            # Use case-insensitive search with toLower()
             cypher_query += " AND (toLower(j.title) CONTAINS toLower($query) OR toLower(j.description) CONTAINS toLower($query))"
             params['query'] = query
         
@@ -1395,6 +1395,65 @@ def api_search_jobs():
             job_data = _node_to_dict(record['j'])
             job_data['business_name'] = record['business_name']
             jobs.append(job_data)
+        
+        # Step 2: If manual search returns no results and we have a query, try AI-assisted search
+        if not jobs and query:
+            logger.info(f"Manual search returned no results for '{query}', attempting AI-assisted search")
+            try:
+                from gemini_client import get_gemini_response
+                
+                # Use AI to expand search keywords
+                expansion_prompt = f"""The user is searching for jobs with query: "{query}"
+
+Generate 5-7 alternative job titles, skills, or keywords that are semantically similar.
+Return ONLY the keywords/titles, one per line, without numbering or explanations.
+
+Examples:
+- If query is "code" → programmer, developer, software engineer, coding, backend, frontend, python
+- If query is "manage" → manager, management, supervisor, administrator, leader, coordinator, director"""
+                
+                keywords_response = get_gemini_response(expansion_prompt)
+                expanded_keywords = [k.strip() for k in keywords_response.split('\n') if k.strip()][:6]
+                
+                if expanded_keywords:
+                    logger.info(f"AI expanded '{query}' to: {expanded_keywords}")
+                    
+                    # Build search conditions with expanded keywords
+                    conditions = [f"toLower(j.title) CONTAINS toLower('{kw}') OR toLower(j.description) CONTAINS toLower('{kw}')" 
+                                 for kw in expanded_keywords]
+                    where_conditions = "(" + " OR ".join(conditions) + ")"
+                    
+                    ai_query = """
+                        MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                        WHERE j.is_active = true AND """ + where_conditions
+                    
+                    if category:
+                        ai_query += " AND j.category = $category"
+                    
+                    ai_query += """
+                        RETURN j, b.name as business_name
+                        ORDER BY j.created_at DESC
+                        LIMIT $limit
+                    """
+                    
+                    ai_params = {'limit': limit}
+                    if category:
+                        ai_params['category'] = category
+                    
+                    ai_results = safe_run(session, ai_query, ai_params)
+                    
+                    for record in ai_results:
+                        job_data = _node_to_dict(record['j'])
+                        job_data['business_name'] = record['business_name']
+                        job_data['ai_assisted'] = True  # Mark as AI-assisted result
+                        jobs.append(job_data)
+                    
+                    if jobs:
+                        logger.info(f"AI-assisted search found {len(jobs)} results for '{query}'")
+            
+            except Exception as e:
+                logger.warning(f"AI-assisted search failed for '{query}': {str(e)}")
+                # Continue with empty results if AI fails
     
     return jsonify(jobs)
 

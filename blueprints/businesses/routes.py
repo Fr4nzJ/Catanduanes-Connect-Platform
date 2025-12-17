@@ -861,7 +861,7 @@ def edit_business(business_id):
 @businesses_bp.route('/api/search')
 @json_response
 def api_search_businesses():
-    """API endpoint for business search"""
+    """API endpoint for business search with AI-assisted fallback"""
     query = request.args.get('q', '')
     category = request.args.get('category', '')
     location = request.args.get('location', '')
@@ -870,7 +870,7 @@ def api_search_businesses():
     
     db = get_neo4j_db()
     with db.session() as session:
-        # Build query
+        # Step 1: Try manual search first (case-insensitive)
         cypher_query = """
             MATCH (b:Business)
             WHERE b.is_active = true
@@ -906,6 +906,70 @@ def api_search_businesses():
         for record in results:
             business_data = _node_to_dict(record['b'])
             businesses.append(business_data)
+        
+        # Step 2: If manual search returns no results and we have a query, try AI-assisted search
+        if not businesses and query:
+            logger.info(f"Manual search returned no results for '{query}', attempting AI-assisted search")
+            try:
+                from gemini_client import get_gemini_response
+                
+                # Use AI to expand search keywords
+                expansion_prompt = f"""The user is searching for businesses with query: "{query}"
+
+Generate 5-7 alternative business types, industry names, or keywords that are semantically similar.
+Return ONLY the keywords, one per line, without numbering or explanations.
+
+Examples:
+- If query is "shop" → store, retail, market, vendor, store, commercial
+- If query is "cafe" → restaurant, coffee, diner, bistro, eatery, food service"""
+                
+                keywords_response = get_gemini_response(expansion_prompt)
+                expanded_keywords = [k.strip() for k in keywords_response.split('\n') if k.strip()][:6]
+                
+                if expanded_keywords:
+                    logger.info(f"AI expanded '{query}' to: {expanded_keywords}")
+                    
+                    # Build search conditions with expanded keywords
+                    conditions = [f"toLower(b.name) CONTAINS toLower('{kw}') OR toLower(b.description) CONTAINS toLower('{kw}')" 
+                                 for kw in expanded_keywords]
+                    where_conditions = "(" + " OR ".join(conditions) + ")"
+                    
+                    ai_query = """
+                        MATCH (b:Business)
+                        WHERE b.is_active = true AND """ + where_conditions
+                    
+                    if category:
+                        ai_query += " AND b.category = $category"
+                    
+                    if location:
+                        ai_query += " AND toLower(b.address) CONTAINS toLower($location)"
+                    
+                    ai_skip = (page - 1) * per_page
+                    ai_query += f"""
+                        RETURN b
+                        ORDER BY b.created_at DESC
+                        SKIP {ai_skip} LIMIT {per_page}
+                    """
+                    
+                    ai_params = {}
+                    if category:
+                        ai_params['category'] = category
+                    if location:
+                        ai_params['location'] = location
+                    
+                    ai_results = safe_run(session, ai_query, ai_params)
+                    
+                    for record in ai_results:
+                        business_data = _node_to_dict(record['b'])
+                        business_data['ai_assisted'] = True  # Mark as AI-assisted result
+                        businesses.append(business_data)
+                    
+                    if businesses:
+                        logger.info(f"AI-assisted search found {len(businesses)} results for '{query}'")
+            
+            except Exception as e:
+                logger.warning(f"AI-assisted search failed for '{query}': {str(e)}")
+                # Continue with empty results if AI fails
     
     return {
         'businesses': businesses,
