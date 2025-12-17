@@ -273,17 +273,39 @@ class GeminiChat:
                         return formatted_response
                     
                 except Exception as e:
-                    if attempt < max_retries - 1:
-                        logger.warning(f"Attempt {attempt + 1} failed: {str(e)}")
-                        continue
+                    error_str = str(e)
+                    # Check if it's a service availability error that might be retried
+                    if "503" in error_str or "UNAVAILABLE" in error_str:
+                        if attempt < max_retries - 1:
+                            logger.warning(f"Attempt {attempt + 1} failed due to service unavailability: {error_str}")
+                            continue
+                        else:
+                            # Final attempt failed
+                            logger.error(f"All retries failed - service unavailable: {error_str}")
+                            return "The AI service is temporarily unavailable. Please try again in a few moments."
                     else:
-                        raise
+                        # Non-retryable error
+                        if attempt < max_retries - 1:
+                            logger.warning(f"Attempt {attempt + 1} failed: {error_str}")
+                            continue
+                        else:
+                            raise
             
             return "I apologize, but I wasn't able to generate a helpful response. Please try rephrasing your question."
             
         except Exception as e:
-            logger.error(f"Error getting response from Gemini: {str(e)}")
-            return "I apologize, but I'm having trouble processing your request right now. Please try again later."
+            error_str = str(e)
+            logger.error(f"Error getting response from Gemini: {error_str}")
+            
+            # Return user-friendly error messages based on error type
+            if "401" in error_str or "UNAUTHENTICATED" in error_str:
+                return "API authentication failed. Please try again later."
+            elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+                return "Too many requests. Please try again in a few moments."
+            elif "400" in error_str or "INVALID_ARGUMENT" in error_str:
+                return "Unable to process your request. Please try rephrasing it."
+            else:
+                return "I apologize, but I'm having trouble processing your request right now. Please try again later."
 
 
 # Global chat instance
@@ -332,5 +354,21 @@ def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
         return "Unable to generate response"
         
     except Exception as e:
-        logger.error(f"Error getting response from Gemini: {str(e)}")
-        raise
+        error_str = str(e)
+        
+        # Handle specific API errors gracefully
+        if "503" in error_str or "UNAVAILABLE" in error_str or "overloaded" in error_str.lower():
+            logger.warning(f"Gemini API is temporarily unavailable: {error_str}")
+            return "The AI service is temporarily unavailable. Please try again in a few moments."
+        elif "401" in error_str or "UNAUTHENTICATED" in error_str:
+            logger.error(f"Gemini API authentication failed: {error_str}")
+            return "API authentication failed. Please check your configuration."
+        elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
+            logger.warning(f"Gemini API rate limit exceeded: {error_str}")
+            return "Too many requests. Please try again in a few moments."
+        elif "400" in error_str or "INVALID_ARGUMENT" in error_str:
+            logger.error(f"Invalid request to Gemini API: {error_str}")
+            return "Unable to process your request. Please try rephrasing it."
+        else:
+            logger.error(f"Error getting response from Gemini: {error_str}")
+            return "An error occurred while processing your request. Please try again."
