@@ -878,7 +878,7 @@ def api_search_businesses():
         params = {}
         
         if query:
-            cypher_query += " AND (b.name CONTAINS $query OR b.description CONTAINS $query)"
+            cypher_query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
             params['query'] = query
         
         if category:
@@ -886,7 +886,7 @@ def api_search_businesses():
             params['category'] = category
         
         if location:
-            cypher_query += " AND b.address CONTAINS $location"
+            cypher_query += " AND toLower(b.address) CONTAINS toLower($location)"
             params['location'] = location
         
         # Add pagination

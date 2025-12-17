@@ -1364,7 +1364,6 @@ def api_search_jobs():
     query = request.args.get('q', '').strip()
     category = request.args.get('category', '').strip()
     limit = request.args.get('limit', 10, type=int)
-    use_ai = request.args.get('ai', 'false').lower() == 'true'
     
     db = get_neo4j_db()
     with db.session() as session:
@@ -1375,38 +1374,9 @@ def api_search_jobs():
         params = {'limit': limit}
         
         if query:
-            # Use semantic AI search if enabled and query is provided
-            if use_ai and query:
-                try:
-                    from gemini_client import get_gemini_response
-                    
-                    # Use AI to understand search intent and expand keywords
-                    expansion_prompt = f"""The user is searching for jobs with this query: "{query}"
-                    
-Generate 3-5 alternative job titles, skills, or keywords that are semantically similar to what they might be looking for.
-Return only the keywords/titles, one per line, without numbering or extra formatting.
-
-Example:
-If query is "code" - return variations like: programmer, developer, software engineer, coding, backend
-If query is "sales" - return variations like: business development, sales representative, account executive, selling"""
-                    
-                    keywords_response = get_gemini_response(expansion_prompt)
-                    expanded_keywords = [k.strip() for k in keywords_response.split('\n') if k.strip()]
-                    
-                    # Build search with both original and expanded keywords
-                    search_conditions = [query] + expanded_keywords
-                    or_conditions = " OR ".join([f"(j.title CONTAINS '{kw}' OR j.description CONTAINS '{kw}')" for kw in search_conditions[:5]])
-                    cypher_query += f" AND ({or_conditions})"
-                    
-                    logger.info(f"AI-enhanced search for: {query}, expanded keywords: {expanded_keywords}")
-                except Exception as e:
-                    logger.warning(f"AI search expansion failed, falling back to basic search: {e}")
-                    cypher_query += " AND (j.title CONTAINS $query OR j.description CONTAINS $query)"
-                    params['query'] = query
-            else:
-                # Regular text search
-                cypher_query += " AND (j.title CONTAINS $query OR j.description CONTAINS $query)"
-                params['query'] = query
+            # Use case-insensitive search with toLower()
+            cypher_query += " AND (toLower(j.title) CONTAINS toLower($query) OR toLower(j.description) CONTAINS toLower($query))"
+            params['query'] = query
         
         if category:
             cypher_query += " AND j.category = $category"
