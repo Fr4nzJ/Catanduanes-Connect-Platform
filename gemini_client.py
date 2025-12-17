@@ -3,9 +3,14 @@ import logging
 import re
 from typing import List, Dict, Optional
 import google.genai as genai
+import pathlib
 
 # Import get_neo4j_db from your database module
 from database import get_neo4j_db  # Replace 'database' with the actual module name if different
+
+# Get project root directory (where app.py is located)
+PROJECT_ROOT = pathlib.Path(__file__).parent.parent
+QUOTA_DISABLED_FLAG = PROJECT_ROOT / '.gemini_quota_disabled'
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -366,10 +371,11 @@ def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
         elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
             logger.warning(f"Gemini API rate limit exceeded: {error_str}")
             # Create a flag file to disable AI search across all requests
-            import pathlib
-            flag_file = pathlib.Path(__file__).parent.parent / '.gemini_quota_disabled'
-            flag_file.touch()
-            logger.warning(f"Created quota disabled flag at: {flag_file}")
+            try:
+                QUOTA_DISABLED_FLAG.touch()
+                logger.warning(f"Created quota disabled flag at: {QUOTA_DISABLED_FLAG}")
+            except Exception as flag_error:
+                logger.error(f"Failed to create quota disabled flag: {flag_error}")
             return "Too many requests. Please try again in a few moments."
         elif "400" in error_str or "INVALID_ARGUMENT" in error_str:
             logger.error(f"Invalid request to Gemini API: {error_str}")

@@ -992,9 +992,10 @@ def ai_search_businesses():
     limit = request.args.get('limit', 12, type=int)
     
     # Check if API quota is exhausted
-    import os
-    quota_disabled_file = os.path.join(os.path.dirname(__file__), '..', '..', '.gemini_quota_disabled')
-    ai_quota_exhausted = os.path.exists(quota_disabled_file)
+    import pathlib
+    project_root = pathlib.Path(__file__).parent.parent.parent
+    quota_disabled_file = project_root / '.gemini_quota_disabled'
+    ai_quota_exhausted = quota_disabled_file.exists()
     
     # For short queries (< 4 chars), use manual search instead to preserve API quota
     # Also skip AI search if quota has been exhausted
