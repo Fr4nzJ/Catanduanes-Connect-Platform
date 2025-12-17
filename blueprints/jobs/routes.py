@@ -1461,14 +1461,45 @@ Examples:
 @jobs_bp.route('/api/ai-search')
 @login_required_optional
 def ai_search_jobs():
-    """AI-powered semantic job search that understands intent and synonyms"""
+    """AI-powered semantic job search that understands intent and synonyms
+    
+    Note: AI search is only triggered for queries >= 4 characters to avoid 
+    excessive API calls during autocomplete and quota exhaustion.
+    """
     
     query = request.args.get('q', '').strip()
     category = request.args.get('category', '').strip()
     limit = request.args.get('limit', 12, type=int)
     
-    if not query or len(query) < 2:
-        return jsonify({'error': 'Search query too short'}), 400
+    # For short queries (< 4 chars), use manual search instead to preserve API quota
+    if not query or len(query) < 4:
+        logger.debug(f"Query too short for AI search ({len(query)} chars), using manual search")
+        db = get_neo4j_db()
+        with db.session() as session:
+            cypher_query = """
+                MATCH (j:Job)-[:POSTED_BY]->(b:Business)
+                WHERE j.is_active = true
+            """
+            params = {'limit': limit}
+            
+            if query:
+                cypher_query += " AND (toLower(j.title) CONTAINS toLower($query) OR toLower(j.description) CONTAINS toLower($query))"
+                params['query'] = query
+            
+            if category:
+                cypher_query += " AND j.category = $category"
+                params['category'] = category
+            
+            cypher_query += " RETURN j, b.name as business_name ORDER BY j.created_at DESC LIMIT $limit"
+            
+            results = safe_run(session, cypher_query, params)
+            jobs = []
+            for record in results:
+                job_data = _node_to_dict(record['j'])
+                job_data['business_name'] = record['business_name']
+                jobs.append(job_data)
+            
+            return jsonify(jobs)
     
     try:
         from gemini_client import get_gemini_response

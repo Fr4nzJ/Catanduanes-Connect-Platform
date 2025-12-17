@@ -981,14 +981,47 @@ Examples:
 @businesses_bp.route('/api/ai-search')
 @login_required_optional
 def ai_search_businesses():
-    """AI-powered semantic business search that understands intent and synonyms"""
+    """AI-powered semantic business search that understands intent and synonyms
+    
+    Note: AI search is only triggered for queries >= 4 characters to avoid 
+    excessive API calls during autocomplete and quota exhaustion.
+    """
     
     query = request.args.get('q', '').strip()
     category = request.args.get('category', '').strip()
     limit = request.args.get('limit', 12, type=int)
     
-    if not query or len(query) < 2:
-        return jsonify({'error': 'Search query too short'}), 400
+    # For short queries (< 4 chars), use manual search instead to preserve API quota
+    if not query or len(query) < 4:
+        logger.debug(f"Query too short for AI search ({len(query)} chars), using manual search")
+        db = get_neo4j_db()
+        with db.session() as session:
+            cypher_query = """
+                MATCH (b:Business)
+                WHERE b.is_active = true
+            """
+            params = {'limit': limit}
+            
+            if query:
+                cypher_query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
+                params['query'] = query
+            
+            if category:
+                cypher_query += " AND b.category = $category"
+                params['category'] = category
+            
+            cypher_query += " RETURN b ORDER BY b.created_at DESC LIMIT $limit"
+            
+            results = safe_run(session, cypher_query, params)
+            businesses = []
+            for record in results:
+                business_data = _node_to_dict(record['b'])
+                businesses.append(business_data)
+            
+            return {
+                'businesses': businesses,
+                'total': len(businesses)
+            }
     
     try:
         from gemini_client import get_gemini_response
