@@ -1029,10 +1029,19 @@ def ai_search_businesses():
                 businesses.append(business_data)
             
             logger.info(f"Manual search (short query/quota exhausted) found {len(businesses)} results for: {query}")
-            return {
-                'businesses': businesses,
-                'total': len(businesses)
-            }
+            return jsonify({
+                'success': True,
+                'query': query,
+                'count': len(businesses),
+                'search_intent': {
+                    'primary_keywords': [query],
+                    'related_keywords': [],
+                    'business_types': [],
+                    'services': [],
+                    'categories': []
+                },
+                'businesses': businesses
+            })
     
     try:
         from gemini_client import get_gemini_response

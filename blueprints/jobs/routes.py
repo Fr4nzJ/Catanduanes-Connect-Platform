@@ -1514,6 +1514,13 @@ def ai_search_jobs():
                 'success': True,
                 'query': query,
                 'count': len(jobs),
+                'search_intent': {
+                    'primary_keywords': [query],
+                    'related_keywords': [],
+                    'job_titles': [],
+                    'skills': [],
+                    'categories': []
+                },
                 'jobs': jobs
             }
             logger.info(f"Response data keys: {response_data.keys()}, count: {response_data['count']}")
