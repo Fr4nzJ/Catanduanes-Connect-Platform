@@ -1493,7 +1493,7 @@ Example for "coding":
             
             search_conditions = []
             for kw in all_keywords:
-                search_conditions.append(f"(j.title ICONTAINS '{kw}' OR j.description ICONTAINS '{kw}')")
+                search_conditions.append(f"(toLower(j.title) CONTAINS '{kw.lower()}' OR toLower(j.description) CONTAINS '{kw.lower()}')")
             
             where_clause = " OR ".join(search_conditions) if search_conditions else "1=1"
             
@@ -1508,7 +1508,7 @@ Example for "coding":
             cypher_query += f"""
                 RETURN j, b.name as business_name, 
                     (CASE 
-                        WHEN j.title ICONTAINS '{query}' THEN 3
+                        WHEN toLower(j.title) CONTAINS '{query.lower()}' THEN 3
                         ELSE 1
                     END) as relevance_score
                 ORDER BY relevance_score DESC, j.created_at DESC
@@ -1526,7 +1526,7 @@ Example for "coding":
                 logger.warning(f"Complex query failed, using simple search: {query_error}")
                 cypher_query = """
                     MATCH (j:Job)-[:POSTED_BY]->(b:Business)
-                    WHERE j.is_active = true AND (j.title ICONTAINS $query OR j.description ICONTAINS $query)
+                    WHERE j.is_active = true AND (toLower(j.title) CONTAINS toLower($query) OR toLower(j.description) CONTAINS toLower($query))
                 """
                 if category:
                     cypher_query += " AND j.category = $category"

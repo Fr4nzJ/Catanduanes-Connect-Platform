@@ -978,7 +978,7 @@ Example for "restaurant":
             
             search_conditions = []
             for kw in all_keywords:
-                search_conditions.append(f"(b.name ICONTAINS '{kw}' OR b.description ICONTAINS '{kw}')")
+                search_conditions.append(f"(toLower(b.name) CONTAINS '{kw.lower()}' OR toLower(b.description) CONTAINS '{kw.lower()}')")
             
             where_clause = " OR ".join(search_conditions) if search_conditions else "1=1"
             
@@ -993,7 +993,7 @@ Example for "restaurant":
             cypher_query += f"""
                 RETURN b, 
                     (CASE 
-                        WHEN b.name ICONTAINS '{query}' THEN 3
+                        WHEN toLower(b.name) CONTAINS '{query.lower()}' THEN 3
                         ELSE 1
                     END) as relevance_score
                 ORDER BY relevance_score DESC, b.rating DESC, b.created_at DESC
@@ -1011,7 +1011,7 @@ Example for "restaurant":
                 logger.warning(f"Complex query failed, using simple search: {query_error}")
                 cypher_query = """
                     MATCH (b:Business)
-                    WHERE b.is_active = true AND (b.name ICONTAINS $query OR b.description ICONTAINS $query)
+                    WHERE b.is_active = true AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))
                 """
                 if category:
                     cypher_query += " AND b.category = $category"
