@@ -1028,6 +1028,7 @@ def ai_search_businesses():
                 business_data = _node_to_dict(record['b'])
                 businesses.append(business_data)
             
+            logger.info(f"Manual search (short query/quota exhausted) found {len(businesses)} results for: {query}")
             return {
                 'businesses': businesses,
                 'total': len(businesses)
@@ -1172,6 +1173,7 @@ Example for "restaurant":
                 
                 logger.info(f"Manual fallback search found {len(businesses)} results for: {query}")
         
+        logger.info(f"Returning {len(businesses)} businesses from AI search for: {query}")
         return jsonify({
             'success': True,
             'query': query,

@@ -1509,6 +1509,14 @@ def ai_search_jobs():
                 job_data['business_name'] = record['business_name']
                 jobs.append(job_data)
             
+            logger.info(f"Manual search (short query/quota exhausted) found {len(jobs)} results for: {query}")
+            return jsonify({
+                'success': True,
+                'query': query,
+                'count': len(jobs),
+                'jobs': jobs
+            })
+            
             return jsonify(jobs)
     
     try:
@@ -1652,6 +1660,7 @@ Example for "coding":
                 
                 logger.info(f"Manual fallback search found {len(jobs)} results for: {query}")
         
+        logger.info(f"Returning {len(jobs)} jobs from AI search for: {query}")
         return jsonify({
             'success': True,
             'query': query,
