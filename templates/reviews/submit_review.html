@@ -253,6 +253,9 @@
             </div>
 
             <form id="reviewForm" method="POST" action="{{ url_for('reviews.submit_review') }}">
+                <!-- CSRF Token -->
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
                 <!-- Rating Section -->
                 <div class="form-group">
                     <label class="form-label">How would you rate Catanduanes Connect?</label>
