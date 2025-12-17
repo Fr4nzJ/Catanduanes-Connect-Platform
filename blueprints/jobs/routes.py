@@ -1510,12 +1510,14 @@ def ai_search_jobs():
                 jobs.append(job_data)
             
             logger.info(f"Manual search (short query/quota exhausted) found {len(jobs)} results for: {query}")
-            return jsonify({
+            response_data = {
                 'success': True,
                 'query': query,
                 'count': len(jobs),
                 'jobs': jobs
-            })
+            }
+            logger.info(f"Response data keys: {response_data.keys()}, count: {response_data['count']}")
+            return jsonify(response_data)
             
             return jsonify(jobs)
     
@@ -1661,13 +1663,15 @@ Example for "coding":
                 logger.info(f"Manual fallback search found {len(jobs)} results for: {query}")
         
         logger.info(f"Returning {len(jobs)} jobs from AI search for: {query}")
-        return jsonify({
+        response_data = {
             'success': True,
             'query': query,
             'count': len(jobs),
             'search_intent': intent_data,
             'jobs': jobs
-        })
+        }
+        logger.info(f"Response data keys: {response_data.keys()}, first job: {jobs[0] if jobs else 'NO JOBS'}")
+        return jsonify(response_data)
     
     except Exception as e:
         logger.error(f"Error in AI search: {str(e)}", exc_info=True)
