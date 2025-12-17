@@ -44,9 +44,9 @@ class GeminiChat:
             # Initialize the Gemini client
             logger.debug("Initializing Gemini client...")
             
-            # Initialize the Gemini client with basic configuration
-            genai.configure(api_key=api_key)
-            self.model = genai.GenerativeModel('gemini-2.5-flash')
+            # Initialize the Gemini client using the new google.genai API
+            self.client = genai.Client(api_key=api_key)
+            self.model_name = 'gemini-2.5-flash'
             
             # Skip connection test to avoid quota limits on free tier
             logger.info("Gemini client initialized (connection test skipped to preserve quota)")
@@ -255,9 +255,10 @@ class GeminiChat:
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    response = self.model.generate_content(
-                        prompt,
-                        generation_config={
+                    response = self.client.models.generate_content(
+                        model=self.model_name,
+                        contents=prompt,
+                        config={
                             "temperature": 0.7,
                             "top_p": 0.8,
                             "top_k": 40,
@@ -305,12 +306,13 @@ def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
         if not api_key:
             raise ValueError("GEMINI_API_KEY environment variable is not set")
         
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        client = genai.Client(api_key=api_key)
+        model_name = 'gemini-2.5-flash'
         
-        response = model.generate_content(
-            prompt,
-            generation_config={
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config={
                 "temperature": temperature,
                 "top_p": 0.8,
                 "top_k": 40,
