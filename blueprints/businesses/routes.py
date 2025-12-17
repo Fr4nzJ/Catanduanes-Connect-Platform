@@ -76,7 +76,7 @@ def list_businesses():
     
     # Add search filters
     if query_text:
-        query += " AND (b.name CONTAINS $query OR b.description CONTAINS $query)"
+        query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
         params['query'] = query_text
     
     if category:
@@ -84,7 +84,7 @@ def list_businesses():
         params['category'] = category
     
     if location:
-        query += " AND b.address CONTAINS $location"
+        query += " AND toLower(b.address) CONTAINS toLower($location)"
         params['location'] = location
     
     if min_rating > 0:
@@ -129,7 +129,7 @@ def list_businesses():
         count_params = {}
         
         if query_text:
-            count_query += " AND (b.name CONTAINS $query OR b.description CONTAINS $query)"
+            count_query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
             count_params['query'] = query_text
         
         if category:
@@ -137,7 +137,7 @@ def list_businesses():
             count_params['category'] = category
         
         if location:
-            count_query += " AND b.address CONTAINS $location"
+            count_query += " AND toLower(b.address) CONTAINS toLower($location)"
             count_params['location'] = location
         
         if min_rating > 0:
@@ -216,7 +216,7 @@ def advanced_search():
         
         # Search by text (name or description)
         if query_text:
-            cypher_query += " AND (b.name CONTAINS $query OR b.description CONTAINS $query)"
+            cypher_query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
             params['query'] = query_text
         
         # Filter by category
@@ -226,7 +226,7 @@ def advanced_search():
         
         # Filter by location
         if location:
-            cypher_query += " AND b.address CONTAINS $location"
+            cypher_query += " AND toLower(b.address) CONTAINS toLower($location)"
             params['location'] = location
         
         # Filter by minimum rating
@@ -253,13 +253,13 @@ def advanced_search():
         count_params = {}
         
         if query_text:
-            count_query += " AND (b.name CONTAINS $query OR b.description CONTAINS $query)"
+            count_query += " AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))"
             count_params['query'] = query_text
         if category:
             count_query += " AND b.category = $category"
             count_params['category'] = category
         if location:
-            count_query += " AND b.address CONTAINS $location"
+            count_query += " AND toLower(b.address) CONTAINS toLower($location)"
             count_params['location'] = location
         if min_rating > 0:
             count_query += " AND b.rating >= $min_rating"
@@ -1199,7 +1199,7 @@ Example for "restaurant":
             with db.session() as session:
                 cypher_query = """
                     MATCH (b:Business)
-                    WHERE b.is_active = true AND (b.name CONTAINS $query OR b.description CONTAINS $query)
+                    WHERE b.is_active = true AND (toLower(b.name) CONTAINS toLower($query) OR toLower(b.description) CONTAINS toLower($query))
                 """
                 if category:
                     cypher_query += " AND b.category = $category"

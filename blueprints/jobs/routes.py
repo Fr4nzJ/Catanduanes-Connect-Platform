@@ -78,7 +78,7 @@ def list_jobs():
         
         # Add search filters
         if search_query:
-            query += " AND (j.title CONTAINS $search OR j.description CONTAINS $search OR b.name CONTAINS $search)"
+            query += " AND (toLower(j.title) CONTAINS toLower($search) OR toLower(j.description) CONTAINS toLower($search) OR toLower(b.name) CONTAINS toLower($search))"
             params['search'] = search_query
         
         if category:
@@ -102,7 +102,7 @@ def list_jobs():
             params['salary_max'] = salary_max
         
         if location:
-            query += " AND j.location CONTAINS $location"
+            query += " AND toLower(j.location) CONTAINS toLower($location)"
             params['location'] = location
         
         # Add sorting
@@ -132,7 +132,7 @@ def list_jobs():
         count_params = {}
         
         if search_query:
-            count_query += " AND (j.title CONTAINS $search OR j.description CONTAINS $search OR b.name CONTAINS $search)"
+            count_query += " AND (toLower(j.title) CONTAINS toLower($search) OR toLower(j.description) CONTAINS toLower($search) OR toLower(b.name) CONTAINS toLower($search))"
             count_params['search'] = search_query
         
         if category:
@@ -148,7 +148,7 @@ def list_jobs():
             count_params['setup'] = setup
         
         if location:
-            count_query += " AND j.location CONTAINS $location"
+            count_query += " AND toLower(j.location) CONTAINS toLower($location)"
             count_params['location'] = location
         
         count_query += " RETURN count(j) as total"
