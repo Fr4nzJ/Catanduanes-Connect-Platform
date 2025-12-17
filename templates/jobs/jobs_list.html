@@ -349,7 +349,7 @@
                     </div>
                     
                     <div class="flex items-end space-x-2">
-                        <button type="button" onclick="performAISearch(document.getElementById('q').value)" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <button type="button" onclick="console.log('AI Search button clicked'); performAISearch(document.getElementById('q').value)" class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
                             <i class="fas fa-sparkles mr-2"></i>Search with AI
                         </button>
                         <button type="submit" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
@@ -1098,6 +1098,7 @@
      * Perform AI-powered search
      */
     async function performAISearch(query) {
+        console.log('performAISearch called with:', query);
         if (!query || query.length < 2) {
             alert('Please enter a search query');
             return;
