@@ -991,9 +991,18 @@ def ai_search_businesses():
     category = request.args.get('category', '').strip()
     limit = request.args.get('limit', 12, type=int)
     
+    # Check if API quota is exhausted
+    import os
+    quota_disabled_file = os.path.join(os.path.dirname(__file__), '..', '..', '.gemini_quota_disabled')
+    ai_quota_exhausted = os.path.exists(quota_disabled_file)
+    
     # For short queries (< 4 chars), use manual search instead to preserve API quota
-    if not query or len(query) < 4:
-        logger.debug(f"Query too short for AI search ({len(query)} chars), using manual search")
+    # Also skip AI search if quota has been exhausted
+    if not query or len(query) < 4 or ai_quota_exhausted:
+        if ai_quota_exhausted:
+            logger.info(f"API quota exhausted, using manual search for: {query}")
+        elif len(query) < 4:
+            logger.debug(f"Query too short for AI search ({len(query)} chars), using manual search")
         db = get_neo4j_db()
         with db.session() as session:
             cypher_query = """

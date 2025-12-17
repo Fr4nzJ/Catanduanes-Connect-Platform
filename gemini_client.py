@@ -365,6 +365,11 @@ def get_gemini_response(prompt: str, temperature: float = 0.7) -> str:
             return "API authentication failed. Please check your configuration."
         elif "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
             logger.warning(f"Gemini API rate limit exceeded: {error_str}")
+            # Create a flag file to disable AI search across all requests
+            import pathlib
+            flag_file = pathlib.Path(__file__).parent.parent / '.gemini_quota_disabled'
+            flag_file.touch()
+            logger.warning(f"Created quota disabled flag at: {flag_file}")
             return "Too many requests. Please try again in a few moments."
         elif "400" in error_str or "INVALID_ARGUMENT" in error_str:
             logger.error(f"Invalid request to Gemini API: {error_str}")
