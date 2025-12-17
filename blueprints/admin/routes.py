@@ -1,7 +1,7 @@
 
 import logging
 from datetime import datetime, timedelta
-from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, Blueprint, g
+from flask import render_template, request, redirect, url_for, flash, jsonify, current_app, Blueprint, g, send_file
 from flask_login import login_required, current_user
 from functools import wraps
 from database import get_neo4j_db, safe_run, _node_to_dict
@@ -10,6 +10,8 @@ from decorators import role_required, json_response
 from tasks import send_email_task, create_notification_task
 from forms import BusinessForm, JobForm
 import bcrypt
+import csv
+import io
 from . import admin_bp
 
 _TIME_TABLE = {
@@ -1161,3 +1163,248 @@ def system_info():
     }
     
     return system_info
+
+
+# CSV Export Routes
+@admin_bp.route('/export/users')
+@admin_required
+def export_users_csv():
+    """Export all users data to CSV"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            users = safe_run(session, """
+                MATCH (u:User)
+                RETURN u.id as user_id, u.username as username, u.email as email, u.role as role,
+                       u.full_name as full_name, u.phone as phone, u.is_verified as is_verified,
+                       u.created_at as created_at, u.last_login as last_login
+                ORDER BY u.created_at DESC
+            """)
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        if users:
+            fieldnames = ['user_id', 'username', 'email', 'role', 'full_name', 'phone', 'is_verified', 'created_at', 'last_login']
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for user in users:
+                row = {k: v for k, v in user.items()}
+                writer.writerow(row)
+        
+        # Convert to bytes
+        output.seek(0)
+        bytes_data = io.BytesIO(output.getvalue().encode('utf-8'))
+        bytes_data.seek(0)
+        
+        logger.info(f"Admin {current_user.username} exported {len(users) if users else 0} users to CSV")
+        
+        return send_file(
+            bytes_data,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'users_export_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        logger.error(f"Error exporting users CSV: {str(e)}")
+        flash('Error exporting users data', 'error')
+        return redirect(url_for('admin.index'))
+
+
+@admin_bp.route('/export/businesses')
+@admin_required
+def export_businesses_csv():
+    """Export all businesses data to CSV"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            businesses = safe_run(session, """
+                MATCH (b:Business)
+                OPTIONAL MATCH (b)-[:HAS_REVIEW]->(r:Review)
+                WITH b, COUNT(r) as review_count, AVG(r.rating) as avg_rating
+                RETURN b.id as business_id, b.name as name, b.category as category, 
+                       b.address as address, b.phone as phone, b.email as email,
+                       b.website as website, b.is_verified as is_verified, b.is_featured as is_featured,
+                       b.rating as rating, b.description as description,
+                       b.latitude as latitude, b.longitude as longitude,
+                       review_count, b.created_at as created_at
+                ORDER BY b.created_at DESC
+            """)
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        if businesses:
+            fieldnames = ['business_id', 'name', 'category', 'address', 'phone', 'email', 'website', 
+                         'is_verified', 'is_featured', 'rating', 'review_count', 'description', 'latitude', 'longitude', 'created_at']
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for business in businesses:
+                row = {k: v for k, v in business.items()}
+                writer.writerow(row)
+        
+        # Convert to bytes
+        output.seek(0)
+        bytes_data = io.BytesIO(output.getvalue().encode('utf-8'))
+        bytes_data.seek(0)
+        
+        logger.info(f"Admin {current_user.username} exported {len(businesses) if businesses else 0} businesses to CSV")
+        
+        return send_file(
+            bytes_data,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'businesses_export_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        logger.error(f"Error exporting businesses CSV: {str(e)}")
+        flash('Error exporting businesses data', 'error')
+        return redirect(url_for('admin.index'))
+
+
+@admin_bp.route('/export/jobs')
+@admin_required
+def export_jobs_csv():
+    """Export all jobs data to CSV"""
+    try:
+        db = get_neo4j_db()
+        with db.session() as session:
+            jobs = safe_run(session, """
+                MATCH (j:Job)
+                OPTIONAL MATCH (j)-[:POSTED_BY]->(b:Business)
+                OPTIONAL MATCH (j)<-[:APPLIED_FOR]-(a:Application)
+                WITH j, b, COUNT(a) as application_count
+                RETURN j.id as job_id, j.title as title, j.description as description,
+                       j.salary_range as salary_range, j.employment_type as employment_type,
+                       j.location as location, j.experience_level as experience_level,
+                       b.name as company_name, j.status as status,
+                       application_count, j.is_featured as is_featured,
+                       j.deadline as deadline, j.created_at as posted_at
+                ORDER BY j.created_at DESC
+            """)
+        
+        # Create CSV in memory
+        output = io.StringIO()
+        if jobs:
+            fieldnames = ['job_id', 'title', 'company_name', 'location', 'salary_range', 
+                         'employment_type', 'experience_level', 'status', 'is_featured',
+                         'application_count', 'deadline', 'posted_at', 'description']
+            writer = csv.DictWriter(output, fieldnames=fieldnames)
+            writer.writeheader()
+            
+            for job in jobs:
+                row = {k: v for k, v in job.items()}
+                writer.writerow(row)
+        
+        # Convert to bytes
+        output.seek(0)
+        bytes_data = io.BytesIO(output.getvalue().encode('utf-8'))
+        bytes_data.seek(0)
+        
+        logger.info(f"Admin {current_user.username} exported {len(jobs) if jobs else 0} jobs to CSV")
+        
+        return send_file(
+            bytes_data,
+            mimetype='text/csv',
+            as_attachment=True,
+            download_name=f'jobs_export_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.csv'
+        )
+    except Exception as e:
+        logger.error(f"Error exporting jobs CSV: {str(e)}")
+        flash('Error exporting jobs data', 'error')
+        return redirect(url_for('admin.index'))
+
+
+@admin_bp.route('/export/all')
+@admin_required
+def export_all_csv():
+    """Export all data (users, businesses, jobs) to CSV files in a zip"""
+    try:
+        import zipfile
+        
+        db = get_neo4j_db()
+        
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+            
+            with db.session() as session:
+                # Export Users
+                users = safe_run(session, """
+                    MATCH (u:User)
+                    RETURN u.id as user_id, u.username as username, u.email as email, u.role as role,
+                           u.full_name as full_name, u.phone as phone, u.is_verified as is_verified,
+                           u.created_at as created_at, u.last_login as last_login
+                    ORDER BY u.created_at DESC
+                """)
+                
+                users_csv = io.StringIO()
+                if users:
+                    fieldnames = ['user_id', 'username', 'email', 'role', 'full_name', 'phone', 'is_verified', 'created_at', 'last_login']
+                    writer = csv.DictWriter(users_csv, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for user in users:
+                        writer.writerow({k: v for k, v in user.items()})
+                
+                zip_file.writestr('users.csv', users_csv.getvalue())
+                
+                # Export Businesses
+                businesses = safe_run(session, """
+                    MATCH (b:Business)
+                    OPTIONAL MATCH (b)-[:HAS_REVIEW]->(r:Review)
+                    WITH b, COUNT(r) as review_count
+                    RETURN b.id as business_id, b.name as name, b.category as category, 
+                           b.address as address, b.phone as phone, b.email as email,
+                           b.website as website, b.is_verified as is_verified, b.is_featured as is_featured,
+                           b.rating as rating, review_count, b.created_at as created_at
+                    ORDER BY b.created_at DESC
+                """)
+                
+                businesses_csv = io.StringIO()
+                if businesses:
+                    fieldnames = ['business_id', 'name', 'category', 'address', 'phone', 'email', 'website', 
+                                 'is_verified', 'is_featured', 'rating', 'review_count', 'created_at']
+                    writer = csv.DictWriter(businesses_csv, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for business in businesses:
+                        writer.writerow({k: v for k, v in business.items()})
+                
+                zip_file.writestr('businesses.csv', businesses_csv.getvalue())
+                
+                # Export Jobs
+                jobs = safe_run(session, """
+                    MATCH (j:Job)
+                    OPTIONAL MATCH (j)-[:POSTED_BY]->(b:Business)
+                    OPTIONAL MATCH (j)<-[:APPLIED_FOR]-(a:Application)
+                    WITH j, b, COUNT(a) as application_count
+                    RETURN j.id as job_id, j.title as title, j.salary_range as salary_range,
+                           j.employment_type as employment_type, j.location as location,
+                           b.name as company_name, j.status as status, application_count,
+                           j.is_featured as is_featured, j.created_at as posted_at
+                    ORDER BY j.created_at DESC
+                """)
+                
+                jobs_csv = io.StringIO()
+                if jobs:
+                    fieldnames = ['job_id', 'title', 'company_name', 'location', 'salary_range', 
+                                 'employment_type', 'status', 'is_featured', 'application_count', 'posted_at']
+                    writer = csv.DictWriter(jobs_csv, fieldnames=fieldnames)
+                    writer.writeheader()
+                    for job in jobs:
+                        writer.writerow({k: v for k, v in job.items()})
+                
+                zip_file.writestr('jobs.csv', jobs_csv.getvalue())
+        
+        zip_buffer.seek(0)
+        logger.info(f"Admin {current_user.username} exported all data to ZIP")
+        
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f'catanduanes_export_{datetime.utcnow().strftime("%Y%m%d_%H%M%S")}.zip'
+        )
+    except Exception as e:
+        logger.error(f"Error exporting all data: {str(e)}")
+        flash('Error exporting data', 'error')
+        return redirect(url_for('admin.index'))
