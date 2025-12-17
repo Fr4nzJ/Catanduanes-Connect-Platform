@@ -8,12 +8,13 @@ import pathlib
 # Import get_neo4j_db from your database module
 from database import get_neo4j_db  # Replace 'database' with the actual module name if different
 
-# Get project root directory (where app.py is located)
-PROJECT_ROOT = pathlib.Path(__file__).parent.parent
+# Get project root directory (where gemini_client.py is located - same level as app.py)
+PROJECT_ROOT = pathlib.Path(__file__).parent
 QUOTA_DISABLED_FLAG = PROJECT_ROOT / '.gemini_quota_disabled'
 
 # Set up logging
 logger = logging.getLogger(__name__)
+logger.info(f"Gemini client initialized. Project root: {PROJECT_ROOT}, Quota flag: {QUOTA_DISABLED_FLAG}")
 
 SYSTEM_TEMPLATE = """You are an AI assistant for CatanduanesConnect, a platform connecting job seekers, businesses, 
 and service providers in Catanduanes. Help users find jobs, businesses, and services while providing accurate,

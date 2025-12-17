@@ -993,7 +993,7 @@ def ai_search_businesses():
     
     # Check if API quota is exhausted
     import pathlib
-    project_root = pathlib.Path(__file__).parent.parent.parent
+    project_root = pathlib.Path(__file__).parent.parent.parent  # From blueprints/businesses/routes.py to project root
     quota_disabled_file = project_root / '.gemini_quota_disabled'
     ai_quota_exhausted = quota_disabled_file.exists()
     
