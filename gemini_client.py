@@ -2,7 +2,7 @@ import os
 import logging
 import re
 from typing import List, Dict, Optional
-import google.generativeai as genai
+import google.genai as genai
 
 # Import get_neo4j_db from your database module
 from database import get_neo4j_db  # Replace 'database' with the actual module name if different
