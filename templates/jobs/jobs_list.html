@@ -1134,14 +1134,20 @@
         document.body.appendChild(loadingOverlay);
 
         try {
+            console.log('Starting AI search for:', query);
             const response = await fetch(`/jobs/api/ai-search?q=${encodeURIComponent(query)}`);
+            console.log('Response status:', response.status, response.ok);
             const data = await response.json();
+            console.log('Parsed JSON:', data);
 
             loadingOverlay.remove();
+            console.log('AI Search Response:', data);
 
             if (data.success) {
                 // Rebuild jobs display
                 const jobsContainer = document.querySelector('[data-jobs-container]');
+                console.log('Jobs container found:', !!jobsContainer);
+                console.log('Number of jobs:', data.jobs?.length);
                 
                 if (data.jobs && data.jobs.length > 0) {
                     jobsContainer.innerHTML = data.jobs.map(job => `
